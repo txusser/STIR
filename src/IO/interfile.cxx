@@ -993,6 +993,18 @@ write_basic_interfile_PDFS_header(const string& header_file_name,
 	output_header << "number of time frames := 1\n";
       }
   }
+
+  // Write energy window lower and upper thresholds, if they are not -1
+  {
+    if (pdfs.get_exam_info_ptr()->high_energy_thres > -1 &&
+            pdfs.get_exam_info_ptr()->low_energy_thres > -1)
+    {
+        output_header << "energy window lower level := " <<
+                         pdfs.get_exam_info_ptr()->high_energy_thres << '\n';
+        output_header << "energy window upper level :=  " <<
+                         pdfs.get_exam_info_ptr()->low_energy_thres << '\n';
+    }
+  }
   if (pdfs.get_scale_factor()!=1.F)
  output_header <<"image scaling factor[1] := "
 		<<pdfs.get_scale_factor()<<endl;

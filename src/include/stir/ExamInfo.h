@@ -50,7 +50,16 @@ public :
 
   ExamInfo()
     : start_time_in_secs_since_1970(0.)
-    {}
+    {
+      low_energy_thres = -1.0f;
+      high_energy_thres = -1.0f;
+  }
+
+  //!
+  //! \brief ask_parameters
+  //! \return A pointer to a new ExamInfo object
+  //! \author Nikos Efthimiou
+  static ExamInfo* ask_parameters();
 
   std::string originating_system;
   
@@ -62,11 +71,42 @@ public :
 
   double start_time_in_secs_since_1970;
 
+//  //! \name Functions that return info related on the acquisition settings
+//  //@{
+//  //! Get the low energy boundary
+//  inline float& get_low_energy_thres() const;
+//  //! Get the high energy boundary
+//  inline float& get_high_energy_thres() const;
+//  //@}
+
+//  //! \name Functions that set values related on the acquisition settings
+//  //@{
+//  //! Set the low energy boundary
+//  void set_low_energy_thres(const float& low_thres);
+//  //! Set the high energy boundary
+//  void set_high_energy_thres(const float& high_thres);
+//  //@}
 
   void set_time_frame_definitions(const TimeFrameDefinitions& new_time_frame_definitions)
     {
       time_frame_definitions = new_time_frame_definitions;
     }
+
+  //!
+  //! \brief low_energy_thres
+  //! \author Nikos Efthimiou
+  //! \details This is the value of low energy threshold of the energy window.
+  //! The units are keV
+  //! This parameter was initially introduced for scatter simulation.
+  float low_energy_thres;
+
+  //!
+  //! \brief high_energy_thres
+  //! \author Nikos Efthimiou
+  //! \details This is the value of high energy threshold of the energy window
+  //! The units are keV
+  //! This parameter was initially introduced for scatter simulation
+  float high_energy_thres;
 };
 
 END_NAMESPACE_STIR

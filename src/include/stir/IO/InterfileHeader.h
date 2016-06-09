@@ -221,6 +221,7 @@ private:
 
   double effective_central_bin_size_in_cm;
   bool is_arccorrected;
+
 };
 
 END_NAMESPACE_STIR

@@ -194,9 +194,9 @@ class ScatterEstimationByBin : public ParsingObject
 
     inline void set_high_energy_threshold(const float& _v);
 
-    inline void set_activity_image(const VoxelsOnCartesianGrid& _v);
+    inline void set_activity_image(const VoxelsOnCartesianGrid<float>& _v);
 
-    inline void set_attenuation_image(const VoxelsOnCartesianGrid& _v);
+    inline void set_attenuation_image(const VoxelsOnCartesianGrid<float>& _v);
 
     inline void set_proj_data(const ProjData& _v);
 
