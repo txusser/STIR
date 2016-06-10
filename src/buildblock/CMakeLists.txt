@@ -3,7 +3,8 @@ set(dir buildblock)
 set (dir_LIB_SOURCES ${dir}_LIB_SOURCES)
 
 set(${dir_LIB_SOURCES}
-  Array  
+  Array
+  ExamInfo  
   IndexRange 
   PatientPosition
   ProjData 

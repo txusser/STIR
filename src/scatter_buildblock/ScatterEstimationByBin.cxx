@@ -50,10 +50,8 @@ set_defaults()
   this->attenuation_threshold =  0.01 ;
   this->random = true;
   this->use_cache = true;
-  this->energy_resolution = .22 ;
-  this->reference_energy = 511.F;
-  this->lower_energy_threshold = 350 ;
-  this->upper_energy_threshold = 650 ;
+//  this->energy_resolution = .22 ;
+//  this->reference_energy = 511.F;
   this->activity_image_filename = "";
   this->density_image_filename = "";
   this->density_image_for_scatter_points_filename = "";
@@ -75,8 +73,6 @@ initialise_keymap()
 
   this->parser.add_key("use_cache", &this->use_cache);
   this->parser.add_key("energy_resolution", &this->energy_resolution);
-  this->parser.add_key("lower_energy_threshold", &this->lower_energy_threshold);
-  this->parser.add_key("upper_energy_threshold", &this->upper_energy_threshold);
 
   this->parser.add_key("activity_image_filename", &this->activity_image_filename);
   this->parser.add_key("density_image_filename", &this->density_image_filename);

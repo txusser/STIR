@@ -210,7 +210,7 @@ InterfileHeader::InterfileHeader()
           &exam_info_sptr->low_energy_thres);
 
   add_key("energy window upper level",
-          &exam_info_sptr->high_energy_thres);
+          &exam_info_sptr->up_energy_thres);
 
   add_key("END OF INTERFILE", 
     KeyArgument::NONE,	&KeyParser::stop_parsing);
@@ -553,8 +553,6 @@ InterfilePDFSHeader::InterfilePDFSHeader()
 	  &effective_central_bin_size_in_cm);
   add_key("applied corrections",
     KeyArgument::LIST_OF_ASCII, &applied_corrections);
-
-  int nikos = 0;
 }
 
 void InterfilePDFSHeader::resize_segments_and_set()

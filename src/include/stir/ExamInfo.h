@@ -52,14 +52,21 @@ public :
     : start_time_in_secs_since_1970(0.)
     {
       low_energy_thres = -1.0f;
-      high_energy_thres = -1.0f;
+      up_energy_thres = -1.0f;
   }
 
   //!
   //! \brief ask_parameters
   //! \return A pointer to a new ExamInfo object
   //! \author Nikos Efthimiou
+  //! \details This function offers a modular initialization for the
+  //! ExamInfo class. In the that energy window is not needed the values
+  //! default to -1.
+  //! For the time frame the default is [0, 1].
   static ExamInfo* ask_parameters();
+
+  //! Return a string describing the object
+  std::string parameter_info() const;
 
   std::string originating_system;
   
@@ -98,15 +105,17 @@ public :
   //! \details This is the value of low energy threshold of the energy window.
   //! The units are keV
   //! This parameter was initially introduced for scatter simulation.
+  //! If scatter simulation is not needed, can default to -1
   float low_energy_thres;
 
   //!
-  //! \brief high_energy_thres
+  //! \brief up_energy_thres
   //! \author Nikos Efthimiou
   //! \details This is the value of high energy threshold of the energy window
   //! The units are keV
   //! This parameter was initially introduced for scatter simulation
-  float high_energy_thres;
+  //! If scatter simulation is not needed, can default to -1
+  float up_energy_thres;
 };
 
 END_NAMESPACE_STIR

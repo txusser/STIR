@@ -120,6 +120,8 @@ class Scanner
   /*! size info is in mm
       \param intrinsic_tilt_v value in radians, \see get_default_intrinsic_tilt()
       \warning calls error() when block/bucket info are inconsistent
+      \warning the energy reference defaults to 511keV, mainly because STIR is
+      used for PET reconstruction
    */
   Scanner(Type type_v, const std::list<std::string>& list_of_names_v,
           int num_detectors_per_ring_v, int num_rings_v, 
@@ -131,12 +133,16 @@ class Scanner
           int num_axial_crystals_per_block_v, int num_transaxial_crystals_per_block_v,
           int num_axial_crystals_per_singles_unit_v, 
           int num_transaxial_crystals_per_singles_unit_v,
-          int num_detector_layers_v);
+          int num_detector_layers_v,
+          float energy_resolution_v = -1.0f,
+          float reference_energy_v = 511.0f);
 
   //! constructor ( a single name)
   /*! size info is in mm
       \param intrinsic_tilt value in radians, \see get_default_intrinsic_tilt()
       \warning calls error() when block/bucket info are inconsistent
+      \warning the energy reference defaults to 511keV, mainly because STIR is
+      used for PET reconstruction
    */
   Scanner(Type type_v, const std::string& name,
           int num_detectors_per_ring_v, int num_rings_v, 
@@ -148,7 +154,9 @@ class Scanner
           int num_axial_crystals_per_block_v, int num_transaxial_crystals_per_block_v,
           int num_axial_crystals_per_singles_unit_v, 
           int num_transaxial_crystals_per_singles_unit_v,
-          int num_detector_layers_v);
+          int num_detector_layers_v,
+          float energy_resolution_v = -1.0f,
+          float reference_energy_v = 511.0f);
 
 
 
@@ -257,10 +265,19 @@ class Scanner
   /* inline int get_num_layers_singles_units() const; */
   inline int get_num_singles_units() const;
 
-
   //@} (end of block/bucket info)
 
   //@} (end of get geometrical info)
+
+  //! \name Functions to get detector responce info
+  //@{
+
+  //! get the energy resolution of the system
+  inline float get_energy_resolution() const;
+  //! get the reference energy of the energy resolution
+  inline float get_reference_energy() const;
+
+  //@} (end of get detector responce info)
 
   //! \name Functions setting info
   /*! Be careful to keep consistency by setting all relevant parameters*/
@@ -306,6 +323,14 @@ class Scanner
 
   //@} (end of block/bucket info)
 
+  //! \name Info on crystals per block etc.
+  //@{
+
+  //@} (end of set detector responce info)
+  //! get the energy resolution of the system
+  inline void set_energy_resolution(const float & new_num);
+  //! get the reference energy of the energy resolution
+  inline void set_reference_energy(const float& new_num);
   //@} (end of set info)
   
   // Calculate a singles bin index from axial and transaxial singles bin coordinates.
@@ -374,7 +399,9 @@ private:
                   int num_axial_crystals_per_block_v, int num_transaxial_crystals_per_block_v,
                   int num_axial_crystals_per_singles_unit_v,
                   int num_transaxial_crystals_per_singles_unit_v,
-                  int num_detector_layers_v);
+                  int num_detector_layers_v,
+                  float energy_resolution_v = -1.0f,
+                  float reference_energy = 511.0f);
 
   // ! set all parameters
   void set_params(Type type_v, const std::list<std::string>& list_of_names_v,
@@ -390,7 +417,9 @@ private:
                   int num_axial_crystals_per_block_v, int num_transaxial_crystals_per_block_v,
                   int num_axial_crystals_per_singles_unit_v,
                   int num_transaxial_crystals_per_singles_unit_v,
-                  int num_detector_layers_v);
+                  int num_detector_layers_v,
+                  float energy_resolution_v = -1.0f,
+                  float reference_energy = 511.0f);
 
 
 };
