@@ -207,10 +207,10 @@ InterfileHeader::InterfileHeader()
     KeyArgument::DOUBLE, &lln_quantification_units);
 
   add_key("energy window lower level",
-          &exam_info_sptr->low_energy_thres);
+          &lower_en_window_thres);
 
   add_key("energy window upper level",
-          &exam_info_sptr->up_energy_thres);
+          &upper_en_window_thres);
 
   add_key("END OF INTERFILE", 
     KeyArgument::NONE,	&KeyParser::stop_parsing);
@@ -326,6 +326,8 @@ bool InterfileHeader::post_processing()
     }      
   } // lln_quantification_units
 
+  exam_info_sptr->set_high_energy_thres(upper_en_window_thres);
+  exam_info_sptr->set_low_energy_thres(lower_en_window_thres);
 
   exam_info_sptr->time_frame_definitions = 
     TimeFrameDefinitions(image_relative_start_times, image_durations);
@@ -1033,6 +1035,10 @@ bool InterfilePDFSHeader::post_processing()
         guessed_scanner_ptr->get_num_transaxial_crystals_per_singles_unit();
     if (num_detector_layers<=0)
       num_detector_layers = guessed_scanner_ptr->get_num_detector_layers();
+    if (energy_resolution < 0)
+        energy_resolution = guessed_scanner_ptr->get_energy_resolution();
+    if (reference_energy < 0)
+        reference_energy = guessed_scanner_ptr->get_reference_energy();
     
     // consistency check with values of the guessed_scanner_ptr we guessed above
 
@@ -1144,6 +1150,24 @@ bool InterfilePDFSHeader::post_processing()
 		num_detector_layers, guessed_scanner_ptr->get_num_detector_layers());
 	mismatch_between_header_and_guess = true;
       }
+    //
+    // 06/16: N.E: Currently, the energy resolution and the reference energy, are used only in the
+    // scatter correction. Therefore the waring is displyed but they don't trigger
+    // a mismatch. I assume that the user will handle this. This is in accordance to the
+    // scanner '==' operator, which displayes a warning message for these two parameters
+    // but continues as usual.
+    if (energy_resolution != guessed_scanner_ptr->get_energy_resolution())
+      {
+    warning("Interfile warning: 'energy resolution' (%d) is expected to be %d.\n",
+        energy_resolution, guessed_scanner_ptr->get_energy_resolution());
+//    mismatch_between_header_and_guess = true;
+      }
+    if (reference_energy != guessed_scanner_ptr->get_reference_energy())
+      {
+    warning("Interfile warning: 'reference energy' (%d) is expected to be %d.\n",
+        reference_energy, guessed_scanner_ptr->get_reference_energy());
+//    mismatch_between_header_and_guess = true;
+      }
 
     // end of checks. If they failed, we ignore the guess
     if (mismatch_between_header_and_guess)
@@ -1205,7 +1229,9 @@ bool InterfilePDFSHeader::post_processing()
 		num_transaxial_crystals_per_block,
 		num_axial_crystals_per_singles_unit,
                 num_transaxial_crystals_per_singles_unit,
-                num_detector_layers));
+                num_detector_layers,
+                energy_resolution,
+                reference_energy));
 
   bool is_consistent =
     scanner_ptr_from_file->check_consistency() == Succeeded::yes;

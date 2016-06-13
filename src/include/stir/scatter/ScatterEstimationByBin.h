@@ -123,41 +123,40 @@ class ScatterEstimationByBin : public ParsingObject
   //! Default constructor (calls set_defaults())
   ScatterEstimationByBin();
 
-  /*! \name functions to (re)set images or projection data
-      These functions also invalidate cached activity integrals such that the cache will be recomputed.
+//  /*! \name functions to (re)set images or projection data
+//      These functions also invalidate cached activity integrals such that the cache will be recomputed.
 
-      The functions that read a file call error() if the reading failed.
-  */
-  //@{
-  void set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
-  void set_activity_image(const std::string& filename);
+//      The functions that read a file call error() if the reading failed.
+//  */
+//  //@{
+//  void set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+//  void set_activity_image(const std::string& filename);
 
-  void set_density_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
-  void set_density_image(const std::string& filename);
+//  void set_density_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+//  void set_density_image(const std::string& filename);
 
-  //! set the image that determines where the scatter points are
-  /*! Also calls sample_scatter_points()
-   \warning Uses attenuation_threshold member variable
-  */
-  void set_density_image_for_scatter_points_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+//  //! set the image that determines where the scatter points are
+//  /*! Also calls sample_scatter_points()
+//   \warning Uses attenuation_threshold member variable
+//  */
+//  void set_density_image_for_scatter_points_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
   
-  //! set the image that determines where the scatter points are
-  /*! Calls set_density_image_for_scatter_points_sptr() to make sure all other variables are ok. */
-  void set_density_image_for_scatter_points(const std::string& filename);
+//  //! set the image that determines where the scatter points are
+//  /*! Calls set_density_image_for_scatter_points_sptr() to make sure all other variables are ok. */
+//  void set_density_image_for_scatter_points(const std::string& filename);
 
-  void set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>&);
-  void set_template_proj_data_info(const std::string& filename);
+//  void set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>&);
+//  void set_template_proj_data_info(const std::string& filename);
 
-  //void set_output_proj_data_sptr(const shared_ptr<ProjData>& new_sptr);
-  //! create output projection data of same size as template_proj_data_info
-  /*! \warning use set_template_proj_data_info() first. 
+//  //void set_output_proj_data_sptr(const shared_ptr<ProjData>& new_sptr);
+//  //! create output projection data of same size as template_proj_data_info
+//  /*! \warning use set_template_proj_data_info() first.
 
-   Currently always uses Interfile output.
-  */
-  void set_output_proj_data(const std::string& filename);
+//   Currently always uses Interfile output.
+//  */
+//  void set_output_proj_data(const std::string& filename);
 
-
-  //@}
+//  //@}
 
   virtual Succeeded process_data();
 
@@ -167,32 +166,13 @@ class ScatterEstimationByBin : public ParsingObject
 	      const float total_scatter);
 
 
-//  this->attenuation_threshold =  0.01 ;
-//  this->random = true;
-//  this->use_cache = true;
-//  this->energy_resolution = .22 ;
-//  this->reference_energy = 511.F;
-//  this->lower_energy_threshold = 350 ;
-//  this->upper_energy_threshold = 650 ;
-//  this->activity_image_filename = "";
-//  this->density_image_filename = "";
-//  this->density_image_for_scatter_points_filename = "";
-//  this->template_proj_data_filename = "";
-//  this->output_proj_data_filename = "";
-
   /*! \name functions to set parameters */
   //@{
-    inline void set_attenuation_threshold(const float& _v);
+    inline void set_attenuation_threshold(float _val);
 
-    inline void set_random_point(const bool& _v);
+    inline void set_random_point(bool _val);
 
-    inline void set_cache_enabled(const bool& _v);
-
-    inline void set_activity_image(const VoxelsOnCartesianGrid<float>& _v);
-
-    inline void set_attenuation_image(const VoxelsOnCartesianGrid<float>& _v);
-
-    inline void set_proj_data(const ProjData& _v);
+    inline void set_cache_enabled(bool _val);
 
   //@}
 
@@ -224,22 +204,6 @@ class ScatterEstimationByBin : public ParsingObject
   */
   bool use_cache;
 
-  //! \name Parameters determining the energy detection efficiency of the scanner
-  //@{
-  //! reference energy used when specifying the energy resolution of the detectors (in units of keV)
-  float reference_energy; 
-  //! resolution of the detectors at \a reference_energy
-  /*! specify as a fraction of the \a reference_energy. For example, a Discovery STE has an energy
-  resolution of about .16 at 511 keV.
-  */
-  float energy_resolution;
-
-  //! Lower energy threshold set during acquisition
-  float lower_energy_threshold;
-  //! Upper energy threshold set during acquisition
-  float upper_energy_threshold;
-  //@}
-
   std::string activity_image_filename;
   std::string density_image_filename;
   std::string density_image_for_scatter_points_filename;
@@ -250,6 +214,18 @@ class ScatterEstimationByBin : public ParsingObject
   shared_ptr<DiscretisedDensity<3,float> > density_image_sptr;
   shared_ptr<DiscretisedDensity<3,float> > activity_image_sptr;
   shared_ptr<ProjData> output_proj_data_sptr; 
+
+  //!
+  //! \brief small_num_dets_per_ring
+  //! \details This is the number of detectors per ring which are going
+  //! to be used in the subsampled scanner.
+  int small_num_dets_per_ring;
+
+  //!
+  //! \brief small_num_rings
+  //! \details This is the number of rings which are going
+  //! to be used in the subsampled scanner.
+  int small_num_rings;
 
 
   /*************** functions that do the work **********/

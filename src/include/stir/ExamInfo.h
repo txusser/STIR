@@ -78,26 +78,28 @@ public :
 
   double start_time_in_secs_since_1970;
 
-//  //! \name Functions that return info related on the acquisition settings
-//  //@{
-//  //! Get the low energy boundary
-//  inline float& get_low_energy_thres() const;
-//  //! Get the high energy boundary
-//  inline float& get_high_energy_thres() const;
-//  //@}
+  //! \name Functions that return info related on the acquisition settings
+  //@{
+  //! Get the low energy boundary
+  inline float get_low_energy_thres() const; // N.E: Should the reference be const?
+  //! Get the high energy boundary
+  inline float get_high_energy_thres() const; // N.E: Should the reference be const?
+  //@}
 
-//  //! \name Functions that set values related on the acquisition settings
-//  //@{
-//  //! Set the low energy boundary
-//  void set_low_energy_thres(const float& low_thres);
-//  //! Set the high energy boundary
-//  void set_high_energy_thres(const float& high_thres);
-//  //@}
+  //! \name Functions that set values related on the acquisition settings
+  //@{
+  //! Set the low energy boundary
+  inline void set_low_energy_thres(float new_val);
+  //! Set the high energy boundary
+  inline void set_high_energy_thres(float new_val);
+  //@}
 
   void set_time_frame_definitions(const TimeFrameDefinitions& new_time_frame_definitions)
     {
       time_frame_definitions = new_time_frame_definitions;
     }
+
+private:
 
   //!
   //! \brief low_energy_thres
@@ -119,5 +121,7 @@ public :
 };
 
 END_NAMESPACE_STIR
+
+#include "stir/ExamInfo.inl"
 
 #endif // __stir_ExamInfo_H__

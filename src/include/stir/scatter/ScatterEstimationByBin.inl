@@ -79,6 +79,25 @@ total_Compton_cross_section_relative_to_511keV(const float energy)
      ));
 }
 
+void
+ScatterEstimationByBin::
+set_attenuation_threshold(float _val)
+{
+    attenuation_threshold = _val;
+}
 
+void
+ScatterEstimationByBin::
+set_random_point(bool _val)
+{
+    random = _val;
+}
+
+void
+ScatterEstimationByBin::
+set_cache_enabled(bool _val)
+{
+    use_cache = _val;
+}
 
 END_NAMESPACE_STIR
