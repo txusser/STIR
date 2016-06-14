@@ -123,41 +123,6 @@ class ScatterEstimationByBin : public ParsingObject
   //! Default constructor (calls set_defaults())
   ScatterEstimationByBin();
 
-//  /*! \name functions to (re)set images or projection data
-//      These functions also invalidate cached activity integrals such that the cache will be recomputed.
-
-//      The functions that read a file call error() if the reading failed.
-//  */
-//  //@{
-//  void set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
-//  void set_activity_image(const std::string& filename);
-
-//  void set_density_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
-//  void set_density_image(const std::string& filename);
-
-//  //! set the image that determines where the scatter points are
-//  /*! Also calls sample_scatter_points()
-//   \warning Uses attenuation_threshold member variable
-//  */
-//  void set_density_image_for_scatter_points_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
-  
-//  //! set the image that determines where the scatter points are
-//  /*! Calls set_density_image_for_scatter_points_sptr() to make sure all other variables are ok. */
-//  void set_density_image_for_scatter_points(const std::string& filename);
-
-//  void set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>&);
-//  void set_template_proj_data_info(const std::string& filename);
-
-//  //void set_output_proj_data_sptr(const shared_ptr<ProjData>& new_sptr);
-//  //! create output projection data of same size as template_proj_data_info
-//  /*! \warning use set_template_proj_data_info() first.
-
-//   Currently always uses Interfile output.
-//  */
-//  void set_output_proj_data(const std::string& filename);
-
-//  //@}
-
   virtual Succeeded process_data();
 
   // TODO write_log can't be const because parameter_info isn't const
@@ -176,11 +141,6 @@ class ScatterEstimationByBin : public ParsingObject
 
   //@}
 
-  /*! \name functions to get parameters */
-  //@{
-
-
-  //@}
 
  protected:
   void set_defaults();

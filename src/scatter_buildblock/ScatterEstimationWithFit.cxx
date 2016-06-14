@@ -14,7 +14,7 @@ START_NAMESPACE_STIR
 ScatterEstimationWithFit::
 ScatterEstimationWithFit()
 {
-  this->set_defaults();
+    this->set_defaults();
 }
 
 void
@@ -44,181 +44,168 @@ ScatterEstimationWithFit::initialise_keymap()
     this->parser.add_key("fitted_output_filename_prefix", &this->fitted_output_proj_data_filename);
 }
 
+
+bool
+ScatterEstimationWithFit::
+pre_processing()
+{
+
+    // Normalization Factors
+
+    // Reconstruct Attenuation Coefficients
+
+    // Reconstruct Activity Image
+
+    //
+
+}
+
+
 bool
 ScatterEstimationWithFit::
 post_processing()
 {
-  //base_type::post_processing();
+    //base_type::post_processing();
 
-  this->set_activity_image(this->activity_image_filename);
-  this->set_density_image(this->density_image_filename);
-  info(boost::format("Attenuation image data are supposed to be in units cm^-1\n"
-                     "\tReference: water has mu .096 cm^-1\n"
-                     "\tMax in attenuation image: %g\n") %
-       this->density_image_sptr->find_max());
+    this->set_activity_image(this->activity_image_filename);
+    this->set_density_image(this->density_image_filename);
+    info(boost::format("Attenuation image data are supposed to be in units cm^-1\n"
+                       "\tReference: water has mu .096 cm^-1\n"
+                       "\tMax in attenuation image: %g\n") %
+         this->density_image_sptr->find_max());
 
-  const VoxelsOnCartesianGrid<float>& activity_image =
-    dynamic_cast<const VoxelsOnCartesianGrid<float>&>(*activity_image_sptr);
+    const VoxelsOnCartesianGrid<float>& activity_image =
+            dynamic_cast<const VoxelsOnCartesianGrid<float>&>(*activity_image_sptr);
 
-  const CartesianCoordinate3D<float> org_voxel_size = activity_image.get_voxel_size();
+    const CartesianCoordinate3D<float> org_voxel_size = activity_image.get_voxel_size();
 
-  const CartesianCoordinate3D<float> zooms =
-    make_coord(this->axial_scatter_point_sampling_in_mm,
-               this->transverse_scatter_point_sampling_in_mm,
-               this->transverse_scatter_point_sampling_in_mm) /
-    org_voxel_size;
+    const CartesianCoordinate3D<float> zooms =
+            make_coord(this->axial_scatter_point_sampling_in_mm,
+                       this->transverse_scatter_point_sampling_in_mm,
+                       this->transverse_scatter_point_sampling_in_mm) /
+            org_voxel_size;
 
-  const CartesianCoordinate3D<float> offsets_in_mm(0.F,0.F,0.F);
+    const CartesianCoordinate3D<float> offsets_in_mm(0.F,0.F,0.F);
 
-BasicCoordinate<3,int> new_sizes
+    BasicCoordinate<3,int> new_sizes
 
-  shared_ptr<DiscretisedDensity<3,float> >
-    scatter_points_image_sptr(new VoxelsOnCartesianGrid<float>(zoom_image(activity_image,zooms, offsets, new_sizes));
-  this->set_density_image_for_scatter_points_sptr(scatter_points_image_sptr);
+            shared_ptr<DiscretisedDensity<3,float> >
+            scatter_points_image_sptr(new VoxelsOnCartesianGrid<float>(zoom_image(activity_image,zooms, offsets, new_sizes));
+            this->set_density_image_for_scatter_points_sptr(scatter_points_image_sptr);
 
-  // for template_proj_data_filename;
-  this->num_detectors_per_ring_for_scatter_simulation;
-  this->num_detectors_rings_for_scatter_simulation;
+    // for template_proj_data_filename;
+    this->num_detectors_per_ring_for_scatter_simulation;
+    this->num_detectors_rings_for_scatter_simulation;
 
 
-  this->set_template_proj_data_info(this->template_proj_data_filename);
+    this->set_template_proj_data_info(this->template_proj_data_filename);
 
-  // create output (has to be AFTER set_template_proj_data_info)
-  this->set_output_proj_data(this->output_proj_data_filename);
+    // create output (has to be AFTER set_template_proj_data_info)
+    this->set_output_proj_data(this->output_proj_data_filename);
 
-  return false;
+    return false;
 
 }
 
-/****************** functions to set images **********************/
-void
+Succeeded
 ScatterEstimationWithFit::
-set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
+process_data()
 {
-  this->activity_image_sptr=new_sptr;
-  this->remove_cache_for_integrals_over_activity();
-}
+    this->initialise_cache_for_scattpoint_det_integrals_over_attenuation();
+    this->initialise_cache_for_scattpoint_det_integrals_over_activity();
 
-void
-ScatterEstimationWithFit::
-set_activity_image(const std::string& filename)
-{
-  this->activity_image_filename=filename;
-  this->activity_image_sptr=
-    read_from_file<DiscretisedDensity<3,float> >(filename);
-  if (is_null_ptr(this->activity_image_sptr))
+    ViewSegmentNumbers vs_num;
+
+    /* ////////////////// SCATTER ESTIMATION TIME ////////////////
+   */
+    CPUTimer bin_timer;
+    int bin_counter = 0;
+    bin_timer.start();
+    int axial_bins = 0 ;
+    for (vs_num.segment_num()=this->proj_data_info_ptr->get_min_segment_num();
+         vs_num.segment_num()<=this->proj_data_info_ptr->get_max_segment_num();
+         ++vs_num.segment_num())
+        axial_bins += this->proj_data_info_ptr->get_num_axial_poss(vs_num.segment_num());
+    const int total_bins =
+            this->proj_data_info_ptr->get_num_views() * axial_bins *
+            this->proj_data_info_ptr->get_num_tangential_poss();
+
+    /* ////////////////// end SCATTER ESTIMATION TIME ////////////////
+   */
+
+    /* Currently, proj_data_info.find_cartesian_coordinates_of_detection() returns
+     coordinate in a coordinate system where z=0 in the first ring of the scanner.
+     We want to shift this to a coordinate system where z=0 in the middle
+     of the scanner.
+     We can use get_m() as that uses the 'middle of the scanner' system.
+     (sorry)
+  */
+#ifndef NDEBUG
     {
-      error(boost::format("Error reading activity image %s") %
-            this->activity_image_filename);
+        CartesianCoordinate3D<float> detector_coord_A, detector_coord_B;
+        // check above statement
+        this->proj_data_info_ptr->find_cartesian_coordinates_of_detection(
+                    detector_coord_A,detector_coord_B,Bin(0,0,0,0));
+        assert(detector_coord_A.z()==0);
+        assert(detector_coord_B.z()==0);
+        // check that get_m refers to the middle of the scanner
+        const float m_first =
+                this->proj_data_info_ptr->get_m(Bin(0,0,this->proj_data_info_ptr->get_min_axial_pos_num(0),0));
+        const float m_last =
+                this->proj_data_info_ptr->get_m(Bin(0,0,this->proj_data_info_ptr->get_max_axial_pos_num(0),0));
+        assert(fabs(m_last + m_first)<m_last*10E-4);
     }
-  this->set_activity_image_sptr(this->activity_image_sptr);
-}
+#endif
+    this->shift_detector_coordinates_to_origin =
+            CartesianCoordinate3D<float>(this->proj_data_info_ptr->get_m(Bin(0,0,0,0)),0, 0);
 
+    float total_scatter = 0 ;
 
-void
-ScatterEstimationWithFit::
-set_density_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
-{
-  this->density_image_sptr=new_sptr;
-  this->remove_cache_for_integrals_over_attenuation();
-}
-
-void
-ScatterEstimationWithFit::
-set_density_image(const std::string& filename)
-{
-  this->density_image_filename=filename;
-  this->density_image_sptr=
-    read_from_file<DiscretisedDensity<3,float> >(filename);
-  if (is_null_ptr(this->density_image_sptr))
+    for (vs_num.segment_num()=this->proj_data_info_ptr->get_min_segment_num();
+         vs_num.segment_num()<=this->proj_data_info_ptr->get_max_segment_num();
+         ++vs_num.segment_num())
     {
-      error(boost::format("Error reading density image %s") %
-            this->density_image_filename);
+        for (vs_num.view_num()=this->proj_data_info_ptr->get_min_view_num();
+             vs_num.view_num()<=this->proj_data_info_ptr->get_max_view_num();
+             ++vs_num.view_num())
+        {
+            total_scatter += this->process_data_for_view_segment_num(vs_num);
+            bin_counter +=
+                    this->proj_data_info_ptr->get_num_axial_poss(vs_num.segment_num()) *
+                    this->proj_data_info_ptr->get_num_tangential_poss();
+
+            /* ////////////////// SCATTER ESTIMATION TIME ////////////////
+           */
+            {
+                // TODO remove statics
+                static double previous_timer = 0 ;
+                static int previous_bin_count = 0 ;
+                std::cerr << bin_counter << " bins  Total time elapsed "
+                          << bin_timer.value() << " sec \tTime remaining about "
+                          << (bin_timer.value()-previous_timer)*
+                             (total_bins-bin_counter)/
+                             (bin_counter-previous_bin_count)/60
+                          << " minutes"
+                          << std::endl;
+                previous_timer = bin_timer.value() ;
+                previous_bin_count = bin_counter ;
+            }
+            /* ////////////////// end SCATTER ESTIMATION TIME ////////////////
+           */
+        }
     }
-  this->set_density_image_sptr(this->density_image_sptr);
-}
+    bin_timer.stop();
+    this->write_log(bin_timer.value(), total_scatter);
 
-void
-ScatterEstimationWithFit::
-set_density_image_for_scatter_points_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
-{
-  this->density_image_for_scatter_points_sptr=new_sptr;
-  this->sample_scatter_points();
-  this->remove_cache_for_integrals_over_attenuation();
-}
-
-void
-ScatterEstimationWithFit::
-set_density_image_for_scatter_points(const std::string& filename)
-{
-  this->density_image_for_scatter_points_filename=filename;
-  this->density_image_for_scatter_points_sptr=
-    read_from_file<DiscretisedDensity<3,float> >(filename);
-  if (is_null_ptr(this->density_image_for_scatter_points_sptr))
+    if (detection_points_vector.size() != static_cast<unsigned int>(total_detectors))
     {
-      error(boost::format("Error reading density_for_scatter_points image %s") %
-            this->density_image_for_scatter_points_filename);
-    }
-  this->set_density_image_for_scatter_points_sptr(this->density_image_for_scatter_points_sptr);
-}
-
-
-/****************** functions to set projection data **********************/
-
-void
-ScatterEstimationWithFit::
-set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>& new_sptr)
-{
-
-  this->proj_data_info_ptr = dynamic_cast<ProjDataInfoCylindricalNoArcCorr const *>(new_sptr->clone());
-
-  if (is_null_ptr(this->proj_data_info_ptr))
-    {
-      error("ScatterEstimationByBin can only handle non-arccorrected data");
+        warning("Expected num detectors: %d, but found %d\n",
+                total_detectors, detection_points_vector.size());
+        return Succeeded::no;
     }
 
-  // find final size of detection_points_vector
-  this->total_detectors =
-    this->proj_data_info_ptr->get_scanner_ptr()->get_num_rings()*
-    this->proj_data_info_ptr->get_scanner_ptr()->get_num_detectors_per_ring ();
-  // reserve space to avoid reallocation, but the actual size will grow dynamically
-  this->detection_points_vector.reserve(total_detectors);
-
-  // remove any cached values as they'd be incorrect if the sizes changes
-  this->remove_cache_for_integrals_over_attenuation();
-  this->remove_cache_for_integrals_over_activity();
+    return Succeeded::yes;
 }
-
-void
-ScatterEstimationWithFit::
-set_template_proj_data_info(const std::string& filename)
-{
-  this->template_proj_data_filename = filename;
-  shared_ptr<ProjData> template_proj_data_sptr =
-    ProjData::read_from_file(this->template_proj_data_filename);
-
-  this->set_template_proj_data_info_sptr(template_proj_data_sptr->get_proj_data_info_ptr()->create_shared_clone());
-}
-
-/*
-void
-ScatterEstimationByBin::
-set_output_proj_data_sptr(const shared_ptr<ProjData>& new_sptr)
-{
-  this->output_proj_data_sptr = new_sptr;
-}
-*/
-
-void
-ScatterEstimationWithFit::
-set_output_proj_data(const std::string& filename)
-{
-  this->output_proj_data_filename = filename;
-  // TODO get ExamInfo from image
-  shared_ptr<ExamInfo> exam_info_sptr(new ExamInfo);
-  this->output_proj_data_sptr.reset(new ProjDataInterfile(exam_info_sptr,
-                                                          this->proj_data_info_ptr->create_shared_clone(),
-                                                          this->output_proj_data_filename));
 }
 
 END_NAMESPACE_STIR
