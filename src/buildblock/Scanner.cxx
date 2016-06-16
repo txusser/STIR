@@ -785,7 +785,7 @@ Scanner::parameter_info() const
     << "Default number of arc-corrected bins     := "
     << get_default_num_arccorrected_bins() << '\n';
 
-  s << "Energy resolution (in keV) := " << get_energy_resolution() << '\n';
+  s << "Energy resolution := " << get_energy_resolution() << '\n';
   s << "Reference energy (in keV) := " << get_reference_energy() << '\n';
 
   // block/bucket description

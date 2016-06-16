@@ -547,6 +547,13 @@ InterfilePDFSHeader::InterfilePDFSHeader()
   add_key("number of detector layers",
 	  &num_detector_layers);
 
+  energy_resolution = -1.f;
+  add_key("Energy resolution",
+          &energy_resolution);
+  reference_energy = 511.f;
+  add_key("Reference energy (in keV)",
+          &reference_energy);
+
   add_key("end scanner parameters",
 	  KeyArgument::NONE,	&KeyParser::do_nothing);
   

@@ -45,7 +45,7 @@ int main(int argc, const char *argv[])
   //stir::ScatterEstimationByBin scatter_estimation;
   // pre- pre- pre- alpha
 
-  stir::ScatterEstimationWithFit scatter_estimation;
+  stir::ScatterEstimationByBin scatter_estimation;
 
   if (argc==2)
     {

@@ -125,21 +125,89 @@ class ScatterEstimationByBin : public ParsingObject
 
   virtual Succeeded process_data();
 
+  /**
+   *
+   *  \name functions to (re)set images or projection data
+   *  These functions also invalidate cached activity integrals such that the cache will be recomputed.
+   *
+   *  The functions that read a file call error() if the reading failed.
+   *
+   * @{
+   */
+
+  //!
+  //! \brief set_activity_image_sptr
+  //!
+  inline void set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+
+  //!
+  //! \brief set_activity_image
+  //! \param filename
+  //!
+  inline void set_activity_image(const std::string& filename);
+
+  inline void set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+
+  //!
+  //! \brief set_image_from_file
+  //! \param filename
+  //! \details This function loads image files from the disk
+  inline void set_image_from_file(const std::string& filename,
+                                  shared_ptr<DiscretisedDensity<3,float> > & _this_image_sptr);
+
+  //!
+  //! \brief set_template_proj_data_info_from_file
+  //! \param filename
+  //! \details Sets the template of the ProjDataInfo from a file
+  inline void set_template_proj_data_info_from_file(const std::string& filename);
+
+  //!
+  //! \brief set_atten_coeffs_from_file
+  //! \param filename
+  //! \details Load attenuation coefficients from disk, instead of
+  //! calculating them on the fly.
+  //! \warning Not tested!
+  inline void set_atten_coeffs_from_file(const std::string& filename);
+
+  inline void set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>&);
+
+  //! set the image that determines where the scatter points are
+  /*! Also calls sample_scatter_points()
+   \warning Uses attenuation_threshold member variable
+  */
+  inline void set_sub_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+
+
+  //void set_output_proj_data_sptr(const shared_ptr<ProjData>& new_sptr);
+  //! create output projection data of same size as template_proj_data_info
+  /*! \warning use set_template_proj_data_info() first.
+
+   Currently always uses Interfile output.
+  */
+  inline void set_proj_data_from_file(const std::string& filename,
+                                      shared_ptr<ProjData>& _this_projdata);
+
+  /** @}*/
+
   // TODO write_log can't be const because parameter_info isn't const
   virtual void
     write_log(const double simulation_time, 
 	      const float total_scatter);
 
 
-  /*! \name functions to set parameters */
-  //@{
+  /**
+   *
+   * \name functions to set parameters
+   * @{
+   */
+
     inline void set_attenuation_threshold(float _val);
 
     inline void set_random_point(bool _val);
 
     inline void set_cache_enabled(bool _val);
 
-  //@}
+  /** @}*/
 
 
  protected:
@@ -164,28 +232,164 @@ class ScatterEstimationByBin : public ParsingObject
   */
   bool use_cache;
 
-  std::string activity_image_filename;
-  std::string density_image_filename;
-  std::string density_image_for_scatter_points_filename;
+  /**
+    *
+    * \name Variables retated to the scanner geometry
+    * @{
+    */
+
+  //!
+  //! \brief template_proj_data_filename
+  //! \details The file name for the Scanner template
   std::string template_proj_data_filename;
+
+  //!
+  //! \brief proj_data_info_ptr
+  //! \details The projection data info of the scanner template
+  const ProjDataInfoCylindricalNoArcCorr * proj_data_info_ptr;
+
+  //!
+  //! \brief template_exam_info_sptr
+  //! \details Exam info extracted from the scanner template
+  shared_ptr<ExamInfo> template_exam_info_sptr;
+
+  /** @}*/
+
+
+  /**
+   *
+   * \name Variables related to the attenuation image and coefficients
+   * @{
+   */
+
+  //!
+  //! \brief atten_image_filename
+  //! \details This is the image file name with the anatomic information.
+  //! \warning Previously named density_image.
+  std::string atten_image_filename;
+
+  //!
+  //! \brief recompute_atten_coeff
+  //! \details If set to 1 the attenuation coefficients are going to
+  //! be recalculated.
+  bool recompute_atten_coeff;
+
+  //!
+  //! \brief atten_coeff_filename
+  //! \details The file name for the attenuation coefficients.
+  //! If they are to be recalculated they will be stored here, if set.
+  std::string atten_coeff_filename;
+
+  //!
+  //! \brief atten_image_sptr
+  //!
+  shared_ptr<DiscretisedDensity<3,float> > atten_image_sptr;
+
+  //!
+  //! \brief output_proj_data_sptr
+  //! \details The attenuation coefficients
+  shared_ptr<ProjData> atten_coeffs_sptr;
+
+  /** @}*/
+
+  /**
+   *
+   *  \name Variables related to normalization factors
+   *  @{
+   */
+
+  //!
+  //! \brief normalization_coeffs_filename
+  //! \details File with normalization factors
+  std::string normalization_coeffs_filename;
+
+  //!
+  //! \brief normalization_factors_sptr
+  //! \details Sinogram with the normalization factors.
+  shared_ptr<ProjData> normalization_factors_sptr;
+
+  /** @}*/
+
+  /**
+    *
+    * \name Variables related to the subsampled attenuation image.
+    * @{
+  */
+
+  //!
+  //! \brief recompute_sub_atten_image
+  bool recompute_sub_atten_image;
+
+  //!
+  //! \brief sub_atten_image_filename
+  //! \details Input or output file name of the subsampled
+  //! attenuation image, depends on the reconmpute_sub_atten_image
+  std::string sub_atten_image_filename;
+
+  //!
+  //! \brief sub_atten_image_sptr
+  //! \details This is the image with tha anatomical information
+  //! \warning Previously density_image_for_scatter_points_sptr
+  shared_ptr<DiscretisedDensity<3,float> > sub_atten_image_sptr;
+
+  //!
+  //! \brief zoom_xy
+  //! \details The subsampling of the attenuation image is done,
+  //! in the arbitary zoom factors. This correspond to the zoom in
+  //! the XY plane.
+  float zoom_xy;
+
+  //!
+  //! \brief zoom_z
+  //! \details The subsampling of the attenuation image is done,
+  //! in the arbitary zoom factors. This correspond to the zoom in
+  //! the Z axis.
+  float zoom_z;
+
+  /** }@*/
+
+  /**
+   *
+   * \name Variables related to the subsampled ProjData.
+   * @{
+   */
+
+  //!
+  //! \brief recompute_sub_projdata
+  //! \details If set the
+  bool recompute_sub_projdata;
+
+  //!
+  //! \brief sub_template_proj_data_filename
+  //!
+  std::string sub_proj_data_filename;
+
+  //!
+  //! \brief sub_proj_data_info_ptr
+  //!
+  const ProjDataInfoCylindricalNoArcCorr * sub_proj_data_info_ptr;
+
+  //!
+  //! \brief sub_num_dets_per_ring
+  //! \details Number of detectors per ring for the subsampled
+  //! scanner
+  int sub_num_dets_per_ring;
+
+  //!
+  //! \brief sub_num_rings
+  //! \details Number of rings for the subsampled scanner.
+  int sub_num_rings;
+
+  /** }@*/
+
+  std::string activity_image_filename;
   std::string output_proj_data_filename;
 
-  shared_ptr<DiscretisedDensity<3,float> > density_image_for_scatter_points_sptr;
-  shared_ptr<DiscretisedDensity<3,float> > density_image_sptr;
+
+
+
   shared_ptr<DiscretisedDensity<3,float> > activity_image_sptr;
   shared_ptr<ProjData> output_proj_data_sptr; 
-
-  //!
-  //! \brief small_num_dets_per_ring
-  //! \details This is the number of detectors per ring which are going
-  //! to be used in the subsampled scanner.
-  int small_num_dets_per_ring;
-
-  //!
-  //! \brief small_num_rings
-  //! \details This is the number of rings which are going
-  //! to be used in the subsampled scanner.
-  int small_num_rings;
 
 
   /*************** functions that do the work **********/
@@ -210,11 +414,17 @@ class ScatterEstimationByBin : public ParsingObject
 
   /************************************************************************/
 
-  //! \name detection related functions
-  //@{
-  //! energy-dependent detection efficiency (Gaussian model)
-  float 
-    detection_efficiency(const float energy) const;
+  /** \name detection related functions
+   *
+   * @{
+   */
+
+  //!
+  //! \brief detection_efficiency
+  //! \param energy
+  //! \return
+  //! \details energy-dependent detection efficiency (Gaussian model)
+  float detection_efficiency(const float energy) const;
 
 	
   //! maximum angle to consider above which detection after Compton scatter is considered too small
@@ -234,7 +444,8 @@ class ScatterEstimationByBin : public ParsingObject
   unsigned 
     find_in_detection_points_vector(const CartesianCoordinate3D<float>& coord) const;
   // private:
-  const ProjDataInfoCylindricalNoArcCorr * proj_data_info_ptr;
+
+
   CartesianCoordinate3D<float>  shift_detector_coordinates_to_origin;
 
   //! average detection efficiency of unscattered counts
@@ -338,11 +549,26 @@ class ScatterEstimationByBin : public ParsingObject
     compute_emis_to_det_points_solid_angle_factor(const CartesianCoordinate3D<float>& emis_point,
 						  const CartesianCoordinate3D<float>& detector_coord) ;
 
- protected:
+  //!
+  //! \brief calculate_attenuation_coefficients
+  //! \param proj_data_info_ptr
+  //! \param atten_image_sptr
+  //! \return
+  //! \details This function calculates the attenuation coefficients
+  //! from the attenuation image.
+  //! \warning This is a temp function, probably a new class
+  //! should be created, instead.
+  Succeeded
+    calculate_atten_coeffs(shared_ptr<ProjData>& template_proj_data_ptr,
+                           shared_ptr<DiscretisedDensity<3,float> >& atten_image_sptr,
+                           shared_ptr<ProjData>& out_proj_data_ptr,
+                           std::string output_filename = "");
+
   //! remove cached attenuation integrals
   /*! should be used before recalculating scatter for a new attenuation image or 
     when changing the sampling of the detector etc */
   virtual void remove_cache_for_integrals_over_attenuation();
+
   //! reset cached activity integrals
   /*! should be used before recalculating scatter for a new activity image or 
     when changing the sampling of the detector etc */

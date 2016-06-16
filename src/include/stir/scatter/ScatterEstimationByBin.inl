@@ -26,7 +26,135 @@
   \author Kris Thielemans
 
 */
+
+#include "ScatterEstimationByBin.h"
+#include "stir/ProjDataInterfile.h"
+#include "stir/ProjDataInfo.h"
+#include "stir/ProjDataInfoCylindricalNoArcCorr.h"
+#include "stir/IO/read_from_file.h"
+#include "stir/is_null_ptr.h"
+#include "stir/info.h"
+#include "stir/error.h"
+#include <fstream>
+
+
 START_NAMESPACE_STIR
+
+/****************** functions to set images **********************/
+void
+ScatterEstimationByBin::
+set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
+{
+  if ( !is_null_ptr(new_sptr) )
+    this->activity_image_sptr=new_sptr;
+
+  this->remove_cache_for_integrals_over_activity();
+}
+
+void
+ScatterEstimationByBin::
+set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
+{
+  if ( !is_null_ptr(new_sptr) )
+    this->atten_image_sptr=new_sptr;
+
+  this->remove_cache_for_integrals_over_attenuation();
+}
+
+void
+ScatterEstimationByBin::
+set_image_from_file(const std::string& filename,
+                    shared_ptr<DiscretisedDensity<3,float> > & _this_image_sptr)
+{
+  _this_image_sptr=
+    read_from_file<DiscretisedDensity<3,float> >(filename);
+
+  if (is_null_ptr(_this_image_sptr))
+      error("Error reading image %s\n",
+            filename.c_str());
+
+}
+
+void
+ScatterEstimationByBin::
+set_sub_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
+{
+  if ( !is_null_ptr(new_sptr) )
+    this->sub_atten_image_sptr=new_sptr;
+
+  this->sample_scatter_points();
+  this->remove_cache_for_integrals_over_attenuation();
+}
+
+/****************** functions to set projection data **********************/
+
+
+void
+ScatterEstimationByBin::
+set_template_proj_data_info_from_file(const std::string& filename)
+{
+  this->template_proj_data_filename = filename;
+
+  shared_ptr<ProjData> template_proj_data_sptr =
+    ProjData::read_from_file(this->template_proj_data_filename);
+
+  this->template_exam_info_sptr = template_proj_data_sptr->get_exam_info_sptr();
+
+  this->set_template_proj_data_info_sptr(template_proj_data_sptr->get_proj_data_info_ptr()->create_shared_clone());
+}
+
+void
+ScatterEstimationByBin::
+set_atten_coeffs_from_file(const std::string& filename)
+{
+  this->atten_coeff_filename = filename;
+
+  this->atten_coeffs_sptr =
+    ProjData::read_from_file(this->atten_coeff_filename);
+}
+
+void
+ScatterEstimationByBin::
+set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>& new_sptr)
+{
+
+  this->proj_data_info_ptr = dynamic_cast<ProjDataInfoCylindricalNoArcCorr const *>(new_sptr->clone());
+
+  if (is_null_ptr(this->proj_data_info_ptr))
+    {
+      error("ScatterEstimationByBin can only handle non-arccorrected data");
+    }
+
+  // find final size of detection_points_vector
+  this->total_detectors =
+    this->proj_data_info_ptr->get_scanner_ptr()->get_num_rings()*
+    this->proj_data_info_ptr->get_scanner_ptr()->get_num_detectors_per_ring ();
+
+  // reserve space to avoid reallocation, but the actual size will grow dynamically
+  this->detection_points_vector.reserve(total_detectors);
+
+  // remove any cached values as they'd be incorrect if the sizes changes
+  this->remove_cache_for_integrals_over_attenuation();
+  this->remove_cache_for_integrals_over_activity();
+}
+
+
+void
+ScatterEstimationByBin::
+set_proj_data_from_file(const std::string& filename,
+                        shared_ptr<ProjData>& _this_projdata)
+{
+  _this_projdata.reset(new ProjDataInterfile(this->template_exam_info_sptr,
+                                                          this->proj_data_info_ptr->create_shared_clone(),
+                                                          filename));
+}
+
+
+//
+//
+// NOT SETS THE REST
+//
+//
 
 
 float

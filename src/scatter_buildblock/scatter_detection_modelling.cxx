@@ -99,17 +99,17 @@ float
 ScatterEstimationByBin::
 detection_efficiency(const float energy) const
 {
-  // factor 2.35482 is used to convert FWHM to sigma
-  const float sigma_times_sqrt2= 
-    sqrt(2.*energy*this->reference_energy)*this->energy_resolution/2.35482;  // 2.35482=2 * sqrt( 2 * ( log(2) )
+//  // factor 2.35482 is used to convert FWHM to sigma
+//  const float sigma_times_sqrt2=
+//    sqrt(2.*energy*this->reference_energy)*this->energy_resolution/2.35482;  // 2.35482=2 * sqrt( 2 * ( log(2) )
   
-  // sigma_times_sqrt2= sqrt(2) * sigma   // resolution proportional to FWHM    
+//  // sigma_times_sqrt2= sqrt(2) * sigma   // resolution proportional to FWHM
   
-  const float efficiency =
-    0.5*( erf((this->upper_energy_threshold-energy)/sigma_times_sqrt2) 
-          - erf((this->lower_energy_threshold-energy)/sigma_times_sqrt2 ));     
-  /* Maximum efficiency is 1.*/
-  return efficiency;
+//  const float efficiency =
+//    0.5*( erf((this->upper_energy_threshold-energy)/sigma_times_sqrt2)
+//          - erf((this->lower_energy_threshold-energy)/sigma_times_sqrt2 ));
+//  /* Maximum efficiency is 1.*/
+//  return efficiency;
 }
 
 float
