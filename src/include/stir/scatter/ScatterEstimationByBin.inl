@@ -41,49 +41,64 @@
 START_NAMESPACE_STIR
 
 /****************** functions to set images **********************/
-void
+Succeeded
 ScatterEstimationByBin::
 set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
 {
-  if ( !is_null_ptr(new_sptr) )
-    this->activity_image_sptr=new_sptr;
+  if (is_null_ptr(new_sptr) )
+      return Succeeded::no;
 
+  VoxelsOnCartesianGrid<float>& image =
+    dynamic_cast<VoxelsOnCartesianGrid<float>&>(*new_sptr);
+
+  this->activity_image_sptr.reset(image.clone());
   this->remove_cache_for_integrals_over_activity();
+
+  return Succeeded::yes;
 }
 
-void
+Succeeded
 ScatterEstimationByBin::
 set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
 {
-  if ( !is_null_ptr(new_sptr) )
-    this->atten_image_sptr=new_sptr;
+  if (is_null_ptr(new_sptr) )
+      return Succeeded::no;
+
+  const VoxelsOnCartesianGrid<float>& image =
+    dynamic_cast<const VoxelsOnCartesianGrid<float> & >(*new_sptr);
+
+
+  if (image.get_x_size() != image.get_y_size())
+      error("The voxels in the x and y dimensions are different. Cannot zoom...  ");
+
+  this->atten_image_sptr.reset(image.clone());
 
   this->remove_cache_for_integrals_over_attenuation();
 }
 
-void
+shared_ptr<DiscretisedDensity<3,float> >
 ScatterEstimationByBin::
-set_image_from_file(const std::string& filename,
-                    shared_ptr<DiscretisedDensity<3,float> > & _this_image_sptr)
+get_image_from_file(const std::string& filename)
 {
-  _this_image_sptr=
-    read_from_file<DiscretisedDensity<3,float> >(filename);
+    shared_ptr<DiscretisedDensity<3,float> > _this_image_sptr =
+        read_from_file<DiscretisedDensity<3,float> >(filename);
 
   if (is_null_ptr(_this_image_sptr))
       error("Error reading image %s\n",
             filename.c_str());
 
+  return _this_image_sptr;
 }
 
 void
 ScatterEstimationByBin::
 set_sub_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
 {
-  if ( !is_null_ptr(new_sptr) )
-    this->sub_atten_image_sptr=new_sptr;
+//  if ( !is_null_ptr(new_sptr) )
+//    this->sub_atten_image_sptr=new_sptr;
 
-  this->sample_scatter_points();
-  this->remove_cache_for_integrals_over_attenuation();
+//  this->sample_scatter_points();
+//  this->remove_cache_for_integrals_over_attenuation();
 }
 
 /****************** functions to set projection data **********************/

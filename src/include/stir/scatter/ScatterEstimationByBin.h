@@ -37,6 +37,7 @@
 #include "stir/CartesianCoordinate3D.h"
 
 #include "stir/VoxelsOnCartesianGrid.h"
+#include "stir/IndexRange3D.h"
 
 START_NAMESPACE_STIR
 
@@ -49,9 +50,9 @@ class BinNormalisation;
   \ingroup scatter
   \brief Estimate the scatter probability using a model-based approach
 
-  This class computes the single Compton scatter estimate for PET data using an analytical 
+  This class computes the single Compton scatter estimate for PET data using an analytical
   approximation of an integral. It takes as input an emission image and an attenuation image.
-  This is effectively an implementation of the simulation part of the algorithms of 
+  This is effectively an implementation of the simulation part of the algorithms of
   Watson and Ollinger.
 
   One non-standard feature is that you can specify a different attenuation image to find the
@@ -67,7 +68,7 @@ class BinNormalisation;
   the Scanner class. Also the \a lower_energy_threshold and \a upper_energy_threshold should
   be read from the emission data, as opposed to setting them here.
 
-  \todo detector coordinates are derived from ProjDataInfo, but areas and orientations are 
+  \todo detector coordinates are derived from ProjDataInfo, but areas and orientations are
   determined by using a cylindrical scanner.
 
   \todo This class should be split into a generic class and one specific to PET single scatter.
@@ -75,9 +76,9 @@ class BinNormalisation;
   \par References
   This implementation is described in the following
   <ol>
-  <li> C. Tsoumpas, P. Aguiar, K. S. Nikita, D. Ros, K. Thielemans, 
-  <i>Evaluation of the Single Scatter Simulation Algorithm Implemented in the STIR Library</i>, 
-  Proc. of IEEE Medical Imaging Conf. 2004, vol. 6 pp. 3361 - 3365. 
+  <li> C. Tsoumpas, P. Aguiar, K. S. Nikita, D. Ros, K. Thielemans,
+  <i>Evaluation of the Single Scatter Simulation Algorithm Implemented in the STIR Library</i>,
+  Proc. of IEEE Medical Imaging Conf. 2004, vol. 6 pp. 3361 - 3365.
   </li>
   </ol>
   Please refer to the above if you use this implementation.
@@ -85,12 +86,12 @@ class BinNormalisation;
   See also these papers for extra evaluation
 
   <ol>
-  <li>N. Dikaios , T. J. Spinks , K. Nikita , K. Thielemans, 
-     <i>Evaluation of the Scatter Simulation Algorithm Implemented in STIR,</i> 
+  <li>N. Dikaios , T. J. Spinks , K. Nikita , K. Thielemans,
+     <i>Evaluation of the Scatter Simulation Algorithm Implemented in STIR,</i>
      proc. 5th ESBME, Patras, Greece.
   </li>
-  <li>P. Aguiar, Ch. Tsoumpas, C. Crespo, J. Pavia, C. Falcon, A. Cot, K. Thielemans and D. Ros, 
-     <i>Assessment of scattered photons in the quantification of the small animal PET studies,</i> 
+  <li>P. Aguiar, Ch. Tsoumpas, C. Crespo, J. Pavia, C. Falcon, A. Cot, K. Thielemans and D. Ros,
+     <i>Assessment of scattered photons in the quantification of the small animal PET studies,</i>
      Eur J Nucl Med Mol I 33:S315-S315 Sep 2006, Proc. EANM 2006, Athens, Greece.
   </li>
   </ol>
@@ -109,15 +110,15 @@ class ScatterEstimationByBin : public ParsingObject
   */
  static void
    upsample_and_fit_scatter_estimate(ProjData& scaled_scatter_proj_data,
-				     const  ProjData& emission_proj_data,
-				     const ProjData& scatter_proj_data,
+                     const  ProjData& emission_proj_data,
+                     const ProjData& scatter_proj_data,
                                      const BinNormalisation& scatter_normalisation,
-				     const ProjData& weights_proj_data,
-				     const float min_scale_factor,
-				     const float max_scale_factor,
-				     const unsigned half_filter_width,
-				     BSpline::BSplineType spline_type,
-				     const bool remove_interleaving = true);
+                     const ProjData& weights_proj_data,
+                     const float min_scale_factor,
+                     const float max_scale_factor,
+                     const unsigned half_filter_width,
+                     BSpline::BSplineType spline_type,
+                     const bool remove_interleaving = true);
 
 
   //! Default constructor (calls set_defaults())
@@ -138,7 +139,7 @@ class ScatterEstimationByBin : public ParsingObject
   //!
   //! \brief set_activity_image_sptr
   //!
-  inline void set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+  inline Succeeded set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
 
   //!
   //! \brief set_activity_image
@@ -146,14 +147,14 @@ class ScatterEstimationByBin : public ParsingObject
   //!
   inline void set_activity_image(const std::string& filename);
 
-  inline void set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+  inline Succeeded set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
 
   //!
   //! \brief set_image_from_file
   //! \param filename
   //! \details This function loads image files from the disk
-  inline void set_image_from_file(const std::string& filename,
-                                  shared_ptr<DiscretisedDensity<3,float> > & _this_image_sptr);
+  inline shared_ptr<DiscretisedDensity<3,float> >
+    get_image_from_file(const std::string& filename);
 
   //!
   //! \brief set_template_proj_data_info_from_file
@@ -191,8 +192,8 @@ class ScatterEstimationByBin : public ParsingObject
 
   // TODO write_log can't be const because parameter_info isn't const
   virtual void
-    write_log(const double simulation_time, 
-	      const float total_scatter);
+    write_log(const double simulation_time,
+          const float total_scatter);
 
 
   /**
@@ -222,7 +223,7 @@ class ScatterEstimationByBin : public ParsingObject
   /*! This was first recommended by Watson. It is recommended to leave this on, as otherwise
      discretisation errors are more obvious.
 
-     Note that the random generator is seeded via date/time, so re-running the scatter 
+     Note that the random generator is seeded via date/time, so re-running the scatter
      simulation will give a slightly different result if this boolean is on.
   */
   bool random;
@@ -283,7 +284,7 @@ class ScatterEstimationByBin : public ParsingObject
   //!
   //! \brief atten_image_sptr
   //!
-  shared_ptr<DiscretisedDensity<3,float> > atten_image_sptr;
+  shared_ptr<VoxelsOnCartesianGrid<float> > atten_image_sptr;
 
   //!
   //! \brief output_proj_data_sptr
@@ -330,7 +331,7 @@ class ScatterEstimationByBin : public ParsingObject
   //! \brief sub_atten_image_sptr
   //! \details This is the image with tha anatomical information
   //! \warning Previously density_image_for_scatter_points_sptr
-  shared_ptr<DiscretisedDensity<3,float> > sub_atten_image_sptr;
+  shared_ptr<VoxelsOnCartesianGrid<float> > sub_atten_image_sptr;
 
   //!
   //! \brief zoom_xy
@@ -356,7 +357,7 @@ class ScatterEstimationByBin : public ParsingObject
 
   //!
   //! \brief recompute_sub_projdata
-  //! \details If set the
+  //! \details
   bool recompute_sub_projdata;
 
   //!
@@ -388,19 +389,19 @@ class ScatterEstimationByBin : public ParsingObject
 
 
 
-  shared_ptr<DiscretisedDensity<3,float> > activity_image_sptr;
-  shared_ptr<ProjData> output_proj_data_sptr; 
+  shared_ptr<VoxelsOnCartesianGrid<float> > activity_image_sptr;
+  shared_ptr<ProjData> output_proj_data_sptr;
 
 
   /*************** functions that do the work **********/
 
   enum image_type{act_image_type, att_image_type};
   struct ScatterPoint
-  { 
+  {
     CartesianCoordinate3D<float> coord;
     float mu_value;
   };
-  
+
   std::vector< ScatterPoint> scatt_points_vector;
   float scatter_volume;
 
@@ -408,7 +409,7 @@ class ScatterEstimationByBin : public ParsingObject
   /*! This function sets scatt_points_vector and scatter_volume. It will also
       remove any cached integrals as they would be incorrect otherwise.
   */
-  void 
+  void
     sample_scatter_points();
 
 
@@ -426,22 +427,22 @@ class ScatterEstimationByBin : public ParsingObject
   //! \details energy-dependent detection efficiency (Gaussian model)
   float detection_efficiency(const float energy) const;
 
-	
+
   //! maximum angle to consider above which detection after Compton scatter is considered too small
   static
-    float 
+    float
     max_cos_angle(const float low, const float approx, const float resolution_at_511keV);
 
   //! mimumum energy to consider above which detection after Compton scatter is considered too small
   static
-    float 
+    float
     energy_lower_limit(const float low, const float approx, const float resolution_at_511keV);
 
-  virtual 
+  virtual
     void
-    find_detectors(unsigned& det_num_A, unsigned& det_num_B, const Bin& bin) const; 
+    find_detectors(unsigned& det_num_A, unsigned& det_num_B, const Bin& bin) const;
 
-  unsigned 
+  unsigned
     find_in_detection_points_vector(const CartesianCoordinate3D<float>& coord) const;
   // private:
 
@@ -450,8 +451,8 @@ class ScatterEstimationByBin : public ParsingObject
 
   //! average detection efficiency of unscattered counts
   double
-    detection_efficiency_no_scatter(const unsigned det_num_A, 
-				    const unsigned det_num_B) const;
+    detection_efficiency_no_scatter(const unsigned det_num_A,
+                    const unsigned det_num_B) const;
 
   // next needs to be mutable because find_in_detection_points_vector is const
   mutable std::vector<CartesianCoordinate3D<float> > detection_points_vector;
@@ -470,66 +471,66 @@ class ScatterEstimationByBin : public ParsingObject
   //! \name integrating functions
   //@{
   static
-    float 
+    float
     integral_between_2_points(const DiscretisedDensity<3,float>& density,
-			      const CartesianCoordinate3D<float>& point1, 
-			      const CartesianCoordinate3D<float>& point2);
+                  const CartesianCoordinate3D<float>& point1,
+                  const CartesianCoordinate3D<float>& point2);
 
-  float 
-    exp_integral_over_attenuation_image_between_scattpoint_det (const CartesianCoordinate3D<float>& scatter_point, 
-								const CartesianCoordinate3D<float>& detector_coord);
-	
+  float
+    exp_integral_over_attenuation_image_between_scattpoint_det (const CartesianCoordinate3D<float>& scatter_point,
+                                const CartesianCoordinate3D<float>& detector_coord);
 
 
-  float 
+
+  float
     integral_over_activity_image_between_scattpoint_det (const CartesianCoordinate3D<float>& scatter_point,
-							 const CartesianCoordinate3D<float>& detector_coord);
-  
- 
+                             const CartesianCoordinate3D<float>& detector_coord);
+
+
     
-  float 
-    cached_integral_over_activity_image_between_scattpoint_det(const unsigned scatter_point_num, 
-							       const unsigned det_num);
-  
-  float 
-    cached_exp_integral_over_attenuation_image_between_scattpoint_det(const unsigned scatter_point_num, 
-								      const unsigned det_num);
+  float
+    cached_integral_over_activity_image_between_scattpoint_det(const unsigned scatter_point_num,
+                                   const unsigned det_num);
+
+  float
+    cached_exp_integral_over_attenuation_image_between_scattpoint_det(const unsigned scatter_point_num,
+                                      const unsigned det_num);
   //@}
-  
+
   /************************************************************************/
-	
-  float 
+
+  float
     single_scatter_estimate_for_one_scatter_point(const std::size_t scatter_point_num,
-					   const unsigned det_num_A, 
-					   const unsigned det_num_B);
+                       const unsigned det_num_A,
+                       const unsigned det_num_B);
 
 
   void
     single_scatter_estimate(double& scatter_ratio_singles,
-			    const unsigned det_num_A, 
-			    const unsigned det_num_B);
+                const unsigned det_num_A,
+                const unsigned det_num_B);
 
-      
+
   virtual double
-    scatter_estimate(const unsigned det_num_A, 
-		     const unsigned det_num_B);
-  
+    scatter_estimate(const unsigned det_num_A,
+             const unsigned det_num_B);
 
-      
+
+
  public:
   /************************************************************************/
 
   //! \name Compton scatter cross sections
   //@{
   static
-    inline float 
+    inline float
     dif_Compton_cross_section(const float cos_theta, float energy);
-	
-	
+
+
   static
-    inline float 
+    inline float
     total_Compton_cross_section(float energy);
-	
+
   static
     inline float
     photon_energy_after_Compton_scatter(const float cos_theta, const float energy);
@@ -539,15 +540,15 @@ class ScatterEstimationByBin : public ParsingObject
     photon_energy_after_Compton_scatter_511keV(const float cos_theta);
 
   static
-    inline float 
+    inline float
     total_Compton_cross_section_relative_to_511keV(const float energy);
   //@}
   /************************************************************************/
  protected:
-	  
-  float  
+
+  float
     compute_emis_to_det_points_solid_angle_factor(const CartesianCoordinate3D<float>& emis_point,
-						  const CartesianCoordinate3D<float>& detector_coord) ;
+                          const CartesianCoordinate3D<float>& detector_coord) ;
 
   //!
   //! \brief calculate_attenuation_coefficients
@@ -560,17 +561,31 @@ class ScatterEstimationByBin : public ParsingObject
   //! should be created, instead.
   Succeeded
     calculate_atten_coeffs(shared_ptr<ProjData>& template_proj_data_ptr,
-                           shared_ptr<DiscretisedDensity<3,float> >& atten_image_sptr,
+                           shared_ptr<VoxelsOnCartesianGrid<float> >& atten_image_sptr,
                            shared_ptr<ProjData>& out_proj_data_ptr,
                            std::string output_filename = "");
 
+
+  //!
+  //! \brief subsample_image
+  //! \param _this_image_sptr The image which will be subsampled
+  //! \param _new_image_sptr The new subsampled image
+  //! \param zoom_xy The zoom factor on the xy plane
+  //! \param zoom_z The zoom factor on the z axis
+  //! \param output_filename If set, the file to store the subsampled image
+  //! \details Replaces the zoom_att_image.sh.
+  void subsample_image(shared_ptr<VoxelsOnCartesianGrid<float> > & _this_image_sptr,
+                       shared_ptr<VoxelsOnCartesianGrid<float> > & _new_image_sptr,
+                       float& zoom_xy, float& zoom_z,
+                       std::string output_filename = "");
+
   //! remove cached attenuation integrals
-  /*! should be used before recalculating scatter for a new attenuation image or 
+  /*! should be used before recalculating scatter for a new attenuation image or
     when changing the sampling of the detector etc */
   virtual void remove_cache_for_integrals_over_attenuation();
 
   //! reset cached activity integrals
-  /*! should be used before recalculating scatter for a new activity image or 
+  /*! should be used before recalculating scatter for a new activity image or
     when changing the sampling of the detector etc */
   virtual void remove_cache_for_integrals_over_activity();
 
@@ -581,12 +596,12 @@ class ScatterEstimationByBin : public ParsingObject
 
   //! set-up cache for attenuation integrals
   /*! \warning This will not remove existing cached data (if the sizes match). If you need this,
-      call remove_cache_for_scattpoint_det_integrals_over_attenuation() first. 
+      call remove_cache_for_scattpoint_det_integrals_over_attenuation() first.
   */
   void initialise_cache_for_scattpoint_det_integrals_over_attenuation();
   //! set-up cache for activity integrals
   /*! \warning This will not remove existing cached data (if the sizes match). If you need this,
-      call remove_cache_for_scattpoint_det_integrals_over_activity() first. 
+      call remove_cache_for_scattpoint_det_integrals_over_activity() first.
   */
   void initialise_cache_for_scattpoint_det_integrals_over_activity();
 };
