@@ -176,7 +176,7 @@ class ScatterEstimationByBin : public ParsingObject
   /*! Also calls sample_scatter_points()
    \warning Uses attenuation_threshold member variable
   */
-  inline void set_sub_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+  inline Succeeded set_sub_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
 
 
   //void set_output_proj_data_sptr(const shared_ptr<ProjData>& new_sptr);
@@ -334,18 +334,19 @@ class ScatterEstimationByBin : public ParsingObject
   shared_ptr<VoxelsOnCartesianGrid<float> > sub_atten_image_sptr;
 
   //!
-  //! \brief zoom_xy
+  //! \brief sub_vox_xy
   //! \details The subsampling of the attenuation image is done,
   //! in the arbitary zoom factors. This correspond to the zoom in
   //! the XY plane.
-  float zoom_xy;
+  float sub_vox_xy;
 
   //!
-  //! \brief zoom_z
+  //! \brief sub_vox_z
   //! \details The subsampling of the attenuation image is done,
   //! in the arbitary zoom factors. This correspond to the zoom in
   //! the Z axis.
-  float zoom_z;
+  float sub_vox_z;
+
 
   /** }@*/
 
@@ -560,9 +561,9 @@ class ScatterEstimationByBin : public ParsingObject
   //! \warning This is a temp function, probably a new class
   //! should be created, instead.
   Succeeded
-    calculate_atten_coeffs(shared_ptr<ProjData>& template_proj_data_ptr,
-                           shared_ptr<VoxelsOnCartesianGrid<float> >& atten_image_sptr,
-                           shared_ptr<ProjData>& out_proj_data_ptr,
+    calculate_atten_coeffs(shared_ptr<ProjData> template_proj_data_ptr,
+                           shared_ptr<VoxelsOnCartesianGrid<float> > atten_image_sptr,
+                           shared_ptr<ProjData> out_proj_data_ptr,
                            std::string output_filename = "");
 
 
@@ -570,14 +571,26 @@ class ScatterEstimationByBin : public ParsingObject
   //! \brief subsample_image
   //! \param _this_image_sptr The image which will be subsampled
   //! \param _new_image_sptr The new subsampled image
-  //! \param zoom_xy The zoom factor on the xy plane
-  //! \param zoom_z The zoom factor on the z axis
+  //! \param _sub_vox_xy The zoom factor on the xy plane
+  //! \param _sub_vox_z The zoom factor on the z axis
   //! \param output_filename If set, the file to store the subsampled image
   //! \details Replaces the zoom_att_image.sh.
   void subsample_image(shared_ptr<VoxelsOnCartesianGrid<float> > & _this_image_sptr,
                        shared_ptr<VoxelsOnCartesianGrid<float> > & _new_image_sptr,
-                       float& zoom_xy, float& zoom_z,
+                       float& _sub_vox_xy, float& _sub_vox_z,
                        std::string output_filename = "");
+
+  //!
+  //! \brief subsample_projdata_info
+  //! \param _original_projdata_info
+  //! \param _new_projdata_info
+  //! \param output_filename
+  //! \details A function to create a subsampled scanner and projdata info
+  //! for a new number of detectors and rings.
+  void subsample_projdata_info(ProjDataInfoCylindricalNoArcCorr& _original_projdata_info,
+                          ProjDataInfoCylindricalNoArcCorr& _new_projdata_info,
+                          int new_num_dets_per_ring, int new_num_rings,
+                          std::string output_filename = "");
 
   //! remove cached attenuation integrals
   /*! should be used before recalculating scatter for a new attenuation image or

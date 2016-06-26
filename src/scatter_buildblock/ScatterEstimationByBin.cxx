@@ -68,6 +68,9 @@ set_defaults()
     this->template_proj_data_filename = "";
     this->output_proj_data_filename = "";
 
+    this->sub_vox_xy = -1.f;
+    this->sub_vox_z = -1.f;
+
     this->remove_cache_for_integrals_over_activity();
     this->remove_cache_for_integrals_over_attenuation();
 }
@@ -97,8 +100,8 @@ initialise_keymap()
     this->parser.add_key("subsampled attenuation image filename",
                          &this->sub_atten_image_filename);
 
-    this->parser.add_key("subsample factor on plane xy", &this->zoom_xy);
-    this->parser.add_key("subsample factor on axis z", &this->zoom_z);
+    this->parser.add_key("subsampled voxel size plane xy (mm/pixel)", &this->sub_vox_xy);
+    this->parser.add_key("subsampled voxel size on z axis (mm/pixel)", &this->sub_vox_z);
 
     this->parser.add_key("recompute subsampled projdata",
                          &this->recompute_sub_projdata);
@@ -142,7 +145,9 @@ post_processing()
     // All relevant initialization have been moved outside
     // the set_image_from_file, since it became more generic.
 
-    this->set_atten_image_sptr(this->get_image_from_file(this->atten_image_filename));
+    shared_ptr<DiscretisedDensity<3,float> > tmp =
+        this->get_image_from_file(this->atten_image_filename);
+    this->set_atten_image_sptr(tmp);
 
     // N.E: Load the normalization coefficients if a name has been set.
     // The following code is a bit lazy.
@@ -190,38 +195,39 @@ post_processing()
     bool use_image = (this->recompute_sub_atten_image || (sub_atten_image_filename.size() > 0)) ? true : false;
     bool use_scanner = (this->recompute_sub_projdata || (sub_proj_data_filename.size() > 0)) ? true : false;
 
-    if (use_image && !use_scanner)
+    if (!use_image && !use_scanner)
+        error("Please set the subsampling info for the attenuation image or the "
+              "scanner");
+
+    if (use_image)
     {
-        info("The subsampling of the scanner will be performed automatically from STIR.");
-
-        // return the voxel size :: subsample_image(this->zoom_xy, this->zoom_z);
-        subsample_image(this->atten_image_sptr,
-                        this->sub_atten_image_sptr,
-                        this->zoom_xy, this->zoom_z,
-                        this->sub_atten_image_filename);
-
-        // create subsampled scanner based on the returned voxel size
+        if (this->recompute_sub_atten_image)
+            subsample_image(this->atten_image_sptr,
+                            this->sub_atten_image_sptr,
+                            this->sub_vox_xy, this->sub_vox_z,
+                            this->sub_atten_image_filename);
+        else
+            this->set_sub_atten_image_sptr(this->get_image_from_file(this->sub_atten_image_filename));
     }
-    else if (use_image && use_scanner)
+
+    if (use_scanner)
     {
-        info("The user is responsible to provide a compatible subsampled image and scanner");
-
-        // subsample_image(this->zoom_xy, this->zoom_z);
-
-        // subsampled scanner
-
-        // some checks
+        if ( this->recompute_sub_projdata)
+            subsample_projdata_info(this->proj_data_info_ptr,
+                                    this->sub_proj_data_info_ptr,
+                                    this->sub_num_dets_per_ring, this->sub_num_rings,
+                                    this->sub_proj_data_filename);
     }
-    else if (!use_image && use_scanner)
+
+    if (!use_image)
     {
         info("The subsampled of the image will be performed automatically from STIR");
 
         // return the voxel size :: subsample scanner
     }
-    else
+    if (!use_scanner)
     {
-        error("Please set the subsampling info for the attenuation image or the "
-              "scanner");
+
     }
 
 
@@ -455,14 +461,27 @@ void
 ScatterEstimationByBin::
 subsample_image(shared_ptr<VoxelsOnCartesianGrid<float> > & _this_image_sptr,
                 shared_ptr<VoxelsOnCartesianGrid<float> > & _new_image_sptr,
-                float& zoom_xy, float& zoom_z,
+                float& _sub_vox_xy, float& _sub_vox_z,
                 std::__cxx11::string output_filename)
 {
 
+    CartesianCoordinate3D <float> _cur_vox = _this_image_sptr->get_voxel_size();
+
+    float zoom_xy = _cur_vox.x() / _sub_vox_xy;
+    float zoom_z = _cur_vox.z() / _sub_vox_z;
+
     int size_xy = _this_image_sptr->get_x_size() * zoom_xy + 0.999;
+    if (size_xy%2 == 0)
+        size_xy+=1;
+
     int size_z = _this_image_sptr->get_z_size() * zoom_z + 0.999;
 
     float scale_att = zoom_xy * zoom_xy * zoom_z;
+
+    // Just multiply with the scale factor.
+    pow_times_add pow_times_add_object(0.0, scale_att, 1.0,
+                                       NumericInfo<float>().min_value(),
+                                       NumericInfo<float>().max_value());
 
     // zoom image
     const CartesianCoordinate3D<float>
@@ -474,17 +493,12 @@ subsample_image(shared_ptr<VoxelsOnCartesianGrid<float> > & _this_image_sptr,
     const CartesianCoordinate3D<int>
             new_sizes(size_z, size_xy, size_xy);
 
-
     VoxelsOnCartesianGrid<float> new_image =
             zoom_image(*_this_image_sptr.get(), zooms, offsets_in_mm, new_sizes);
 
-     // Just multiply with the scale factor.
-     pow_times_add pow_times_add_object(0.0, scale_att, 1.0,
-                                        NumericInfo<float>().min_value(),
-                                        NumericInfo<float>().max_value());
-
      in_place_apply_function(new_image, pow_times_add_object);
 
+     float dd = new_image.find_max();
 
      _new_image_sptr.reset(new_image.clone());
 
@@ -494,11 +508,24 @@ subsample_image(shared_ptr<VoxelsOnCartesianGrid<float> > & _this_image_sptr,
 }
 
 
+void
+ScatterEstimationByBin::
+subsample_projdata_info(ProjDataInfoCylindricalNoArcCorr& _original_projdata_info,
+                        ProjDataInfoCylindricalNoArcCorr& _new_projdata_info,
+                        int new_num_dets_per_ring, int new_num_rings,
+                        std::string output_filename = "")
+{
+
+
+
+}
+
+
 Succeeded
 ScatterEstimationByBin::
-calculate_atten_coeffs(shared_ptr<ProjData>& template_proj_data_ptr,
-                       shared_ptr<VoxelsOnCartesianGrid<float> >& atten_image_sptr,
-                       shared_ptr<ProjData>& out_proj_data_ptr,
+calculate_atten_coeffs(shared_ptr<ProjData> template_proj_data_ptr,
+                       shared_ptr<VoxelsOnCartesianGrid<float> > atten_image_sptr,
+                       shared_ptr<ProjData> out_proj_data_ptr,
                        std::string output_filename)
 {
 
@@ -526,8 +553,10 @@ calculate_atten_coeffs(shared_ptr<ProjData>& template_proj_data_ptr,
     out_proj_data_ptr->fill(*this->normalization_factors_sptr);
 
     // construct a normalisation object that does all the work for us.
+    shared_ptr < VoxelsOnCartesianGrid < float > > tmp_atten_image_sptr(atten_image_sptr->clone());
+
     shared_ptr<BinNormalisation> normalisation_ptr
-            (new BinNormalisationFromAttenuationImage(atten_image_sptr,
+            (new BinNormalisationFromAttenuationImage(tmp_atten_image_sptr,
                                                       forw_projector_ptr));
 
     if (normalisation_ptr->set_up(template_proj_data_ptr->get_proj_data_info_ptr()->create_shared_clone())

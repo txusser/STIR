@@ -57,6 +57,7 @@ set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr
   return Succeeded::yes;
 }
 
+
 Succeeded
 ScatterEstimationByBin::
 set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
@@ -67,7 +68,6 @@ set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
   const VoxelsOnCartesianGrid<float>& image =
     dynamic_cast<const VoxelsOnCartesianGrid<float> & >(*new_sptr);
 
-
   if (image.get_x_size() != image.get_y_size())
       error("The voxels in the x and y dimensions are different. Cannot zoom...  ");
 
@@ -75,6 +75,24 @@ set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
 
   this->remove_cache_for_integrals_over_attenuation();
 }
+
+
+Succeeded
+ScatterEstimationByBin::
+set_sub_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
+{
+  if ( is_null_ptr(new_sptr) )
+      return Succeeded::no;
+
+  const VoxelsOnCartesianGrid<float>& image =
+    dynamic_cast<const VoxelsOnCartesianGrid<float> & >(*new_sptr);
+
+  this->sub_atten_image_sptr.reset(image.clone());
+
+  this->sample_scatter_points();
+  this->remove_cache_for_integrals_over_attenuation();
+}
+
 
 shared_ptr<DiscretisedDensity<3,float> >
 ScatterEstimationByBin::
@@ -88,17 +106,6 @@ get_image_from_file(const std::string& filename)
             filename.c_str());
 
   return _this_image_sptr;
-}
-
-void
-ScatterEstimationByBin::
-set_sub_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
-{
-//  if ( !is_null_ptr(new_sptr) )
-//    this->sub_atten_image_sptr=new_sptr;
-
-//  this->sample_scatter_points();
-//  this->remove_cache_for_integrals_over_attenuation();
 }
 
 /****************** functions to set projection data **********************/
@@ -118,6 +125,7 @@ set_template_proj_data_info_from_file(const std::string& filename)
   this->set_template_proj_data_info_sptr(template_proj_data_sptr->get_proj_data_info_ptr()->create_shared_clone());
 }
 
+
 void
 ScatterEstimationByBin::
 set_atten_coeffs_from_file(const std::string& filename)
@@ -127,6 +135,7 @@ set_atten_coeffs_from_file(const std::string& filename)
   this->atten_coeffs_sptr =
     ProjData::read_from_file(this->atten_coeff_filename);
 }
+
 
 void
 ScatterEstimationByBin::
