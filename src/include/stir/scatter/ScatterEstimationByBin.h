@@ -163,6 +163,13 @@ class ScatterEstimationByBin : public ParsingObject
   inline void set_template_proj_data_info_from_file(const std::string& filename);
 
   //!
+  //! \brief set_sub_proj_data_info_from_file
+  //! \param filename
+  //!
+  inline void
+  set_sub_proj_data_info_from_file(const std::string& filename);
+
+  //!
   //! \brief set_atten_coeffs_from_file
   //! \param filename
   //! \details Load attenuation coefficients from disk, instead of
@@ -247,7 +254,7 @@ class ScatterEstimationByBin : public ParsingObject
   //!
   //! \brief proj_data_info_ptr
   //! \details The projection data info of the scanner template
-  const ProjDataInfoCylindricalNoArcCorr * proj_data_info_ptr;
+  ProjDataInfoCylindricalNoArcCorr * proj_data_info_ptr;
 
   //!
   //! \brief template_exam_info_sptr
@@ -369,7 +376,7 @@ class ScatterEstimationByBin : public ParsingObject
   //!
   //! \brief sub_proj_data_info_ptr
   //!
-  const ProjDataInfoCylindricalNoArcCorr * sub_proj_data_info_ptr;
+  ProjDataInfoCylindricalNoArcCorr * sub_proj_data_info_ptr;
 
   //!
   //! \brief sub_num_dets_per_ring
@@ -587,8 +594,7 @@ class ScatterEstimationByBin : public ParsingObject
   //! \param output_filename
   //! \details A function to create a subsampled scanner and projdata info
   //! for a new number of detectors and rings.
-  void subsample_projdata_info(ProjDataInfoCylindricalNoArcCorr& _original_projdata_info,
-                          ProjDataInfoCylindricalNoArcCorr& _new_projdata_info,
+  void subsample_projdata_info(ProjDataInfoCylindricalNoArcCorr* _original_projdata_info,
                           int new_num_dets_per_ring, int new_num_rings,
                           std::string output_filename = "");
 
@@ -617,6 +623,26 @@ class ScatterEstimationByBin : public ParsingObject
       call remove_cache_for_scattpoint_det_integrals_over_activity() first.
   */
   void initialise_cache_for_scattpoint_det_integrals_over_activity();
+
+  //!
+  //! \brief dets_to_voxs
+  //! \param _num
+  //! \param _axis
+  //! \return
+  //! \details A helper function which finds the optimal voxels size
+  //! for a detector size
+  inline float
+  num_dets_to_vox_size(int _num, bool _axis);
+
+  //!
+  //! \brief voxs_to_dets
+  //! \param _num
+  //! \param _axis
+  //! \return
+  //! \details A helper function which finds the optimal det size
+  //! for a voxel size.
+  inline int
+  vox_size_to_num_dets(float _num, bool _axis);
 };
 
 

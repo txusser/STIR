@@ -128,6 +128,20 @@ set_template_proj_data_info_from_file(const std::string& filename)
 
 void
 ScatterEstimationByBin::
+set_sub_proj_data_info_from_file(const std::string& filename)
+{
+  this->sub_proj_data_filename = filename;
+
+  shared_ptr<ProjData> template_proj_data_sptr =
+    ProjData::read_from_file(this->sub_proj_data_filename);
+
+   this->sub_proj_data_info_ptr = dynamic_cast<ProjDataInfoCylindricalNoArcCorr * >
+          (template_proj_data_sptr->get_proj_data_info_ptr()->clone());
+}
+
+
+void
+ScatterEstimationByBin::
 set_atten_coeffs_from_file(const std::string& filename)
 {
   this->atten_coeff_filename = filename;
@@ -142,7 +156,7 @@ ScatterEstimationByBin::
 set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>& new_sptr)
 {
 
-  this->proj_data_info_ptr = dynamic_cast<ProjDataInfoCylindricalNoArcCorr const *>(new_sptr->clone());
+  this->proj_data_info_ptr = dynamic_cast<ProjDataInfoCylindricalNoArcCorr *>(new_sptr->clone());
 
   if (is_null_ptr(this->proj_data_info_ptr))
     {
@@ -250,6 +264,36 @@ ScatterEstimationByBin::
 set_cache_enabled(bool _val)
 {
     use_cache = _val;
+}
+
+float
+ScatterEstimationByBin::
+num_dets_to_vox_size(int _num, bool _axis)
+{
+
+    // _num = num of dets per ring
+    if (_axis)
+        return ((_PI * this->sub_proj_data_info_ptr->get_scanner_ptr()->get_inner_ring_radius()
+                / _num) * 0.9f);
+    else
+        return (this->proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing() * _num) /
+                ( 2.f * this->proj_data_info_ptr->get_scanner_ptr()->get_num_rings());
+
+}
+
+int
+ScatterEstimationByBin::
+vox_size_to_num_dets(float _num, bool _axis)
+{
+    if (_axis)
+        return (((this->proj_data_info_ptr->get_scanner_ptr()->get_inner_ring_radius() * _PI)
+                       / _num) * 1.1f);
+    else
+    {
+        float tot_length = this->proj_data_info_ptr->get_scanner_ptr()->get_num_rings() *
+                this->proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing();
+        return static_cast<int>(tot_length / _num +0.5f);
+    }
 }
 
 END_NAMESPACE_STIR
