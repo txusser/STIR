@@ -62,7 +62,8 @@ set_defaults()
     this->attenuation_threshold =  0.01 ;
     this->random = true;
     this->use_cache = true;
-    this->activity_image_filename = "";
+    this->recompute_initial_activity_image = true;
+    this->initial_activity_image_filename = "";
     this->atten_image_filename = "";
     this->sub_atten_image_filename = "";
     this->template_proj_data_filename = "";
@@ -107,12 +108,19 @@ initialise_keymap()
                          &this->sub_num_dets_per_ring);
     this->parser.add_key("number of subsampled rings",
                          &this->sub_num_rings);
+
+    this->parser.add_key("recompute initial activity image", &this->recompute_initial_activity_image);
+    this->parser.add_key("initial activity image filename", &this->initial_activity_image_filename);
+
+    this->parser.add_parsing_key("reconstruction parameters filename", &reconstruction_method_sptr);
+
     // To this point.
     this->parser.add_key("attenuation_threshold", &this->attenuation_threshold);
     this->parser.add_key("random", &this->random);
     this->parser.add_key("use_cache", &this->use_cache);
-    this->parser.add_key("activity_image_filename", &this->activity_image_filename);
     this->parser.add_key("output_filename_prefix", &this->output_proj_data_filename);
+
+
 }
 
 bool
@@ -236,6 +244,8 @@ post_processing()
             error("DataSymmetriesForBins_PET_CartesianGrid can currently only support z-grid spacing "
                   "equal to the ring spacing of the scanner divided by an integer. Sorry\n");
     }
+
+
 
     //    this->
     //  this->set_activity_image(this->activity_image_filename);

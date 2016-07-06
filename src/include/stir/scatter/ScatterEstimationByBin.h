@@ -35,6 +35,7 @@
 #include "stir/numerics/BSplines.h"
 #include <vector>
 #include "stir/CartesianCoordinate3D.h"
+#include "stir/recon_buildblock/Reconstruction.h"
 
 #include "stir/VoxelsOnCartesianGrid.h"
 #include "stir/IndexRange3D.h"
@@ -391,11 +392,35 @@ class ScatterEstimationByBin : public ParsingObject
 
   /** }@*/
 
-  std::string activity_image_filename;
+  /**
+   *
+   * \name Variables related to the initial activity image.
+   * @{
+   */
+
+  //!
+  //! \brief recompute_initial_estimate
+  //! \details If set then the initial activity estimate will be recomputed
+  //! and stored if a name is provided.
+  bool recompute_initial_activity_image;
+
+  //!
+  //! \brief initial_activity_image_filename
+  //! \details Filename of the initial activity image.
+  std::string initial_activity_image_filename;
+
+
+  /** }@*/
+
   std::string output_proj_data_filename;
 
 
-
+  //!
+  //! \brief reconstruction_method_sptr
+  //! \details The reconsturction which is going to be used for the scatter simulation
+  //! and the intial activity image (if recompute set).
+  shared_ptr < Reconstruction < DiscretisedDensity < 3, float > > >
+          reconstruction_method_sptr;
 
   shared_ptr<VoxelsOnCartesianGrid<float> > activity_image_sptr;
   shared_ptr<ProjData> output_proj_data_sptr;
@@ -643,6 +668,8 @@ class ScatterEstimationByBin : public ParsingObject
   //! for a voxel size.
   inline int
   vox_size_to_num_dets(float _num, bool _axis);
+
+
 };
 
 
