@@ -420,7 +420,10 @@ class ScatterEstimationByBin : public ParsingObject
   //! \details The reconsturction which is going to be used for the scatter simulation
   //! and the intial activity image (if recompute set).
   shared_ptr < Reconstruction < DiscretisedDensity < 3, float > > >
-          reconstruction_method_sptr;
+          reconstruction_template_sptr;
+
+  std::string reconstruction_template_par_filename;
+  std::string reconstruction_template_par_type;
 
   shared_ptr<VoxelsOnCartesianGrid<float> > activity_image_sptr;
   shared_ptr<ProjData> output_proj_data_sptr;

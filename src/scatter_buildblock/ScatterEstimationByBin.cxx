@@ -112,7 +112,12 @@ initialise_keymap()
     this->parser.add_key("recompute initial activity image", &this->recompute_initial_activity_image);
     this->parser.add_key("initial activity image filename", &this->initial_activity_image_filename);
 
-    this->parser.add_parsing_key("reconstruction parameters filename", &reconstruction_method_sptr);
+//    this->parser.add_start_key("Reconstruction");
+//    this->parser.add_stop_key("End Reconstruction");
+    this->parser.add_key("reconstruction method", &this->reconstruction_template_par_type);
+
+    this->parser.add_key("reconstruction template filename", &this->reconstruction_template_par_filename);
+//    this->reconstruction_template_sptr.reset(new Reconstruction<DiscretisedDensity<3, float > > ( rec_filename ));
 
     // To this point.
     this->parser.add_key("attenuation_threshold", &this->attenuation_threshold);
@@ -245,12 +250,30 @@ post_processing()
                   "equal to the ring spacing of the scanner divided by an integer. Sorry\n");
     }
 
+    //
+    // Initial activity image
+    //
 
 
+    if (!this->recompute_initial_activity_image && this->initial_activity_image_filename.size() > 0 )
+        this->set_activity_image_sptr( get_image_from_file(this->initial_activity_image_filename) );
+
+    // A second local parser which will initialize the reconstruction method - WORKAROUND
+
+    if (is_null_ptr(this->reconstruction_template_sptr))
+    {
+    KeyParser local_parser;
+    local_parser.add_start_key("Reconstruction");
+    local_parser.add_stop_key("End Reconstruction");
+    local_parser.add_parsing_key("reconstruction method", &this->reconstruction_template_sptr);
+    local_parser.parse(this->reconstruction_template_par_filename.c_str());
+        }
     //    this->
     //  this->set_activity_image(this->activity_image_filename);
     //  this->set_density_image_for_scatter_points(this->density_image_for_scatter_points_filename);
     //  return false;
+
+    int nikos = 0;
 }
 
 ScatterEstimationByBin::

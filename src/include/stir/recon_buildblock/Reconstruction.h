@@ -171,12 +171,12 @@ public:
 
 protected:
 
-  /*! 
-  \brief 
-  This function initialises all parameters, either via parsing, 
+  /*!
+  \brief
+  This function initialises all parameters, either via parsing,
   or by calling ask_parameters() (when parameter_filename is the empty string).
 
-  It should be called in the constructor of the last class in the 
+  It should be called in the constructor of the last class in the
   hierarchy. At that time, all Interfile keys will have been
   initialised, and ask_parameters() will be the appropriate virtual
   function, such that questions are asked for all parameters.
