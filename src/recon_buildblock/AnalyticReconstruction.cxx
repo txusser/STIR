@@ -225,6 +225,13 @@ reconstruct(shared_ptr<TargetT> const& target_image_sptr)
   }
   return success;
 }
+
+void
+AnalyticReconstruction::
+set_input_data(shared_ptr<ExamData> _this_data)
+{
+//    this->proj_data_ptr.reset(dynamic_cast < ProjData * > (_this_data.get()) );
+}
  
 END_NAMESPACE_STIR
 
