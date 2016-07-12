@@ -133,6 +133,19 @@ public :
   std::vector<double>	pixel_sizes;
   std::vector<std::vector<double> > image_scaling_factors;
   std::vector<unsigned long> data_offset_each_dataset;
+
+  // Acquisition parameters
+  //!
+  //! \brief lower_en_window_thres
+  //! \details Low energy window limit
+  float lower_en_window_thres;
+
+  //!
+  //! \brief upper_en_window_thres
+  //! \details High energy window limit
+  float upper_en_window_thres;
+  // end acquisition parameters
+
  protected:
   // version 3.3 had only a single offset. we'll internally replace it with data_offset_each_dataset
   unsigned long data_offset;
@@ -217,10 +230,14 @@ private:
   int num_axial_crystals_per_singles_unit;
   int num_transaxial_crystals_per_singles_unit;
   int num_detector_layers;
+
+  float energy_resolution;
+  float reference_energy;
   // end scanner parameters
 
   double effective_central_bin_size_in_cm;
   bool is_arccorrected;
+
 };
 
 END_NAMESPACE_STIR

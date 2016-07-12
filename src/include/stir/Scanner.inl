@@ -216,8 +216,17 @@ Scanner::get_num_singles_units  () const
 }
 
 
+float
+Scanner::get_energy_resolution() const
+{
+    return energy_resolution;
+}
 
-
+float
+Scanner::get_reference_energy() const
+{
+    return reference_energy;
+}
 
 
 //************************ set ******************************8
@@ -314,6 +323,18 @@ void Scanner::set_num_transaxial_crystals_per_singles_unit(const int& new_num)
 }
 
 
+void
+Scanner::set_energy_resolution(const float & new_num)
+{
+    energy_resolution = new_num;
+}
+
+
+void
+Scanner::set_reference_energy(const float& new_num)
+{
+    reference_energy = new_num;
+}
 
 
 /********    Calculate singles bin index from detection position    *********/

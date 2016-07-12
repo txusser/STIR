@@ -26,7 +26,173 @@
   \author Kris Thielemans
 
 */
+
+#include "ScatterEstimationByBin.h"
+#include "stir/ProjDataInterfile.h"
+#include "stir/ProjDataInfo.h"
+#include "stir/ProjDataInfoCylindricalNoArcCorr.h"
+#include "stir/IO/read_from_file.h"
+#include "stir/is_null_ptr.h"
+#include "stir/info.h"
+#include "stir/error.h"
+#include <fstream>
+
+
 START_NAMESPACE_STIR
+
+/****************** functions to set images **********************/
+Succeeded
+ScatterEstimationByBin::
+set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
+{
+  if (is_null_ptr(new_sptr) )
+      return Succeeded::no;
+
+  VoxelsOnCartesianGrid<float>& image =
+    dynamic_cast<VoxelsOnCartesianGrid<float>&>(*new_sptr);
+
+  this->activity_image_sptr.reset(image.clone());
+  this->remove_cache_for_integrals_over_activity();
+
+  return Succeeded::yes;
+}
+
+
+Succeeded
+ScatterEstimationByBin::
+set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
+{
+  if (is_null_ptr(new_sptr) )
+      return Succeeded::no;
+
+  const VoxelsOnCartesianGrid<float>& image =
+    dynamic_cast<const VoxelsOnCartesianGrid<float> & >(*new_sptr);
+
+  if (image.get_x_size() != image.get_y_size())
+      error("The voxels in the x and y dimensions are different. Cannot zoom...  ");
+
+  this->atten_image_sptr.reset(image.clone());
+
+  this->remove_cache_for_integrals_over_attenuation();
+}
+
+
+Succeeded
+ScatterEstimationByBin::
+set_sub_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
+{
+  if ( is_null_ptr(new_sptr) )
+      return Succeeded::no;
+
+  const VoxelsOnCartesianGrid<float>& image =
+    dynamic_cast<const VoxelsOnCartesianGrid<float> & >(*new_sptr);
+
+  this->sub_atten_image_sptr.reset(image.clone());
+
+  this->sample_scatter_points();
+  this->remove_cache_for_integrals_over_attenuation();
+}
+
+
+shared_ptr<DiscretisedDensity<3,float> >
+ScatterEstimationByBin::
+get_image_from_file(const std::string& filename)
+{
+    shared_ptr<DiscretisedDensity<3,float> > _this_image_sptr =
+        read_from_file<DiscretisedDensity<3,float> >(filename);
+
+  if (is_null_ptr(_this_image_sptr))
+      error("Error reading image %s\n",
+            filename.c_str());
+
+  return _this_image_sptr;
+}
+
+/****************** functions to set projection data **********************/
+
+
+void
+ScatterEstimationByBin::
+set_template_proj_data_info_from_file(const std::string& filename)
+{
+  this->template_proj_data_filename = filename;
+
+  shared_ptr<ProjData> template_proj_data_sptr =
+    ProjData::read_from_file(this->template_proj_data_filename);
+
+  this->template_exam_info_sptr = template_proj_data_sptr->get_exam_info_sptr();
+
+  this->set_template_proj_data_info_sptr(template_proj_data_sptr->get_proj_data_info_ptr()->create_shared_clone());
+}
+
+
+void
+ScatterEstimationByBin::
+set_sub_proj_data_info_from_file(const std::string& filename)
+{
+  this->sub_proj_data_filename = filename;
+
+  shared_ptr<ProjData> template_proj_data_sptr =
+    ProjData::read_from_file(this->sub_proj_data_filename);
+
+   this->sub_proj_data_info_ptr = dynamic_cast<ProjDataInfoCylindricalNoArcCorr * >
+          (template_proj_data_sptr->get_proj_data_info_ptr()->clone());
+}
+
+
+void
+ScatterEstimationByBin::
+set_atten_coeffs_from_file(const std::string& filename)
+{
+  this->atten_coeff_filename = filename;
+
+  this->atten_coeffs_sptr =
+    ProjData::read_from_file(this->atten_coeff_filename);
+}
+
+
+void
+ScatterEstimationByBin::
+set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>& new_sptr)
+{
+
+  this->proj_data_info_ptr = dynamic_cast<ProjDataInfoCylindricalNoArcCorr *>(new_sptr->clone());
+
+  if (is_null_ptr(this->proj_data_info_ptr))
+    {
+      error("ScatterEstimationByBin can only handle non-arccorrected data");
+    }
+
+  // find final size of detection_points_vector
+  this->total_detectors =
+    this->proj_data_info_ptr->get_scanner_ptr()->get_num_rings()*
+    this->proj_data_info_ptr->get_scanner_ptr()->get_num_detectors_per_ring ();
+
+  // reserve space to avoid reallocation, but the actual size will grow dynamically
+  this->detection_points_vector.reserve(total_detectors);
+
+  // remove any cached values as they'd be incorrect if the sizes changes
+  this->remove_cache_for_integrals_over_attenuation();
+  this->remove_cache_for_integrals_over_activity();
+}
+
+
+void
+ScatterEstimationByBin::
+set_proj_data_from_file(const std::string& filename,
+                        shared_ptr<ProjData>& _this_projdata)
+{
+  _this_projdata.reset(new ProjDataInterfile(this->template_exam_info_sptr,
+                                                          this->proj_data_info_ptr->create_shared_clone(),
+                                                          filename));
+}
+
+
+//
+//
+// NOT SETS THE REST
+//
+//
 
 
 float
@@ -79,6 +245,55 @@ total_Compton_cross_section_relative_to_511keV(const float energy)
      ));
 }
 
+void
+ScatterEstimationByBin::
+set_attenuation_threshold(float _val)
+{
+    attenuation_threshold = _val;
+}
 
+void
+ScatterEstimationByBin::
+set_random_point(bool _val)
+{
+    random = _val;
+}
+
+void
+ScatterEstimationByBin::
+set_cache_enabled(bool _val)
+{
+    use_cache = _val;
+}
+
+float
+ScatterEstimationByBin::
+num_dets_to_vox_size(int _num, bool _axis)
+{
+
+    // _num = num of dets per ring
+    if (_axis)
+        return ((_PI * this->sub_proj_data_info_ptr->get_scanner_ptr()->get_inner_ring_radius()
+                / _num) * 0.9f);
+    else
+        return (this->proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing() * _num) /
+                ( 2.f * this->proj_data_info_ptr->get_scanner_ptr()->get_num_rings());
+
+}
+
+int
+ScatterEstimationByBin::
+vox_size_to_num_dets(float _num, bool _axis)
+{
+    if (_axis)
+        return (((this->proj_data_info_ptr->get_scanner_ptr()->get_inner_ring_radius() * _PI)
+                       / _num) * 1.1f);
+    else
+    {
+        float tot_length = this->proj_data_info_ptr->get_scanner_ptr()->get_num_rings() *
+                this->proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing();
+        return static_cast<int>(tot_length / _num +0.5f);
+    }
+}
 
 END_NAMESPACE_STIR

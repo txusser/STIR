@@ -50,7 +50,8 @@ ScatterEstimationByBin::
           const unsigned det_num_A, 
           const unsigned det_num_B)
 {       
-  static const float max_single_scatter_cos_angle=max_cos_angle(lower_energy_threshold,2.,energy_resolution);
+/*  static const float max_single_scatter_cos_angle=
+    max_cos_angle(lower_energy_threshold,2.,energy_resolution);
 
   //static const float min_energy=energy_lower_limit(lower_energy_threshold,2.,energy_resolution);
 
@@ -142,7 +143,7 @@ ScatterEstimationByBin::
     cos_angle(scatter_point - detector_coord_B,
               detB_to_ring_center) ;
             
-  return scatter_ratio*cos_incident_angle_AS*cos_incident_angle_BS*dif_Compton_cross_section_value;
+  return scatter_ratio*cos_incident_angle_AS*cos_incident_angle_BS*dif_Compton_cross_section_value;*/
           
 }
 

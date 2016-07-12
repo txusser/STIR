@@ -14,6 +14,7 @@ set(${dir_LIB_SOURCES}
 	scatter_estimate_for_one_scatter_point 
 	upsample_and_fit_scatter_estimate 
 	ScatterEstimationByBin 
+	ScatterEstimationWithFit
 )
 #$(dir)_REGISTRY_SOURCES:= scatter_buildblock_registries
 

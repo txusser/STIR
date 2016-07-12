@@ -186,9 +186,10 @@ public:
   inline int get_min_tangential_pos_num() const;
   //! Get maximum tangential position number
   inline int get_max_tangential_pos_num() const;
+
   //@}
 
-  //| \name Functions that return geometrical info for a Bin
+  //! \name Functions that return geometrical info for a Bin
   //@{
   //! Get tangent of the co-polar angle of the normal to the projection plane
   /*! theta=0 for 'direct' planes (i.e. projection planes parallel to the scanner axis) */

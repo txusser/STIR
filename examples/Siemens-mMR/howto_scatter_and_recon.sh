@@ -5,23 +5,23 @@
 # Author: Kris Thielemans
 
 # directory with some standard .par files
-: ${pardir:=~/devel/STIR/examples/Siemens-mMR}
+: ${pardir:=/home/nikos/Workspace/STIR_dev/github/NikEfth-STIR/STIR/examples/Siemens-mMR}
 
-: ${sino_input:=sinospan11_f1g1d0b0.hs}
+: ${sino_input:=/home/nikos/Workspace/STIR_dev/github/NikEfth-STIR/STIR/examples/Siemens-mMR/template_span1.hs}
 
 # ECAT8 norm file 
 # note: variable name is used in correct_projdata.par
-: ${ECATNORM:=Norm_20130515125744.n.hdr.STIR}
+: ${ECATNORM:=/home/nikos/Workspace/STIR_dev/github/NikEfth-STIR/STIR/examples/Siemens-mMR/Norm_20130515125744.n.hdr.STIR}
 export ECATNORM
 
 # output (or input if it exists already) for normalisation sinogram
-: ${norm_sino_prefix:=fullnormfactorsspan11}
+: ${norm_sino_prefix:=/home/nikos/Workspace/STIR_dev/github/NikEfth-STIR/STIR/examples/Siemens-mMR/fullnormfactorsspan11}
 
 if [ -r ${norm_sino_prefix}.hs ]; then
   echo "Re-using existing ${norm_sino_prefix}.hs"
 else
   echo "Creating ${norm_sino_prefix}.hs"
-  OUTPUT=${norm_sino_prefix} INPUT=${sino_input} correct_projdata ${pardir}/correct_projdata.par > ${norm_sino_prefix}.log 2>&1
+  INPUT=${sino_input} OUTPUT=${norm_sino_prefix} correct_projdata ${pardir}/correct_projdata.par > ${norm_sino_prefix}.log 2>&1
 fi
 
 # input files etc

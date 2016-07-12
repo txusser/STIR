@@ -112,6 +112,5 @@ ProjDataInfo::get_scanner_ptr() const
     
 }
 
-
 END_NAMESPACE_STIR
 

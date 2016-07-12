@@ -157,7 +157,6 @@ ProjDataInfo::set_max_tangential_pos_num(const int max_tang_poss)
   max_tangential_pos_num = max_tang_poss;
 }
 
-
 ProjDataInfo::ProjDataInfo()
 {}
 
