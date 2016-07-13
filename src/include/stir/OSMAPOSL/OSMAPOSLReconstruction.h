@@ -84,7 +84,6 @@ class OSMAPOSLReconstruction:
                     Reconstruction < TargetT >,
                     IterativeReconstruction < TargetT >
                  >
-//public IterativeReconstruction<TargetT >
 {
  private:
   typedef RegisteredParsingObject<

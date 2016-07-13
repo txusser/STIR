@@ -84,6 +84,11 @@ initialise_keymap()
     this->parser.add_stop_key("end Scatter Estimation Parameters");
     this->parser.add_key("projdata template filename",
                          &this->template_proj_data_filename);
+    // N.E. 13/07/16: I don't like "input file" for the input data.
+    // I try to keep consistency with the reconstruction
+    // params.
+    this->parser.add_key("input file",
+                         &this->input_projdata_filename);
     this->parser.add_key("attenuation image filename",
                          &this->atten_image_filename);
     this->parser.add_key("attenuation projdata filename",
@@ -112,10 +117,6 @@ initialise_keymap()
     this->parser.add_key("recompute initial activity image", &this->recompute_initial_activity_image);
     this->parser.add_key("initial activity image filename", &this->initial_activity_image_filename);
 
-//    this->parser.add_start_key("Reconstruction");
-//    this->parser.add_stop_key("End Reconstruction");
-    this->parser.add_key("reconstruction method", &this->reconstruction_template_par_type);
-
     this->parser.add_key("reconstruction template filename", &this->reconstruction_template_par_filename);
 //    this->reconstruction_template_sptr.reset(new Reconstruction<DiscretisedDensity<3, float > > ( rec_filename ));
 
@@ -134,9 +135,14 @@ post_processing()
 {
     // Load the scanner template
     this->set_template_proj_data_info_from_file(this->template_proj_data_filename);
+
     // create output (has to be AFTER set_template_proj_data_info)
     this->set_proj_data_from_file(this->output_proj_data_filename,
                                   this->output_proj_data_sptr);
+
+    // Load the measured input emission data.
+    this->input_projdata_sptr =
+                ProjData::read_from_file(this->input_projdata_filename);
     // Load the attenuation image.
     // All relevant initialization have been moved outside
     // the set_image_from_file, since it became more generic.
@@ -251,23 +257,43 @@ post_processing()
     }
 
     //
-    // Initial activity image
+    // Initial activity image.
     //
-
-
-    if (!this->recompute_initial_activity_image && this->initial_activity_image_filename.size() > 0 )
-        this->set_activity_image_sptr( get_image_from_file(this->initial_activity_image_filename) );
 
     // A second local parser which will initialize the reconstruction method - WORKAROUND
 
     if (is_null_ptr(this->reconstruction_template_sptr))
     {
-    KeyParser local_parser;
-    local_parser.add_start_key("Reconstruction");
-    local_parser.add_stop_key("End Reconstruction");
-    local_parser.add_parsing_key("reconstruction method", &this->reconstruction_template_sptr);
-    local_parser.parse(this->reconstruction_template_par_filename.c_str());
-        }
+        KeyParser local_parser;
+        local_parser.add_start_key("Reconstruction");
+        local_parser.add_stop_key("End Reconstruction");
+        local_parser.add_parsing_key("reconstruction method", &this->reconstruction_template_sptr);
+        local_parser.parse(this->reconstruction_template_par_filename.c_str());
+    }
+
+    // TODO: Test this case, I don't have right now a reconstructed image.
+    // Should the reconstruction of the initial image be part of the pre-process?
+    // In a sense it is a prerequisive but it can be a long process and might not be the best to have
+    // it here.
+    if (!this->recompute_initial_activity_image && this->initial_activity_image_filename.size() > 0 )
+        this->set_activity_image_sptr( get_image_from_file(this->initial_activity_image_filename) );
+    else if (this->recompute_initial_activity_image)
+    {
+        if (is_null_ptr(this->reconstruction_template_sptr))
+            error("There was an error in the initialisation of the reconstruction object.");
+
+        this->reconstruction_template_sptr->set_input_data(this->input_projdata_sptr);
+        this->reconstruction_template_sptr->reconstruct();
+
+        this->activity_image_sptr.reset( dynamic_cast < VoxelsOnCartesianGrid<float> * > (
+                reconstruction_template_sptr->get_target_image().get()));
+
+        if (this->initial_activity_image_filename.length() > 0)
+            OutputFileFormat<DiscretisedDensity < 3, float > >::default_sptr()->
+                    write_to_file(this->initial_activity_image_filename, *activity_image_sptr.get());
+    }
+
+
     //    this->
     //  this->set_activity_image(this->activity_image_filename);
     //  this->set_density_image_for_scatter_points(this->density_image_for_scatter_points_filename);

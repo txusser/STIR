@@ -267,6 +267,55 @@ class ScatterEstimationByBin : public ParsingObject
 
   /**
    *
+   * \name Variables related to the initial activity image and the measured emission data.
+   * @{
+   */
+
+  //!
+  //! \brief recompute_initial_estimate
+  //! \details If set then the initial activity estimate will be recomputed
+  //! and stored if a name is provided.
+  bool recompute_initial_activity_image;
+
+  //!
+  //! \brief initial_activity_image_filename
+  //! \details Filename of the initial activity image.
+  std::string initial_activity_image_filename;
+
+  //!
+  //! \brief reconstruction_method_sptr
+  //! \details The reconsturction which is going to be used for the scatter simulation
+  //! and the intial activity image (if recompute set).
+  shared_ptr < Reconstruction < DiscretisedDensity < 3, float > > >
+          reconstruction_template_sptr;
+
+  //!
+  //! \brief reconstruction_template_par_filename
+  //! \details The filename for the parameters file of the reconstruction method.
+  //! \warning Refere to the samples for a proper example.
+  std::string reconstruction_template_par_filename;
+
+  //!
+  //! \brief activity_image_sptr
+  //! \details Initially with is the reconstructed activity image, but during the scatter
+  //! estimation it with actually hold the reconstructed data.
+  shared_ptr<VoxelsOnCartesianGrid<float> > activity_image_sptr;
+
+  //!
+  //! \brief input_projdata_filename
+  //! \details Filename of the measured emission data.
+  std::string input_projdata_filename;
+
+  //!
+  //! \brief input_data
+  //! \details This memnbers holds the measured emission data.
+  shared_ptr<ProjData> input_projdata_sptr;
+  /** }@*/
+
+
+
+  /**
+   *
    * \name Variables related to the attenuation image and coefficients
    * @{
    */
@@ -392,40 +441,7 @@ class ScatterEstimationByBin : public ParsingObject
 
   /** }@*/
 
-  /**
-   *
-   * \name Variables related to the initial activity image.
-   * @{
-   */
-
-  //!
-  //! \brief recompute_initial_estimate
-  //! \details If set then the initial activity estimate will be recomputed
-  //! and stored if a name is provided.
-  bool recompute_initial_activity_image;
-
-  //!
-  //! \brief initial_activity_image_filename
-  //! \details Filename of the initial activity image.
-  std::string initial_activity_image_filename;
-
-
-  /** }@*/
-
   std::string output_proj_data_filename;
-
-
-  //!
-  //! \brief reconstruction_method_sptr
-  //! \details The reconsturction which is going to be used for the scatter simulation
-  //! and the intial activity image (if recompute set).
-  shared_ptr < Reconstruction < DiscretisedDensity < 3, float > > >
-          reconstruction_template_sptr;
-
-  std::string reconstruction_template_par_filename;
-  std::string reconstruction_template_par_type;
-
-  shared_ptr<VoxelsOnCartesianGrid<float> > activity_image_sptr;
   shared_ptr<ProjData> output_proj_data_sptr;
 
 
