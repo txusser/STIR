@@ -351,6 +351,18 @@ class ScatterEstimationByBin : public ParsingObject
   /** @}*/
 
   /**
+    * \name Varianbles realted to the background proj data
+    * @{
+    *
+    */
+
+  std::string back_projdata_filename;
+
+  shared_ptr<ProjData> back_projdata_sptr;
+
+  /** @}*/
+
+  /**
    *
    *  \name Variables related to normalization factors
    *  @{

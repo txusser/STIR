@@ -159,23 +159,11 @@ public:
   void set_enable_output(bool _val);
 
   //!
-  //! \brief get_reconstructed_image
+  //! \brief get_target_image
   //! \author Nikos Efthimiou
-  //! \return
+  //!  \return
   //!
-  shared_ptr<TargetT > get_target_image();
-
-  // parameters
- protected:
-
-  //! file name for output reconstructed images
-  std::string output_filename_prefix; 
-
-  //! defines the format of the output files
-  shared_ptr<OutputFileFormat<TargetT> > output_file_format_ptr; 
-
-  //! post-filter
-  shared_ptr<DataProcessor<TargetT> >  post_filter_sptr;
+  shared_ptr<TargetT> get_target_image();
 
   //!
   //! \brief set_additive_proj_data_sptr
@@ -192,14 +180,27 @@ public:
   //! piece of code, the user should be able to set any additive sinogram
   virtual void set_normalisation_sptr(const shared_ptr<BinNormalisation>&) = 0;
 
+
+  // parameters
+ protected:
+
+  //! file name for output reconstructed images
+  std::string output_filename_prefix; 
+
+  //! defines the format of the output files
+  shared_ptr<OutputFileFormat<TargetT> > output_file_format_ptr; 
+
+  //! post-filter
+  shared_ptr<DataProcessor<TargetT> >  post_filter_sptr;
+
 protected:
 
-  /*!
-  \brief
-  This function initialises all parameters, either via parsing,
+  /*! 
+  \brief 
+  This function initialises all parameters, either via parsing, 
   or by calling ask_parameters() (when parameter_filename is the empty string).
 
-  It should be called in the constructor of the last class in the
+  It should be called in the constructor of the last class in the 
   hierarchy. At that time, all Interfile keys will have been
   initialised, and ask_parameters() will be the appropriate virtual
   function, such that questions are asked for all parameters.
@@ -226,9 +227,6 @@ protected:
   */
   virtual bool post_processing();
 
-  //!
-  //! \brief target_data_sptr
-  //!
   shared_ptr<TargetT > target_data_sptr;
 
   //!

@@ -93,6 +93,8 @@ initialise_keymap()
                          &this->atten_image_filename);
     this->parser.add_key("attenuation projdata filename",
                          &this->atten_coeff_filename);
+    this->parser.add_key("background projdata filename",
+                         &this->back_projdata_filename);
     this->parser.add_key("recompute attenuation coefficients",
                          &this->recompute_atten_coeff);
     this->parser.add_key("normalization_coefficients_filename",
@@ -171,6 +173,10 @@ post_processing()
                                                                     this->output_proj_data_sptr->get_proj_data_info_ptr()->create_shared_clone()));
         this->normalization_factors_sptr->fill(1.f);
     }
+
+    if (this->back_projdata_filename.size() > 0)
+        this->set_proj_data_from_file(this->back_projdata_filename,
+                                      this->back_projdata_sptr);
 
     if (this->recompute_atten_coeff)
     {
@@ -283,6 +289,16 @@ post_processing()
             error("There was an error in the initialisation of the reconstruction object.");
 
         this->reconstruction_template_sptr->set_input_data(this->input_projdata_sptr);
+        if (!is_null_ptr(this->back_projdata_sptr))
+            this->reconstruction_template_sptr->set_additive_proj_data_sptr(this->back_projdata_sptr);
+        // TODO: Set the multiplicative factor for the Analytic reconstruction.
+        // Currently implemented only in iterative reconstruction.
+//        if (!is_null_ptr(this->atten_coeffs_sptr))
+//            this->reconstruction_template_sptr->set_normalisation_sptr(this->atten_coeffs_sptr);
+
+        // Should the attenuations/normalization be
+        // different from the subsampled attenuation ( which should include the bed attenuation) ???
+
         this->reconstruction_template_sptr->reconstruct();
 
         this->activity_image_sptr.reset( dynamic_cast < VoxelsOnCartesianGrid<float> * > (
