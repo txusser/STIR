@@ -145,6 +145,7 @@ post_processing()
     // Load the measured input emission data.
     this->input_projdata_sptr =
                 ProjData::read_from_file(this->input_projdata_filename);
+
     // Load the attenuation image.
     // All relevant initialization have been moved outside
     // the set_image_from_file, since it became more generic.
@@ -160,8 +161,12 @@ post_processing()
     // calculation, this way without any additional checks.
     if (this->normalization_coeffs_filename.size() > 0)
     {
-        this->set_proj_data_from_file(this->normalization_coeffs_filename,
-                                      this->normalization_factors_sptr);
+    //        this->set_proj_data_from_file(this->normalization_coeffs_filename,
+    //                                      this->normalization_factors_sptr);
+
+        this->normalization_factors_sptr =
+                    ProjData::read_from_file(this->normalization_coeffs_filename);
+
         //
         // TODO: Set the bin normalization for OSEM reconstruction.
         //
@@ -175,8 +180,9 @@ post_processing()
     }
 
     if (this->back_projdata_filename.size() > 0)
-        this->set_proj_data_from_file(this->back_projdata_filename,
-                                      this->back_projdata_sptr);
+        this->back_projdata_sptr =
+            ProjData::read_from_file(this->back_projdata_filename);
+
 
     if (this->recompute_atten_coeff)
     {

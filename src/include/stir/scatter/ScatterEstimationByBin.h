@@ -192,6 +192,7 @@ class ScatterEstimationByBin : public ParsingObject
   /*! \warning use set_template_proj_data_info() first.
 
    Currently always uses Interfile output.
+   \warning If the specified file already exists it will be erased.
   */
   inline void set_proj_data_from_file(const std::string& filename,
                                       shared_ptr<ProjData>& _this_projdata);
