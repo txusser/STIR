@@ -20,12 +20,13 @@
 #include "stir/recon_buildblock/Reconstruction.h"
 #include <iostream>
 #include <stdlib.h>
+#include <string>
 #include "stir/Succeeded.h"
 #include "stir/CPUTimer.h"
 #include "stir/HighResWallClockTimer.h"
 #include "stir/IO/write_to_file.h"
-
 #include "stir/ProjData.h"
+
 
 static void print_usage_and_exit()
 {
@@ -73,7 +74,6 @@ int main(int argc, const char *argv[])
             reconstruction_method_sptr;
 
     std::string data_filename;
-
     std::string output_filename;
 
     KeyParser parser;
@@ -118,6 +118,7 @@ int main(int argc, const char *argv[])
     }
 
     return Succeeded::yes;
+
     return EXIT_SUCCESS;
 }
 

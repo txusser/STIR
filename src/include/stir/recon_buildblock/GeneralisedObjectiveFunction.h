@@ -35,7 +35,9 @@
 #include "stir/recon_buildblock/GeneralisedPrior.h"
 #include <string>
 
-#include <stir/IO/ExamData.h>
+#include "stir/IO/ExamData.h"
+#include "stir/ProjData.h"
+#include "stir/recon_buildblock/BinNormalisation.h"
 
 START_NAMESPACE_STIR
 
@@ -274,6 +276,21 @@ public:
   //! \details It can be used to set the data to be reconstucted in
   //! real-time ( withint some other code ).
   virtual void set_input_data(const shared_ptr< ExamData > &) = 0;
+
+  //!
+  //! \brief set_additive_proj_data_sptr
+  //! \author Nikos Efthimiou
+  //! \details In the case the reconstruction process is called from another
+  //! piece of code, the user should be able to set any additive sinogram
+  //!
+   virtual void set_additive_proj_data_sptr(const shared_ptr<ExamData>&) = 0;
+
+  //!
+  //! \brief set_normalisation_sptr
+  //! \author Nikos Efthimiou
+  //! \details In the case the reconstruction process is called from another
+  //! piece of code, the user should be able to set any additive sinogram
+  virtual void set_normalisation_sptr(const shared_ptr<BinNormalisation>&) = 0;
 
 protected:
   int num_subsets;
