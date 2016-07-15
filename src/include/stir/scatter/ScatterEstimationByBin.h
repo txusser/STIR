@@ -40,6 +40,8 @@
 #include "stir/VoxelsOnCartesianGrid.h"
 #include "stir/IndexRange3D.h"
 
+#include "stir/scatter/ScatterSimulation.h"
+
 START_NAMESPACE_STIR
 
 class Succeeded;
@@ -126,6 +128,18 @@ class ScatterEstimationByBin : public ParsingObject
   ScatterEstimationByBin();
 
   virtual Succeeded process_data();
+
+
+  // N.E: New main process_data funtion,
+  // the '_' will be removed later.
+  virtual Succeeded _process_data();
+
+  virtual Succeeded
+  _iterate(int,
+           shared_ptr<ExamData>&,
+           shared_ptr<ExamData>&,
+           shared_ptr<ExamData>&,
+           shared_ptr<VoxelsOnCartesianGrid<float> >&);
 
   /**
    *
@@ -299,7 +313,8 @@ class ScatterEstimationByBin : public ParsingObject
   //!
   //! \brief activity_image_sptr
   //! \details Initially with is the reconstructed activity image, but during the scatter
-  //! estimation it with actually hold the reconstructed data.
+  //! estimation it with actually hold the iterative estimates.
+  //! Therefore the nane might change later.
   shared_ptr<VoxelsOnCartesianGrid<float> > activity_image_sptr;
 
   //!
@@ -666,6 +681,12 @@ class ScatterEstimationByBin : public ParsingObject
   virtual void remove_cache_for_integrals_over_activity();
 
  private:
+
+  //!
+  //! \brief _scatter_simulation
+  //! \details Class which will implement the scatter simulation.
+  shared_ptr < ScatterSimulation > _scatter_simulation;
+
   Array<2,float> cached_activity_integral_scattpoint_det;
   Array<2,float> cached_attenuation_integral_scattpoint_det;
 

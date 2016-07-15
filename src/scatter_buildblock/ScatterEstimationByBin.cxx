@@ -65,13 +65,10 @@ set_defaults()
     this->recompute_initial_activity_image = true;
     this->initial_activity_image_filename = "";
     this->atten_image_filename = "";
-    this->sub_atten_image_filename = "";
+
     this->template_proj_data_filename = "";
     this->output_proj_data_filename = "";
-    this->sub_vox_xy = -1.f;
-    this->sub_vox_z = -1.f;
-    this->sub_num_dets_per_ring = -1.f;
-    this->sub_num_rings = -1.f;
+
     this->remove_cache_for_integrals_over_activity();
     this->remove_cache_for_integrals_over_attenuation();
 }
@@ -95,32 +92,36 @@ initialise_keymap()
                          &this->atten_coeff_filename);
     this->parser.add_key("background projdata filename",
                          &this->back_projdata_filename);
-    this->parser.add_key("recompute attenuation coefficients",
-                         &this->recompute_atten_coeff);
-    this->parser.add_key("normalization_coefficients_filename",
-                         &this->normalization_coeffs_filename);
-    this->parser.add_key("recompute subsampled attenuation image",
-                         &this->recompute_sub_atten_image);
-    this->parser.add_key("subsampled attenuation image filename",
-                         &this->sub_atten_image_filename);
-    this->parser.add_key("subsampled voxel size plane xy (mm/pixel)",
-                         &this->sub_vox_xy);
-    this->parser.add_key("subsampled voxel size on z axis (mm/pixel)",
-                         &this->sub_vox_z);
-    this->parser.add_key("recompute subsampled projdata",
-                         &this->recompute_sub_projdata);
-    this->parser.add_key("subsampled projdata template filename",
-                         &this->sub_proj_data_filename);
-    this->parser.add_key("number of subsampled detectors",
-                         &this->sub_num_dets_per_ring);
-    this->parser.add_key("number of subsampled rings",
-                         &this->sub_num_rings);
+    // Moved to scatter simulation
+    //    this->parser.add_key("recompute attenuation coefficients",
+    //                         &this->recompute_atten_coeff);
+    //    this->parser.add_key("normalization_coefficients_filename",
+    //                         &this->normalization_coeffs_filename);
+    //    this->parser.add_key("recompute subsampled attenuation image",
+    //                         &this->recompute_sub_atten_image);
+    //    this->parser.add_key("subsampled attenuation image filename",
+    //                         &this->sub_atten_image_filename);
+    //    this->parser.add_key("subsampled voxel size plane xy (mm/pixel)",
+    //                         &this->sub_vox_xy);
+    //    this->parser.add_key("subsampled voxel size on z axis (mm/pixel)",
+    //                         &this->sub_vox_z);
+    //    this->parser.add_key("recompute subsampled projdata",
+    //                         &this->recompute_sub_projdata);
+    //    this->parser.add_key("subsampled projdata template filename",
+    //                         &this->sub_proj_data_filename);
+    //    this->parser.add_key("number of subsampled detectors",
+    //                         &this->sub_num_dets_per_ring);
+    //    this->parser.add_key("number of subsampled rings",
+    //                         &this->sub_num_rings);
+    // End move to SS
+    this->parser.add_key("recompute initial activity image",
+                         &this->recompute_initial_activity_image);
+    this->parser.add_key("initial activity image filename",
+                         &this->initial_activity_image_filename);
 
-    this->parser.add_key("recompute initial activity image", &this->recompute_initial_activity_image);
-    this->parser.add_key("initial activity image filename", &this->initial_activity_image_filename);
-
-    this->parser.add_key("reconstruction template filename", &this->reconstruction_template_par_filename);
-//    this->reconstruction_template_sptr.reset(new Reconstruction<DiscretisedDensity<3, float > > ( rec_filename ));
+    this->parser.add_key("reconstruction template filename",
+                         &this->reconstruction_template_par_filename);
+    //    this->reconstruction_template_sptr.reset(new Reconstruction<DiscretisedDensity<3, float > > ( rec_filename ));
 
     // To this point.
     this->parser.add_key("attenuation_threshold", &this->attenuation_threshold);
@@ -144,7 +145,7 @@ post_processing()
 
     // Load the measured input emission data.
     this->input_projdata_sptr =
-                ProjData::read_from_file(this->input_projdata_filename);
+            ProjData::read_from_file(this->input_projdata_filename);
 
     // Load the attenuation image.
     // All relevant initialization have been moved outside
@@ -161,11 +162,11 @@ post_processing()
     // calculation, this way without any additional checks.
     if (this->normalization_coeffs_filename.size() > 0)
     {
-    //        this->set_proj_data_from_file(this->normalization_coeffs_filename,
-    //                                      this->normalization_factors_sptr);
+        //        this->set_proj_data_from_file(this->normalization_coeffs_filename,
+        //                                      this->normalization_factors_sptr);
 
         this->normalization_factors_sptr =
-                    ProjData::read_from_file(this->normalization_coeffs_filename);
+                ProjData::read_from_file(this->normalization_coeffs_filename);
 
         //
         // TODO: Set the bin normalization for OSEM reconstruction.
@@ -283,24 +284,22 @@ post_processing()
         local_parser.parse(this->reconstruction_template_par_filename.c_str());
     }
 
-    // TODO: Test this case, I don't have right now a reconstructed image.
-    // Should the reconstruction of the initial image be part of the pre-process?
-    // In a sense it is a prerequisive but it can be a long process and might not be the best to have
-    // it here.
     if (!this->recompute_initial_activity_image && this->initial_activity_image_filename.size() > 0 )
         this->set_activity_image_sptr( get_image_from_file(this->initial_activity_image_filename) );
-    else if (this->recompute_initial_activity_image)
+    else if (this->recompute_initial_activity_image)     // Initial reconstruction
     {
         if (is_null_ptr(this->reconstruction_template_sptr))
             error("There was an error in the initialisation of the reconstruction object.");
 
         this->reconstruction_template_sptr->set_input_data(this->input_projdata_sptr);
+
         if (!is_null_ptr(this->back_projdata_sptr))
             this->reconstruction_template_sptr->set_additive_proj_data_sptr(this->back_projdata_sptr);
+
         // TODO: Set the multiplicative factor for the Analytic reconstruction.
         // Currently implemented only in iterative reconstruction.
-//        if (!is_null_ptr(this->atten_coeffs_sptr))
-//            this->reconstruction_template_sptr->set_normalisation_sptr(this->atten_coeffs_sptr);
+        if (!is_null_ptr(this->atten_coeffs_sptr))
+            this->reconstruction_template_sptr->set_normalisation_proj_data_sptr(this->atten_coeffs_sptr);
 
         // Should the attenuations/normalization be
         // different from the subsampled attenuation ( which should include the bed attenuation) ???
@@ -308,7 +307,7 @@ post_processing()
         this->reconstruction_template_sptr->reconstruct();
 
         this->activity_image_sptr.reset( dynamic_cast < VoxelsOnCartesianGrid<float> * > (
-                reconstruction_template_sptr->get_target_image().get()));
+                                             reconstruction_template_sptr->get_target_image().get()));
 
         if (this->initial_activity_image_filename.length() > 0)
             OutputFileFormat<DiscretisedDensity < 3, float > >::default_sptr()->
@@ -330,6 +329,35 @@ ScatterEstimationByBin()
     this->set_defaults();
 }
 
+
+/****************** New processing functions; Initially they are going to be marked with '_'
+ * later it will be removed.
+ */
+
+Succeeded
+ScatterEstimationByBin::
+_process_data()
+{
+
+    //LOOP { NUM }
+
+    // Iterate
+
+    // Simulate
+
+
+}
+
+Succeeded
+ScatterEstimationByBin::
+_iterate(int _current_iter_num,
+         shared_ptr<ExamData>& _input_data,
+         shared_ptr<ExamData>& _mult_data,
+         shared_ptr<ExamData>& _add_data,
+         shared_ptr<VoxelsOnCartesianGrid<float> >& _current_estimate_sptr)
+{
+
+}
 
 /****************** functions to compute scatter **********************/
 
@@ -621,9 +649,9 @@ subsample_projdata_info(ProjDataInfoCylindricalNoArcCorr* _original_projdata_inf
                             tmpl_scanner.get_energy_resolution(),
                             tmpl_scanner.get_reference_energy()));
 
-//    if (new_scanner_ptr->check_consistency() != Succeeded::yes)
-//        error("Initialization of the subsampled scanner failed, sheck the number "
-//              "of detectors per ring and the number of rings\n");
+    //    if (new_scanner_ptr->check_consistency() != Succeeded::yes)
+    //        error("Initialization of the subsampled scanner failed, sheck the number "
+    //              "of detectors per ring and the number of rings\n");
 
     // get FOV in mm
 

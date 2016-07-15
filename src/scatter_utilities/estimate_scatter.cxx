@@ -35,7 +35,7 @@
 
 #include "stir/scatter/ScatterEstimationByBin.h"
 // pre-pre-pre alpha
-#include "stir/scatter/ScatterEstimationWithFit.h"
+//#include "stir/scatter/ScatterEstimationWithFit.h"
 #include "stir/Succeeded.h"
 /***********************************************************/     
 
