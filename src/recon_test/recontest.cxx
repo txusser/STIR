@@ -27,6 +27,8 @@
 #include "stir/IO/write_to_file.h"
 #include "stir/ProjData.h"
 
+#include "stir/TextWriter.h"
+
 
 static void print_usage_and_exit()
 {
@@ -71,6 +73,12 @@ int main(int argc, const char *argv[])
 {
     using namespace stir;
 
+    TextPrinter tp("std::cout");
+    TextWriterHandle twh;
+    twh.set_information_channel(&tp);
+    twh.set_warning_channel(&tp);
+    twh.set_error_channel(&tp);
+
     if (argc!=2)
         print_usage_and_exit();
 
@@ -86,6 +94,8 @@ int main(int argc, const char *argv[])
     shared_ptr<ProjData> atten_data_sptr;
     shared_ptr<ProjData> back_data_sptr;
 
+    twh.print_information("Starting Genererilised reconstruction ... ");
+
     KeyParser parser;
     parser.add_start_key("Reconstruction");
     parser.add_stop_key("End Reconstruction");
@@ -94,6 +104,8 @@ int main(int argc, const char *argv[])
     parser.add_key("background input file", &background_filename);
     parser.add_key("output filename prefix", &output_filename);
     parser.add_parsing_key("reconstruction method", &reconstruction_method_sptr);
+
+    twh.print_information("Parsing par file ... ");
     parser.parse(argv[1]);
 
     HighResWallClockTimer t;
@@ -106,6 +118,8 @@ int main(int argc, const char *argv[])
                 ProjData::read_from_file(data_filename);
 
         reconstruction_method_sptr->set_input_data(recon_data_sptr);
+
+        twh.print_information("Input data loaded ... ");
     }
     else
         return false;
@@ -116,6 +130,8 @@ int main(int argc, const char *argv[])
                 ProjData::read_from_file(attenuation_filename);
 
         reconstruction_method_sptr->set_normalisation_proj_data_sptr(atten_data_sptr);
+
+        twh.print_information("Normalisation / Attenuation data loaded ... ");
     }
 
     if (background_filename.size() > 0)
@@ -124,12 +140,16 @@ int main(int argc, const char *argv[])
                 ProjData::read_from_file(background_filename);
 
         reconstruction_method_sptr->set_additive_proj_data_sptr(back_data_sptr);
+
+        twh.print_information("Background (scattered / random) data loaded ... ");
     }
 
 
     if (reconstruction_method_sptr->reconstruct() == Succeeded::yes)
     {
         t.stop();
+        twh.print_information("Reconstruction finished.");
+
         std::cout << "Total Wall clock time: " << t.value() << " seconds" << std::endl;
     }
     else
@@ -144,11 +164,13 @@ int main(int argc, const char *argv[])
 
     if (output_filename.length() > 0 )
     {
+        twh.print_information("Saving output image.");
         shared_ptr  < DiscretisedDensity < 3, float > > reconstructed_image =
                 reconstruction_method_sptr->get_target_image();
 
         OutputFileFormat<DiscretisedDensity < 3, float > >::default_sptr()->
                 write_to_file(output_filename, *reconstructed_image.get());
+        twh.print_information("Output image saved.");
     }
 
     return Succeeded::yes;
