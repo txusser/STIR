@@ -32,16 +32,19 @@ static void print_usage_and_exit()
 {
     std::cerr<<"This executable is able to reconstruct some data without calling a specific reconstruction method, from the code.\n";
     std::cerr<<"but specifing the method in the par file with the \"econstruction method\". \n";
-    std::cerr<<"\nUsage:\nrecontest reconstuction.par\n";
+    std::cerr<<"\nUsage:\nrecontest reconstuction_test.par\n";
     std::cerr<<"Example parameter file:\n\n"
-            <<"reconstruction method := OSMAPOSL\n"
-           <<"OSMAPOSLParameters := \n"
-          <<"objective function type:= PoissonLogLikelihoodWithLinearModelForMeanAndProjData\n"
-         <<"PoissonLogLikelihoodWithLinearModelForMeanAndProjData Parameters:=\n"
-        <<"input file := <input>.hs\n"
-       <<"maximum absolute segment number to process := -1\n"
-      <<"projector pair type := Matrix\n"
-     <<"Projector Pair Using Matrix Parameters :=\n"
+            <<"Reconstruction :=\n"
+           <<"input file := my_prompts.hs\n"
+          <<"attenuation input file := my_acfs.hs\n"
+         <<"reconstruction method := OSMAPOSL\n"
+        <<"OSMAPOSLParameters := \n"
+       <<"objective function type:= PoissonLogLikelihoodWithLinearModelForMeanAndProjData\n"
+      <<"PoissonLogLikelihoodWithLinearModelForMeanAndProjData Parameters:=\n"
+     <<"input file := <input>.hs\n"
+    <<"maximum absolute segment number to process := -1\n"
+    <<"projector pair type := Matrix\n"
+    <<"Projector Pair Using Matrix Parameters :=\n"
     <<"Matrix type := Ray Tracing\n"
     <<"Ray tracing matrix parameters :=\n"
     <<"number of rays in tangential direction to trace for each bin:= 10\n"
@@ -56,6 +59,7 @@ static void print_usage_and_exit()
     <<"save estimates at subiteration intervals:= 1\n"
     <<"output filename prefix := output\n"
     <<"end OSMAPOSLParameters := \n"
+    <<"output filename prefix := output_image \n"
     <<"end reconstruction := \n";
     exit(EXIT_FAILURE);
 }
@@ -76,12 +80,18 @@ int main(int argc, const char *argv[])
     std::string data_filename;
     std::string output_filename;
     std::string attenuation_filename;
+    std::string background_filename;
+
+    shared_ptr<ProjData> recon_data_sptr;
+    shared_ptr<ProjData> atten_data_sptr;
+    shared_ptr<ProjData> back_data_sptr;
 
     KeyParser parser;
     parser.add_start_key("Reconstruction");
     parser.add_stop_key("End Reconstruction");
     parser.add_key("input file", &data_filename);
     parser.add_key("attenuation input file", &attenuation_filename);
+    parser.add_key("background input file", &background_filename);
     parser.add_key("output filename prefix", &output_filename);
     parser.add_parsing_key("reconstruction method", &reconstruction_method_sptr);
     parser.parse(argv[1]);
@@ -90,14 +100,32 @@ int main(int argc, const char *argv[])
     t.reset();
     t.start();
 
-    shared_ptr < ProjData> recon_data_sptr =
-            ProjData::read_from_file(data_filename);
+    if (data_filename.size() > 0)
+    {
+        recon_data_sptr =
+                ProjData::read_from_file(data_filename);
 
-    shared_ptr <ProjData> atten_data_sptr =
-            ProjData::read_from_file(attenuation_filename);
+        reconstruction_method_sptr->set_input_data(recon_data_sptr);
+    }
+    else
+        return false;
 
-    reconstruction_method_sptr->set_normalisation_proj_data_sptr(atten_data_sptr);
-    reconstruction_method_sptr->set_input_data(recon_data_sptr);
+    if (attenuation_filename.size() > 0 )
+    {
+        atten_data_sptr =
+                ProjData::read_from_file(attenuation_filename);
+
+        reconstruction_method_sptr->set_normalisation_proj_data_sptr(atten_data_sptr);
+    }
+
+    if (background_filename.size() > 0)
+    {
+        back_data_sptr =
+                ProjData::read_from_file(background_filename);
+
+        reconstruction_method_sptr->set_additive_proj_data_sptr(back_data_sptr);
+    }
+
 
     if (reconstruction_method_sptr->reconstruct() == Succeeded::yes)
     {
