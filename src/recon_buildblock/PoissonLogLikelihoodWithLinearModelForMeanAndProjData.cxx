@@ -30,6 +30,7 @@
 #include "stir/recon_buildblock/PoissonLogLikelihoodWithLinearModelForMeanAndProjData.h"
 #include "stir/VoxelsOnCartesianGrid.h"
 #include "stir/recon_buildblock/TrivialBinNormalisation.h"
+#include "stir/recon_buildblock/BinNormalisationFromProjData.h"
 #include "stir/Succeeded.h"
 #include "stir/RelatedViewgrams.h"
 #include "stir/stream.h"
@@ -461,7 +462,7 @@ set_additive_proj_data_sptr(const shared_ptr<ExamData> &arg)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndProjData<TargetT>::
-set_projector_pair_sptr(const shared_ptr<ProjectorByBinPair>& arg) 
+set_projector_pair_sptr(const shared_ptr<ProjectorByBinPair>& arg)
 {
   this->projector_pair_ptr = arg;
 }
@@ -493,9 +494,18 @@ set_normalisation_sptr(const shared_ptr<BinNormalisation>& arg)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndProjData<TargetT>::
-set_input_data(const shared_ptr<ExamData> & _this_data)
+set_normalisation_proj_data_sptr(const shared_ptr<ExamData>& arg)
 {
-    this->proj_data_sptr.reset(dynamic_cast < ProjData * > (_this_data.get()) );
+    shared_ptr<ProjData> temp(dynamic_cast < ProjData * > (arg.get()) );
+    this->normalisation_sptr.reset(new BinNormalisationFromProjData(temp));
+}
+
+template<typename TargetT>
+void
+PoissonLogLikelihoodWithLinearModelForMeanAndProjData<TargetT>::
+set_input_data(const shared_ptr<ExamData> & arg)
+{
+    this->proj_data_sptr.reset(dynamic_cast < ProjData * > (arg.get()) );
 }
 
 /***************************************************************

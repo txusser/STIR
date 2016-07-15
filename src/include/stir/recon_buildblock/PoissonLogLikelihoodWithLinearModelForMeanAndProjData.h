@@ -29,9 +29,9 @@
 
 #include "stir/RegisteredParsingObject.h"
 #include "stir/recon_buildblock/PoissonLogLikelihoodWithLinearModelForMean.h"
-//#include "stir/ProjData.h"
+#include "stir/ProjData.h"
 #include "stir/recon_buildblock/ProjectorByBinPair.h"
-//#include "stir/recon_buildblock/BinNormalisation.h"
+#include "stir/recon_buildblock/BinNormalisation.h"
 #include "stir/TimeFrameDefinitions.h"
 #ifdef STIR_MPI
 #include "stir/recon_buildblock/distributable.h" // for  RPC_process_related_viewgrams_type
@@ -212,7 +212,9 @@ public:
   void set_projector_pair_sptr(const shared_ptr<ProjectorByBinPair>&) ;
   void set_frame_num(const int);
   void set_frame_definitions(const TimeFrameDefinitions&);
-  virtual void set_normalisation_sptr(const shared_ptr<BinNormalisation>&);
+
+  virtual void set_normalisation_proj_data_sptr(const shared_ptr<ExamData> &);
+  void set_normalisation_sptr(const shared_ptr<BinNormalisation>&);
 
   virtual void set_input_data(const shared_ptr<ExamData> &);
   //@}

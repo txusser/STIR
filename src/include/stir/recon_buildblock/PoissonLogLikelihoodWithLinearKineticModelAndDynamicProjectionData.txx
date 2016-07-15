@@ -48,6 +48,7 @@
 #endif
 #include "stir/recon_buildblock/ProjectorByBinPairUsingSeparateProjectors.h"
 
+#include "stir/recon_buildblock/BinNormalisationFromProjData.h"
 #include <algorithm>
 #include <string> 
 // For the Patlak Plot Modelling
@@ -420,10 +421,10 @@ set_additive_proj_data_sptr(const shared_ptr<ExamData> &arg)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearKineticModelAndDynamicProjectionData<TargetT>::
-set_normalisation_sptr(const shared_ptr<BinNormalisation>& arg)
+set_normalisation_proj_data_sptr(const shared_ptr<ExamData> &arg)
 {
-//  this->normalisation_sptr = arg;
-    error("Not implemeted yet");
+    shared_ptr<ProjData> temp(dynamic_cast < ProjData * > (arg.get()) );
+    this->_normalisation_sptr.reset(new BinNormalisationFromProjData(temp));
 }
 
 

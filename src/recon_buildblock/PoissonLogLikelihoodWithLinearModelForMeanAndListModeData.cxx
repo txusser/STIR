@@ -31,6 +31,8 @@
 #include "stir/Succeeded.h" 
 #include "stir/IO/read_from_file.h"
 
+#include "stir/recon_buildblock/BinNormalisationFromProjData.h"
+
 using std::vector;
 using std::pair;
 
@@ -121,9 +123,9 @@ PoissonLogLikelihoodWithLinearModelForMeanAndListModeData<TargetT>::post_process
 template <typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndListModeData<TargetT>::
-set_input_data(const shared_ptr<ExamData> & _this_data)
+set_input_data(const shared_ptr<ExamData> & arg)
 {
-    list_mode_data_sptr.reset(dynamic_cast<CListModeData* > (_this_data.get()) );
+    list_mode_data_sptr.reset(dynamic_cast<CListModeData* > (arg.get()) );
 }
 
 template<typename TargetT>
@@ -137,9 +139,10 @@ set_additive_proj_data_sptr(const shared_ptr<ExamData> &arg)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndListModeData<TargetT>::
-set_normalisation_sptr(const shared_ptr<BinNormalisation>& arg)
+set_normalisation_proj_data_sptr(const shared_ptr<ExamData> &arg)
 {
-  this->normalisation_sptr = arg;
+    shared_ptr<ProjData> temp(dynamic_cast < ProjData * > (arg.get()) );
+    this->normalisation_sptr.reset(new BinNormalisationFromProjData(temp));
 }
 
 #if 0

@@ -348,10 +348,9 @@ set_additive_proj_data_sptr(const shared_ptr<ExamData> &arg)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndGatedProjDataWithMotion<TargetT>::
-set_normalisation_sptr(const shared_ptr<BinNormalisation>& arg)
+set_normalisation_proj_data_sptr(const shared_ptr<ExamData> &arg)
 {
-//  this->normalisation_sptr = arg;
-    error("Not implemeted yet");
+    this->_normalisation_gated_proj_data_sptr.reset(dynamic_cast < GatedProjData * > (arg.get()) );
 }
 
 /***************************************************************

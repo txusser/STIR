@@ -36,8 +36,6 @@
 #include <string>
 
 #include "stir/IO/ExamData.h"
-#include "stir/ProjData.h"
-#include "stir/recon_buildblock/BinNormalisation.h"
 
 START_NAMESPACE_STIR
 
@@ -289,8 +287,8 @@ public:
   //! \brief set_normalisation_sptr
   //! \author Nikos Efthimiou
   //! \details In the case the reconstruction process is called from another
-  //! piece of code, the user should be able to set any additive sinogram
-  virtual void set_normalisation_sptr(const shared_ptr<BinNormalisation>&) = 0;
+  //! piece of code, the user is able to set the multiplicative sinogram.
+  virtual void set_normalisation_proj_data_sptr(const shared_ptr<ExamData>&) = 0;
 
 protected:
   int num_subsets;
