@@ -75,11 +75,13 @@ int main(int argc, const char *argv[])
 
     std::string data_filename;
     std::string output_filename;
+    std::string attenuation_filename;
 
     KeyParser parser;
     parser.add_start_key("Reconstruction");
     parser.add_stop_key("End Reconstruction");
     parser.add_key("input file", &data_filename);
+    parser.add_key("attenuation input file", &attenuation_filename);
     parser.add_key("output filename prefix", &output_filename);
     parser.add_parsing_key("reconstruction method", &reconstruction_method_sptr);
     parser.parse(argv[1]);
@@ -89,8 +91,12 @@ int main(int argc, const char *argv[])
     t.start();
 
     shared_ptr < ProjData> recon_data_sptr =
-            ProjData::read_from_file(data_file_name);
+            ProjData::read_from_file(data_filename);
 
+    shared_ptr <ProjData> atten_data_sptr =
+            ProjData::read_from_file(attenuation_filename);
+
+    reconstruction_method_sptr->set_normalisation_proj_data_sptr(atten_data_sptr);
     reconstruction_method_sptr->set_input_data(recon_data_sptr);
 
     if (reconstruction_method_sptr->reconstruct() == Succeeded::yes)

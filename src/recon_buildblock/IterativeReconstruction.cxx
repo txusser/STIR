@@ -630,9 +630,9 @@ set_additive_proj_data_sptr(const shared_ptr<ExamData> &arg)
 template <typename TargetT>
 void
 IterativeReconstruction<TargetT>::
-set_normalisation_sptr(const shared_ptr<BinNormalisation>& arg)
+set_normalisation_proj_data_sptr(const shared_ptr<ExamData>& arg)
 {
-    error("Not implemented yet");
+    this->objective_function_sptr->set_normalisation_proj_data_sptr(arg);
 }
 
 
