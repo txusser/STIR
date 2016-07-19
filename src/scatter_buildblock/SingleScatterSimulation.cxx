@@ -55,5 +55,6 @@ method_info() const
 
 }
 
+
 END_NAMESPACE_STIR
 

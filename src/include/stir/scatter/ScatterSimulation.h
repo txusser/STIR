@@ -14,9 +14,6 @@
 #include "stir/Succeeded.h"
 #include "stir/RegisteredObject.h"
 
-#include "stir/VoxelsOnCartesianGrid.h"
-#include "stir/ProjDataInfoCylindricalNoArcCorr.h"
-
 START_NAMESPACE_STIR
 
 /*!
@@ -102,115 +99,13 @@ protected:
     void initialise(const std::string& parameter_filename);
 
     virtual void set_defaults();
-
     virtual void initialise_keymap();
 
     //! used to check acceptable parameter ranges, etc...
     virtual bool post_processing();
 
-    //!
-    //! \brief sub_atten_image_sptr
-    //! \details This is the image with tha anatomical information
-    //! \warning Previously density_image_for_scatter_points_sptr
-    shared_ptr<VoxelsOnCartesianGrid<float> > sub_atten_image_sptr;
-
-    //!
-    //! \brief sub_proj_data_info_ptr
-    //!
-    ProjDataInfoCylindricalNoArcCorr * sub_proj_data_info_ptr;
-
-    //! computes scatter for one viewgram
-    /*! \return total scatter estimated for this viewgram */
-    virtual double
-      process_data_for_view_segment_num(const ViewSegmentNumbers& vs_num);
-
 private:
 
-    /**
-      *
-      * \name Variables related to the subsampled attenuation image.
-      * @{
-    */
-
-    //!
-    //! \brief recompute_sub_atten_image
-    bool recompute_sub_atten_image;
-
-    //!
-    //! \brief sub_atten_image_filename
-    //! \details Input or output file name of the subsampled
-    //! attenuation image, depends on the reconmpute_sub_atten_image
-    std::string sub_atten_image_filename;
-
-    //!
-    //! \brief sub_vox_xy
-    //! \details The subsampling of the attenuation image is done,
-    //! in the arbitary zoom factors. This correspond to the zoom in
-    //! the XY plane.
-    float sub_vox_xy;
-
-    //!
-    //! \brief sub_vox_z
-    //! \details The subsampling of the attenuation image is done,
-    //! in the arbitary zoom factors. This correspond to the zoom in
-    //! the Z axis.
-    float sub_vox_z;
-
-    /** }@*/
-
-    /**
-     *
-     * \name Variables related to the subsampled ProjData.
-     * @{
-     */
-
-    //!
-    //! \brief recompute_sub_projdata
-    //! \details
-    bool recompute_sub_projdata;
-
-    //!
-    //! \brief sub_template_proj_data_filename
-    //!
-    std::string sub_proj_data_filename;
-
-    //!
-    //! \brief sub_num_dets_per_ring
-    //! \details Number of detectors per ring for the subsampled
-    //! scanner
-    int sub_num_dets_per_ring;
-
-    //!
-    //! \brief sub_num_rings
-    //! \details Number of rings for the subsampled scanner.
-    int sub_num_rings;
-
-    /** }@*/
-
-
-    //!
-    //! \brief subsample_image
-    //! \param _this_image_sptr The image which will be subsampled
-    //! \param _new_image_sptr The new subsampled image
-    //! \param _sub_vox_xy The zoom factor on the xy plane
-    //! \param _sub_vox_z The zoom factor on the z axis
-    //! \param output_filename If set, the file to store the subsampled image
-    //! \details Replaces the zoom_att_image.sh.
-    void subsample_image(shared_ptr<VoxelsOnCartesianGrid<float> > & _this_image_sptr,
-                         shared_ptr<VoxelsOnCartesianGrid<float> > & _new_image_sptr,
-                         float& _sub_vox_xy, float& _sub_vox_z,
-                         std::string output_filename = "");
-
-    //!
-    //! \brief subsample_projdata_info
-    //! \param _original_projdata_info
-    //! \param _new_projdata_info
-    //! \param output_filename
-    //! \details A function to create a subsampled scanner and projdata info
-    //! for a new number of detectors and rings.
-    void subsample_projdata_info(ProjDataInfoCylindricalNoArcCorr* _original_projdata_info,
-                            int new_num_dets_per_ring, int new_num_rings,
-                            std::string output_filename = "");
 
 
 };
