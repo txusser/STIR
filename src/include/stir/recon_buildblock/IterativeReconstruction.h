@@ -253,6 +253,11 @@ public:
   //! \brief set_normalisation_sptr
   //! \author Nikos Efthimiou
   virtual void set_normalisation_proj_data_sptr(const shared_ptr<ExamData>&);
+
+  //!
+  //! \brief set_normalisation_sptr
+  //!
+  virtual void set_normalisation_sptr(const shared_ptr<BinNormalisation>&);
   //@}
 
 protected:

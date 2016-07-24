@@ -145,6 +145,14 @@ set_normalisation_proj_data_sptr(const shared_ptr<ExamData> &arg)
     this->normalisation_sptr.reset(new BinNormalisationFromProjData(temp));
 }
 
+template<typename TargetT>
+void
+PoissonLogLikelihoodWithLinearModelForMeanAndListModeData<TargetT>::
+set_normalisation_sptr(const shared_ptr<BinNormalisation> &arg)
+{
+    this->normalisation_sptr = arg;
+}
+
 #if 0
 Succeeded  
 PoissonLogLikelihoodWithLinearModelForMeanAndListModeData<TargetT>::

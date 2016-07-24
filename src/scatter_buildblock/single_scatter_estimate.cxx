@@ -27,16 +27,16 @@
 
 */
 
-#include "stir/scatter/ScatterEstimationByBin.h"
+#include "stir/scatter/ScatterSimulation.h"
 using namespace std;
 START_NAMESPACE_STIR
 static const float total_Compton_cross_section_511keV = 
-ScatterEstimationByBin::
+ScatterSimulation::
   total_Compton_cross_section(511.F); 
 
 
 double
-ScatterEstimationByBin::
+ScatterSimulation::
 scatter_estimate(const unsigned det_num_A, 
 		 const unsigned det_num_B)	
 {
@@ -50,7 +50,7 @@ scatter_estimate(const unsigned det_num_A,
 }      
 
 void
-ScatterEstimationByBin::
+ScatterSimulation::
 single_scatter_estimate(double& scatter_ratio_singles,
 			const unsigned det_num_A, 
 			const unsigned det_num_B)

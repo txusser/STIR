@@ -635,6 +635,13 @@ set_normalisation_proj_data_sptr(const shared_ptr<ExamData>& arg)
     this->objective_function_sptr->set_normalisation_proj_data_sptr(arg);
 }
 
+template <typename TargetT>
+void
+IterativeReconstruction<TargetT>::
+set_normalisation_sptr(const shared_ptr<BinNormalisation>& arg)
+{
+    this->objective_function_sptr->set_normalisation_sptr(arg);
+}
 
 template <typename TargetT>
 int

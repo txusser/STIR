@@ -5,8 +5,6 @@
   \brief Demo for Realtime reconstruction initialization
 
   \author Nikos Efthimiou
-
-
   \par main() for any reconstruction which will be created in realtime.
   \code
   recontest parfile
@@ -25,10 +23,21 @@
 #include "stir/CPUTimer.h"
 #include "stir/HighResWallClockTimer.h"
 #include "stir/IO/write_to_file.h"
+#include "stir/IO/read_from_file.h"
+
 #include "stir/ProjData.h"
-
+#include "stir/ProjDataInMemory.h"
+#include "stir/ProjDataInterfile.h"
+#include "stir/recon_buildblock/BinNormalisationFromProjData.h"
+#include "stir/recon_buildblock/BinNormalisationFromAttenuationImage.h"
 #include "stir/TextWriter.h"
+#include "stir/is_null_ptr.h"
+#include "stir/recon_buildblock/ChainedBinNormalisation.h"
+#include "stir/DiscretisedDensity.h"
 
+using std::cerr;
+using std::cout;
+using std::endl;
 
 static void print_usage_and_exit()
 {
@@ -66,11 +75,11 @@ static void print_usage_and_exit()
     exit(EXIT_FAILURE);
 }
 
-
 /***********************************************************/
 
 int main(int argc, const char *argv[])
 {
+
     using namespace stir;
 
     TextPrinter tp("std::cout");
@@ -88,11 +97,20 @@ int main(int argc, const char *argv[])
     std::string data_filename;
     std::string output_filename;
     std::string attenuation_filename;
+    std::string attenuation_image_filename;
+    std::string normalisation_filename;
     std::string background_filename;
+    std::string mult_output_filename = "mult_sino2";
 
     shared_ptr<ProjData> recon_data_sptr;
     shared_ptr<ProjData> atten_data_sptr;
     shared_ptr<ProjData> back_data_sptr;
+    shared_ptr<ProjData> norm_data_sptr;
+    shared_ptr<ProjData> mult_data_sptr;
+
+    shared_ptr<BinNormalisation> bin_norm_sptr;
+
+    shared_ptr<DiscretisedDensity<3,float> > atten_image_sptr;
 
     twh.print_information("Starting Genererilised reconstruction ... ");
 
@@ -101,6 +119,8 @@ int main(int argc, const char *argv[])
     parser.add_stop_key("End Reconstruction");
     parser.add_key("input file", &data_filename);
     parser.add_key("attenuation input file", &attenuation_filename);
+    parser.add_key("attenuation image file", &attenuation_image_filename);
+    parser.add_key("normalisation input file", &normalisation_filename);
     parser.add_key("background input file", &background_filename);
     parser.add_key("output filename prefix", &output_filename);
     parser.add_parsing_key("reconstruction method", &reconstruction_method_sptr);
@@ -128,10 +148,68 @@ int main(int argc, const char *argv[])
     {
         atten_data_sptr =
                 ProjData::read_from_file(attenuation_filename);
+    }
 
-        reconstruction_method_sptr->set_normalisation_proj_data_sptr(atten_data_sptr);
+    if (attenuation_image_filename.size() > 0 )
+    {
+        atten_image_sptr = read_from_file<DiscretisedDensity<3,float> >(attenuation_image_filename);
+    }
 
-        twh.print_information("Normalisation / Attenuation data loaded ... ");
+    if ( normalisation_filename.size() > 0 )
+    {
+        norm_data_sptr =
+                ProjData::read_from_file(normalisation_filename);
+    }
+
+    // Example 1: bin normalisation from image file
+    //    if (attenuation_image_filename.size() > 0 )
+    //    {
+    //        bin_norm_sptr.reset(new BinNormalisationFromAttenuationImage(attenuation_image_filename));
+    //        reconstruction_method_sptr->set_normalisation_sptr(bin_norm_sptr);
+    //        twh.print_information("Bin normalisation from Attenuation image file loaded ...\n ");
+    //    }
+
+    // Example 2: bin normalisation from projdata file
+    //    if (attenuation_filename.size() > 0 )
+    //    {
+    //        bin_norm_sptr.reset(new BinNormalisationFromProjData(attenuation_filename) );
+    //        reconstruction_method_sptr->set_normalisation_sptr(bin_norm_sptr);
+    //        twh.print_information("Bin normalisation from Attenuation ProjData file loaded ...\n ");
+    //    }
+
+    // Example 3: bin normalisation from DiscretisedDensity
+    //        if (!is_null_ptr(atten_image_sptr))
+    //        {
+    //            bin_norm_sptr.reset(new BinNormalisationFromAttenuationImage(atten_image_sptr));
+    //            reconstruction_method_sptr->set_normalisation_sptr(bin_norm_sptr);
+    //            twh.print_information("Bin normalisation from DiscretisedDensity data loaded ...\n ");
+    //        }
+
+    //Example 4: bin normalisation from ProjData.
+    //    if (!is_null_ptr(atten_data_sptr))
+    //    {
+    //        bin_norm_sptr.reset(new BinNormalisationFromProjData(atten_data_sptr));
+    //        reconstruction_method_sptr->set_normalisation_sptr(bin_norm_sptr);
+    //        twh.print_information("Bin normalisation from ProjData loaded ...\n ");
+    //    }
+
+    // Example 5: Normalisation from ProjData
+    //    if (!is_null_ptr(atten_data_sptr))
+    //    {
+    //        reconstruction_method_sptr->set_normalisation_proj_data_sptr(atten_data_sptr);
+    //        twh.print_information("Bin normalisation from ProjData loaded ...\n ");
+    //    }
+
+    //Example 6: Chained BinNormalisation from ProjData
+    if (!is_null_ptr(atten_data_sptr) &&
+            !is_null_ptr(norm_data_sptr))
+    {
+        shared_ptr<BinNormalisationFromProjData> _atten(new BinNormalisationFromProjData(atten_data_sptr));
+        shared_ptr<BinNormalisationFromProjData> _norm(new BinNormalisationFromProjData(norm_data_sptr));
+        bin_norm_sptr.reset(new ChainedBinNormalisation(_atten, _norm));
+
+        reconstruction_method_sptr->set_normalisation_sptr(bin_norm_sptr);
+        twh.print_information("Chained Bin normalisation from ProjData loaded ...\n ");
     }
 
     if (background_filename.size() > 0)
@@ -176,5 +254,5 @@ int main(int argc, const char *argv[])
     return Succeeded::yes;
 
     return EXIT_SUCCESS;
-}
 
+}

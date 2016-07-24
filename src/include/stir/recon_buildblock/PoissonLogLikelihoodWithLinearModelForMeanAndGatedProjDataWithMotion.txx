@@ -353,6 +353,14 @@ set_normalisation_proj_data_sptr(const shared_ptr<ExamData> &arg)
     this->_normalisation_gated_proj_data_sptr.reset(dynamic_cast < GatedProjData * > (arg.get()) );
 }
 
+template<typename TargetT>
+void
+PoissonLogLikelihoodWithLinearModelForMeanAndGatedProjDataWithMotion<TargetT>::
+set_normalisation_sptr(const shared_ptr<BinNormalisation> &arg)
+{
+//    this->_normalisation_gated_proj_data_sptr.reset(dynamic_cast < GatedProjData * > (arg.get()) );
+    error ("Please use set_normalisation_proj_data_sptr, instead. ");
+}
 /***************************************************************
   set_up()
 ***************************************************************/

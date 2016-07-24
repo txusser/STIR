@@ -66,6 +66,7 @@
 #include "stir/is_null_ptr.h"
 #include "stir/Succeeded.h"
 
+#include "stir/PostFiltering.h"
 #include <iostream> 
 
 #ifndef STIR_NO_NAMESPACES
@@ -88,24 +89,24 @@ DiscretisedDensity<3,float>* ask_image(const char *const input_query)
   
 }
 
-class PostFiltering 
-{
-public:
-  PostFiltering();
-  shared_ptr<DataProcessor<DiscretisedDensity<3,float> > > filter_ptr;
-public:
-  KeyParser parser;
+//class PostFiltering
+//{
+//public:
+//  PostFiltering();
+//  shared_ptr<DataProcessor<DiscretisedDensity<3,float> > > filter_ptr;
+//public:
+//  KeyParser parser;
   
-};
+//};
 
-PostFiltering::PostFiltering()
-{
-  filter_ptr.reset();
-  parser.add_start_key("PostFilteringParameters");
-  parser.add_parsing_key("PostFilter type", &filter_ptr);
-  parser.add_stop_key("END PostFiltering Parameters");
+//PostFiltering::PostFiltering()
+//{
+//  filter_ptr.reset();
+//  parser.add_start_key("PostFilteringParameters");
+//  parser.add_parsing_key("PostFilter type", &filter_ptr);
+//  parser.add_stop_key("END PostFiltering Parameters");
   
-}
+//}
 
 
 END_NAMESPACE_STIR

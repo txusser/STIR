@@ -427,6 +427,16 @@ set_normalisation_proj_data_sptr(const shared_ptr<ExamData> &arg)
     this->_normalisation_sptr.reset(new BinNormalisationFromProjData(temp));
 }
 
+template<typename TargetT>
+void
+PoissonLogLikelihoodWithLinearKineticModelAndDynamicProjectionData<TargetT>::
+set_normalisation_sptr(const shared_ptr<BinNormalisation> &arg)
+{
+    //shared_ptr<ProjData> temp(dynamic_cast < ProjData * > (arg.get()) );
+    //this->_normalisation_sptr.reset(new BinNormalisationFromProjData(temp));
+    this->_normalisation_sptr = arg;
+}
+
 
 /*************************************************************************
   functions that compute the value/gradient of the objective function etc

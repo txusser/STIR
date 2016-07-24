@@ -28,7 +28,7 @@
 
 */
 
-#include "stir/scatter/ScatterEstimationByBin.h"
+#include "stir/scatter/ScatterSimulation.h"
 #include "stir/ProjDataInfoCylindricalNoArcCorr.h"
 #include "stir/numerics/erf.h"
 #include "stir/info.h"
@@ -36,7 +36,7 @@
 
 START_NAMESPACE_STIR
 unsigned 
-ScatterEstimationByBin::
+ScatterSimulation::
 find_in_detection_points_vector(const CartesianCoordinate3D<float>& coord) const
 {
   unsigned int ret_value = 0;
@@ -63,7 +63,7 @@ find_in_detection_points_vector(const CartesianCoordinate3D<float>& coord) const
 }
 
 void
-ScatterEstimationByBin::
+ScatterSimulation::
 find_detectors(unsigned& det_num_A, unsigned& det_num_B, const Bin& bin) const
 {
   CartesianCoordinate3D<float> detector_coord_A, detector_coord_B;
@@ -79,7 +79,7 @@ find_detectors(unsigned& det_num_A, unsigned& det_num_B, const Bin& bin) const
 }
 
 float
-ScatterEstimationByBin::
+ScatterSimulation::
 compute_emis_to_det_points_solid_angle_factor(
                                               const CartesianCoordinate3D<float>& emis_point,
                                               const CartesianCoordinate3D<float>& detector_coord)
@@ -96,7 +96,7 @@ compute_emis_to_det_points_solid_angle_factor(
 }
 
 float
-ScatterEstimationByBin::
+ScatterSimulation::
 detection_efficiency(const float energy) const
 {
 //  // factor 2.35482 is used to convert FWHM to sigma
@@ -113,7 +113,7 @@ detection_efficiency(const float energy) const
 }
 
 float
-ScatterEstimationByBin::
+ScatterSimulation::
 max_cos_angle(const float low, const float approx, const float resolution_at_511keV)
 {
   return
@@ -123,7 +123,7 @@ max_cos_angle(const float low, const float approx, const float resolution_at_511
 
 
 float
-ScatterEstimationByBin::
+ScatterSimulation::
 energy_lower_limit(const float low, const float approx, const float resolution_at_511keV)
 {
   return
@@ -131,7 +131,7 @@ energy_lower_limit(const float low, const float approx, const float resolution_a
 }
 
 double
-ScatterEstimationByBin::
+ScatterSimulation::
 detection_efficiency_no_scatter(const unsigned det_num_A, 
                                 const unsigned det_num_B) const
 {

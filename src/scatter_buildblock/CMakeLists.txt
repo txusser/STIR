@@ -17,6 +17,7 @@ set(${dir_LIB_SOURCES}
 	ScatterEstimationWithFit
 	ScatterSimulation
 	SingleScatterSimulation
+        CreateTailMaskFromACFs
 )
 #$(dir)_REGISTRY_SOURCES:= scatter_buildblock_registries
 

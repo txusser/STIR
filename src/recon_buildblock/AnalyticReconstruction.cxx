@@ -246,6 +246,13 @@ set_normalisation_proj_data_sptr(const shared_ptr<ExamData>& arg)
 {
     error("Not implemented yet, please precorrect the projection data");
 }
+
+void
+AnalyticReconstruction::
+set_normalisation_sptr(const shared_ptr<BinNormalisation>& arg)
+{
+    error("Not implemented yet, please precorrect the projection data");
+}
  
 END_NAMESPACE_STIR
 

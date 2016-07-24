@@ -214,7 +214,7 @@ public:
   void set_frame_definitions(const TimeFrameDefinitions&);
 
   virtual void set_normalisation_proj_data_sptr(const shared_ptr<ExamData> &);
-  void set_normalisation_sptr(const shared_ptr<BinNormalisation>&);
+  virtual void set_normalisation_sptr(const shared_ptr<BinNormalisation>&);
 
   virtual void set_input_data(const shared_ptr<ExamData> &);
   //@}

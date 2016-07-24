@@ -26,7 +26,7 @@
   \author Kris Thielemans
 */
 
-#include "stir/scatter/ScatterEstimationByBin.h"
+#include "stir/scatter/ScatterSimulation.h"
 #include "stir/VoxelsOnCartesianGrid.h"
 #include <time.h>
 
@@ -43,17 +43,17 @@ static inline float random_point(const float low, const float high)
 }
 
 void
-ScatterEstimationByBin::
+ScatterSimulation::
 sample_scatter_points()
 { 
 
   const DiscretisedDensityOnCartesianGrid<3,float>& attenuation_map =
     dynamic_cast<const DiscretisedDensityOnCartesianGrid<3,float>& >
-    (*this->sub_atten_image_sptr);
+    (*this->atten_image_sptr);
 
   BasicCoordinate<3,int> min_index, max_index ;
   CartesianCoordinate3D<int> coord;
-  if(!this->sub_atten_image_sptr->get_regular_range(min_index, max_index))
+  if(!this->atten_image_sptr->get_regular_range(min_index, max_index))
     error("scatter points sampling works only on regular ranges, at the moment\n");    
   const VoxelsOnCartesianGrid<float>& image =
     dynamic_cast<const VoxelsOnCartesianGrid<float>&>(attenuation_map);

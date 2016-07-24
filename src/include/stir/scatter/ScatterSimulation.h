@@ -14,7 +14,15 @@
 #include "stir/Succeeded.h"
 #include "stir/RegisteredObject.h"
 
+#include "stir/ProjData.h"
+#include "stir/VoxelsOnCartesianGrid.h"
+
 START_NAMESPACE_STIR
+
+class Succeeded;
+class ProjDataInfoCylindricalNoArcCorr;
+class ViewSegmentNumbers;
+class BinNormalisation;
 
 /*!
   \ingroup scatter
@@ -94,7 +102,122 @@ public:
     //! prompts the user to enter parameter values manually
     virtual void ask_parameters();
 
+    inline void set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>&);
+
+    shared_ptr<VoxelsOnCartesianGrid<float> > activity_image_sptr;
+
+    //!
+    //! \brief set_activity_image_sptr
+    //!
+    inline Succeeded set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+
+    //!
+    //! \brief set_atten_image_sptr
+    //! \return
+    //! \details If called  from ScatterEstimationByBin then this refers to the
+    //! subsampled attenuation image.
+    inline Succeeded set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+
+    //!
+    //! \brief set_activity_image
+    //! \param filename
+    //!
+    inline void set_activity_image(const std::string& filename);
+
+    //! find scatter points
+    /*! This function sets scatt_points_vector and scatter_volume. It will also
+        remove any cached integrals as they would be incorrect otherwise.
+    */
+    void
+    sample_scatter_points();
+
+    //!
+    //! \brief set_template_proj_data_info_from_file
+    //! \param filename
+    //! \details Sets the template of the ProjDataInfo from a file
+    inline void set_template_proj_data_info_from_file(const std::string& filename);
+
+    //!
+    //! \brief set_sub_proj_data_info_from_file
+    //! \param filename
+    //!
+    inline void
+    set_sub_proj_data_info_from_file(const std::string& filename);
+
+    //! create output projection data of same size as template_proj_data_info
+    /*! \warning use set_template_proj_data_info() first.
+
+     Currently always uses Interfile output.
+     \warning If the specified file already exists it will be erased.
+    */
+    inline void set_proj_data_from_file(const std::string& filename,
+                                        shared_ptr<ProjData>& _this_projdata);
+
+    /**
+     *
+     * \name functions to set parameters
+     * @{
+     */
+
+    inline void set_attenuation_threshold(float _val);
+
+    inline void set_random_point(bool _val);
+
+    inline void set_cache_enabled(bool _val);
+
+    /** @}*/
+
+    //! \name Compton scatter cross sections
+    //@{
+    static
+    inline float
+    dif_Compton_cross_section(const float cos_theta, float energy);
+
+
+    static
+    inline float
+    total_Compton_cross_section(float energy);
+
+    static
+    inline float
+    photon_energy_after_Compton_scatter(const float cos_theta, const float energy);
+
+    static
+    inline float
+    photon_energy_after_Compton_scatter_511keV(const float cos_theta);
+
+    static
+    inline float
+    total_Compton_cross_section_relative_to_511keV(const float energy);
+    //@}
+
 protected:
+
+    //! computes scatter for one viewgram
+    /*! \return total scatter estimated for this viewgram */
+    virtual double
+    process_data_for_view_segment_num(const ViewSegmentNumbers& vs_num);
+
+    float
+    compute_emis_to_det_points_solid_angle_factor(const CartesianCoordinate3D<float>& emis_point,
+                                                  const CartesianCoordinate3D<float>& detector_coord) ;
+
+    //! threshold below which a voxel in the attenuation image will not be considered as a candidate scatter point
+    float attenuation_threshold;
+
+    //! boolean to see if we need to move the scatter point randomly within in its voxel
+    /*! This was first recommended by Watson. It is recommended to leave this on, as otherwise
+       discretisation errors are more obvious.
+
+       Note that the random generator is seeded via date/time, so re-running the scatter
+       simulation will give a slightly different result if this boolean is on.
+    */
+    bool random;
+    //! boolean to see if we need to cache the integrals
+    /*! By default, we cache the integrals over the emission and attenuation image. If you run out
+        of memory, you can switch this off, but performance will suffer dramatically.
+    */
+    bool use_cache;
 
     void initialise(const std::string& parameter_filename);
 
@@ -104,13 +227,285 @@ protected:
     //! used to check acceptable parameter ranges, etc...
     virtual bool post_processing();
 
+    bool sub_sample_atten_image();
+
+    enum image_type{act_image_type, att_image_type};
+    struct ScatterPoint
+    {
+        CartesianCoordinate3D<float> coord;
+        float mu_value;
+    };
+
+    std::vector< ScatterPoint> scatt_points_vector;
+
+    float scatter_volume;
+
+
+    //! remove cached attenuation integrals
+    /*! should be used before recalculating scatter for a new attenuation image or
+      when changing the sampling of the detector etc */
+    virtual void remove_cache_for_integrals_over_attenuation();
+
+    //! reset cached activity integrals
+    /*! should be used before recalculating scatter for a new activity image or
+      when changing the sampling of the detector etc */
+    virtual void remove_cache_for_integrals_over_activity();
+
+    /**
+      *
+      * \name Variables retated to the scanner geometry
+      * @{
+      */
+
+    //!
+    //! \brief template_proj_data_filename
+    //! \details The file name for the Scanner template
+    std::string template_proj_data_filename;
+
+    //!
+    //! \brief proj_data_info_ptr
+    //! \details The projection data info of the scanner template
+    ProjDataInfoCylindricalNoArcCorr * proj_data_info_ptr;
+
+    //!
+    //! \brief template_exam_info_sptr
+    //! \details Exam info extracted from the scanner template
+    shared_ptr<ExamInfo> template_exam_info_sptr;
+
+    /** @}*/
+
+    /**
+      *
+      * \name Variables related to the subsampled attenuation image.
+      * @{
+    */
+
+    //!
+    //! \brief recompute_sub_atten_image
+    bool recompute_sub_atten_image;
+
+    //!
+    //! \brief sub_atten_image_filename
+    //! \details Input or output file name of the subsampled
+    //! attenuation image, depends on the reconmpute_sub_atten_image
+    std::string sub_atten_image_filename;
+
+    //!
+    //! \brief sub_atten_image_sptr
+    //! \details This is the image with tha anatomical information
+    //! \warning Previously density_image_for_scatter_points_sptr
+    shared_ptr<VoxelsOnCartesianGrid<float> > atten_image_sptr;
+
+    //!
+    //! \brief sub_vox_xy
+    //! \details The subsampling of the attenuation image is done,
+    //! in the arbitary zoom factors. This correspond to the zoom in
+    //! the XY plane.
+    float sub_vox_xy;
+
+    //!
+    //! \brief sub_vox_z
+    //! \details The subsampling of the attenuation image is done,
+    //! in the arbitary zoom factors. This correspond to the zoom in
+    //! the Z axis.
+    float sub_vox_z;
+
+    /** }@*/
+
+    int total_detectors;
+
+    /** \name detection related functions
+     *
+     * @{
+     */
+
+    //!
+    //! \brief detection_efficiency
+    //! \param energy
+    //! \return
+    //! \details energy-dependent detection efficiency (Gaussian model)
+    float detection_efficiency(const float energy) const;
+
+
+    //! maximum angle to consider above which detection after Compton scatter is considered too small
+    static
+    float
+    max_cos_angle(const float low, const float approx, const float resolution_at_511keV);
+
+    //! mimumum energy to consider above which detection after Compton scatter is considered too small
+    static
+    float
+    energy_lower_limit(const float low, const float approx, const float resolution_at_511keV);
+
+    virtual
+    void
+    find_detectors(unsigned& det_num_A, unsigned& det_num_B, const Bin& bin) const;
+
+    unsigned
+    find_in_detection_points_vector(const CartesianCoordinate3D<float>& coord) const;
+
+    CartesianCoordinate3D<float>  shift_detector_coordinates_to_origin;
+
+    //! average detection efficiency of unscattered counts
+    double
+    detection_efficiency_no_scatter(const unsigned det_num_A,
+                                    const unsigned det_num_B) const;
+
+    // next needs to be mutable because find_in_detection_points_vector is const
+    mutable std::vector<CartesianCoordinate3D<float> > detection_points_vector;
+
+    //!@}
+
+    /**
+     *
+     * \name Variables related to the subsampled ProjData.
+     * @{
+     */
+
+    //!
+    //! \brief recompute_sub_projdata
+    //! \details
+    bool recompute_sub_projdata;
+
+    //!
+    //! \brief sub_template_proj_data_filename
+    //!
+    std::string sub_proj_data_filename;
+
+    //!
+    //! \brief sub_proj_data_info_ptr
+    //!
+    ProjDataInfoCylindricalNoArcCorr * sub_proj_data_info_ptr;
+
+    //!
+    //! \brief sub_num_dets_per_ring
+    //! \details Number of detectors per ring for the subsampled
+    //! scanner
+    int sub_num_dets_per_ring;
+
+    //!
+    //! \brief sub_num_rings
+    //! \details Number of rings for the subsampled scanner.
+    int sub_num_rings;
+
+    /** }@*/
+
+    float
+    single_scatter_estimate_for_one_scatter_point(const std::size_t scatter_point_num,
+                                                  const unsigned det_num_A,
+                                                  const unsigned det_num_B);
+
+
+    void
+    single_scatter_estimate(double& scatter_ratio_singles,
+                            const unsigned det_num_A,
+                            const unsigned det_num_B);
+
+
+    virtual double
+    scatter_estimate(const unsigned det_num_A,
+                     const unsigned det_num_B);
+
+
+
+    //! \name integrating functions
+    //@{
+    static
+    float
+    integral_between_2_points(const DiscretisedDensity<3,float>& density,
+                              const CartesianCoordinate3D<float>& point1,
+                              const CartesianCoordinate3D<float>& point2);
+
+    float
+    exp_integral_over_attenuation_image_between_scattpoint_det (const CartesianCoordinate3D<float>& scatter_point,
+                                                                const CartesianCoordinate3D<float>& detector_coord);
+
+
+
+    float
+    integral_over_activity_image_between_scattpoint_det (const CartesianCoordinate3D<float>& scatter_point,
+                                                         const CartesianCoordinate3D<float>& detector_coord);
+
+
+
+    float
+    cached_integral_over_activity_image_between_scattpoint_det(const unsigned scatter_point_num,
+                                                               const unsigned det_num);
+
+    float
+    cached_exp_integral_over_attenuation_image_between_scattpoint_det(const unsigned scatter_point_num,
+                                                                      const unsigned det_num);
+    //@}
+
+
 private:
 
+    Array<2,float> cached_activity_integral_scattpoint_det;
+    Array<2,float> cached_attenuation_integral_scattpoint_det;
 
+
+    Succeeded subsample_atten_image();
+
+    //! set-up cache for attenuation integrals
+    /*! \warning This will not remove existing cached data (if the sizes match). If you need this,
+        call remove_cache_for_scattpoint_det_integrals_over_attenuation() first.
+    */
+    void initialise_cache_for_scattpoint_det_integrals_over_attenuation();
+    //! set-up cache for activity integrals
+    /*! \warning This will not remove existing cached data (if the sizes match). If you need this,
+        call remove_cache_for_scattpoint_det_integrals_over_activity() first.
+    */
+    void initialise_cache_for_scattpoint_det_integrals_over_activity();
+
+
+    //!
+    //! \brief subsample_image
+    //! \param _this_image_sptr The image which will be subsampled
+    //! \param _new_image_sptr The new subsampled image
+    //! \param _sub_vox_xy The zoom factor on the xy plane
+    //! \param _sub_vox_z The zoom factor on the z axis
+    //! \param output_filename If set, the file to store the subsampled image
+    //! \details Replaces the zoom_att_image.sh.
+    void subsample_image(shared_ptr<VoxelsOnCartesianGrid<float> > & _this_image_sptr,
+                         shared_ptr<VoxelsOnCartesianGrid<float> > & _new_image_sptr,
+                         float& _sub_vox_xy, float& _sub_vox_z,
+                         std::string output_filename = "");
+
+    //!
+    //! \brief subsample_projdata_info
+    //! \param _original_projdata_info
+    //! \param _new_projdata_info
+    //! \param output_filename
+    //! \details A function to create a subsampled scanner and projdata info
+    //! for a new number of detectors and rings.
+    void subsample_projdata_info(ProjDataInfoCylindricalNoArcCorr* _original_projdata_info,
+                            int new_num_dets_per_ring, int new_num_rings,
+                            std::string output_filename = "");
+    //!
+    //! \brief dets_to_voxs
+    //! \param _num
+    //! \param _axis
+    //! \return
+    //! \details A helper function which finds the optimal voxels size
+    //! for a detector size
+    inline float
+    num_dets_to_vox_size(int _num, bool _axis);
+
+    //!
+    //! \brief voxs_to_dets
+    //! \param _num
+    //! \param _axis
+    //! \return
+    //! \details A helper function which finds the optimal det size
+    //! for a voxel size.
+    inline int
+    vox_size_to_num_dets(float _num, bool _axis);
 
 };
 
 END_NAMESPACE_STIR
+
+#include "stir/scatter/ScatterSimulation.inl"
 
 #endif
 

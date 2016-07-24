@@ -28,7 +28,7 @@
 
 
 */
-#include "stir/scatter/ScatterEstimationByBin.h"
+#include "stir/scatter/ScatterSimulation.h"
 #ifndef NDEBUG
 // currently necessary for assert below
 #include "stir/VoxelsOnCartesianGrid.h"
@@ -40,11 +40,11 @@ using namespace std;
 START_NAMESPACE_STIR
 
 static const float total_Compton_cross_section_511keV = 
-ScatterEstimationByBin::
+ScatterSimulation::
   total_Compton_cross_section(511.F); 
 
 float
-ScatterEstimationByBin::
+ScatterSimulation::
  single_scatter_estimate_for_one_scatter_point(
           const std::size_t scatter_point_num, 
           const unsigned det_num_A, 
