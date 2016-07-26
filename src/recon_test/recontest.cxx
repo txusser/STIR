@@ -35,6 +35,8 @@
 #include "stir/recon_buildblock/ChainedBinNormalisation.h"
 #include "stir/DiscretisedDensity.h"
 
+#include "stir/recon_buildblock/IterativeReconstruction.h"
+
 using std::cerr;
 using std::cout;
 using std::endl;
@@ -101,6 +103,9 @@ int main(int argc, const char *argv[])
     std::string normalisation_filename;
     std::string background_filename;
     std::string mult_output_filename = "mult_sino2";
+    bool iterative_method = true;
+
+    IterativeReconstruction <DiscretisedDensity<3, float> > * iterative_object;
 
     shared_ptr<ProjData> recon_data_sptr;
     shared_ptr<ProjData> atten_data_sptr;
@@ -144,6 +149,20 @@ int main(int argc, const char *argv[])
     else
         return false;
 
+    if (reconstruction_method_sptr->get_registered_name() == "OSMAPOSL" ||
+            reconstruction_method_sptr->get_registered_name() == "OSSPS")
+    {
+
+        iterative_object =
+                dynamic_cast<IterativeReconstruction<DiscretisedDensity<3, float> > *> (reconstruction_method_sptr.get());
+        iterative_method = true;
+    }
+    else if (reconstruction_method_sptr->get_registered_name() == "FBP3D" ||
+             reconstruction_method_sptr->get_registered_name() == "FBP2D")
+    {
+       iterative_method = false;
+    }
+
     if (attenuation_filename.size() > 0 )
     {
         atten_data_sptr =
@@ -162,7 +181,7 @@ int main(int argc, const char *argv[])
     }
 
     // Example 1: bin normalisation from image file
-    //    if (attenuation_image_filename.size() > 0 )
+    //    if (attenuation_image_filename.size() > 0 && iterative_method)
     //    {
     //        bin_norm_sptr.reset(new BinNormalisationFromAttenuationImage(attenuation_image_filename));
     //        reconstruction_method_sptr->set_normalisation_sptr(bin_norm_sptr);
@@ -170,7 +189,7 @@ int main(int argc, const char *argv[])
     //    }
 
     // Example 2: bin normalisation from projdata file
-    //    if (attenuation_filename.size() > 0 )
+    //    if (attenuation_filename.size() > 0 && iterative_method)
     //    {
     //        bin_norm_sptr.reset(new BinNormalisationFromProjData(attenuation_filename) );
     //        reconstruction_method_sptr->set_normalisation_sptr(bin_norm_sptr);
@@ -178,7 +197,7 @@ int main(int argc, const char *argv[])
     //    }
 
     // Example 3: bin normalisation from DiscretisedDensity
-    //        if (!is_null_ptr(atten_image_sptr))
+    //        if (!is_null_ptr(atten_image_sptr) && iterative_method)
     //        {
     //            bin_norm_sptr.reset(new BinNormalisationFromAttenuationImage(atten_image_sptr));
     //            reconstruction_method_sptr->set_normalisation_sptr(bin_norm_sptr);
@@ -186,7 +205,7 @@ int main(int argc, const char *argv[])
     //        }
 
     //Example 4: bin normalisation from ProjData.
-    //    if (!is_null_ptr(atten_data_sptr))
+    //    if (!is_null_ptr(atten_data_sptr) && iterative_method)
     //    {
     //        bin_norm_sptr.reset(new BinNormalisationFromProjData(atten_data_sptr));
     //        reconstruction_method_sptr->set_normalisation_sptr(bin_norm_sptr);
@@ -194,7 +213,7 @@ int main(int argc, const char *argv[])
     //    }
 
     // Example 5: Normalisation from ProjData
-    //    if (!is_null_ptr(atten_data_sptr))
+    //    if (!is_null_ptr(atten_data_sptr) && iterative_method)
     //    {
     //        reconstruction_method_sptr->set_normalisation_proj_data_sptr(atten_data_sptr);
     //        twh.print_information("Bin normalisation from ProjData loaded ...\n ");
@@ -202,22 +221,22 @@ int main(int argc, const char *argv[])
 
     //Example 6: Chained BinNormalisation from ProjData
     if (!is_null_ptr(atten_data_sptr) &&
-            !is_null_ptr(norm_data_sptr))
+            !is_null_ptr(norm_data_sptr) && iterative_method)
     {
         shared_ptr<BinNormalisationFromProjData> _atten(new BinNormalisationFromProjData(atten_data_sptr));
         shared_ptr<BinNormalisationFromProjData> _norm(new BinNormalisationFromProjData(norm_data_sptr));
         bin_norm_sptr.reset(new ChainedBinNormalisation(_atten, _norm));
 
-        reconstruction_method_sptr->set_normalisation_sptr(bin_norm_sptr);
+        iterative_object->set_normalisation_sptr(bin_norm_sptr);
         twh.print_information("Chained Bin normalisation from ProjData loaded ...\n ");
     }
 
-    if (background_filename.size() > 0)
+    if (background_filename.size() > 0 && iterative_method)
     {
         back_data_sptr =
                 ProjData::read_from_file(background_filename);
 
-        reconstruction_method_sptr->set_additive_proj_data_sptr(back_data_sptr);
+        iterative_object->set_additive_proj_data_sptr(back_data_sptr);
 
         twh.print_information("Background (scattered / random) data loaded ... ");
     }

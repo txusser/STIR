@@ -165,27 +165,27 @@ public:
   //!
   shared_ptr<TargetT> get_target_image();
 
-  //!
-  //! \brief set_additive_proj_data_sptr
-  //! \author Nikos Efthimiou
-  //! \details In the case the reconstruction process is called from another
-  //! piece of code, the user should be able to set any additive sinogram
-  //!
-   virtual void set_additive_proj_data_sptr(const shared_ptr<ExamData>&) = 0;
+//  //!
+//  //! \brief set_additive_proj_data_sptr
+//  //! \author Nikos Efthimiou
+//  //! \details In the case the reconstruction process is called from another
+//  //! piece of code, the user should be able to set any additive sinogram
+//  //!
+//   virtual void set_additive_proj_data_sptr(const shared_ptr<ExamData>&) = 0;
 
-  //!
-  //! \brief set_normalisation_proj_data_sptr
-  //! \author Nikos Efthimiou
-  //! \details In the case the reconstruction process is called from another
-  //! piece of code, the user should be able to set any additive sinogram
-  //! \warning This function don't perform as expected some times. If possible better
-  //! use the set_normalisation_sptr.
-  virtual void set_normalisation_proj_data_sptr(const shared_ptr<ExamData>&) = 0;
+//  //!
+//  //! \brief set_normalisation_proj_data_sptr
+//  //! \author Nikos Efthimiou
+//  //! \details In the case the reconstruction process is called from another
+//  //! piece of code, the user should be able to set any additive sinogram
+//  //! \warning This function don't perform as expected some times. If possible better
+//  //! use the set_normalisation_sptr.
+//  virtual void set_normalisation_proj_data_sptr(const shared_ptr<ExamData>&) = 0;
 
-  //!
-  //! \brief set_normalisation_sptr
-  //! \author Nikos Efthimiou
-  virtual void set_normalisation_sptr(const shared_ptr<BinNormalisation>&) = 0;
+//  //!
+//  //! \brief set_normalisation_sptr
+//  //! \author Nikos Efthimiou
+//  virtual void set_normalisation_sptr(const shared_ptr<BinNormalisation>&) = 0;
 
 
   // parameters

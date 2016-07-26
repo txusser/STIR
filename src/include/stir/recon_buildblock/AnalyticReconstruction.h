@@ -102,20 +102,20 @@ public:
     //! \author Nikos Efthimiou
     void set_input_data(const shared_ptr<ExamData>&);
 
-    //!
-    //! \brief set_additive_proj_data_sptr
-    //! \author Nikos Efthimiou
-     virtual void set_additive_proj_data_sptr(const shared_ptr<ExamData>&);
+//    //!
+//    //! \brief set_additive_proj_data_sptr
+//    //! \author Nikos Efthimiou
+//     virtual void set_additive_proj_data_sptr(const shared_ptr<ExamData>&);
 
-    //!
-    //! \brief set_normalisation_proj_data_sptr
-    //! \author Nikos Efthimiou
-    virtual void set_normalisation_proj_data_sptr(const shared_ptr<ExamData>&);
+//    //!
+//    //! \brief set_normalisation_proj_data_sptr
+//    //! \author Nikos Efthimiou
+//    virtual void set_normalisation_proj_data_sptr(const shared_ptr<ExamData>&);
 
-    //!
-    //! \brief set_normalisation_stpr
-    //!
-    virtual void set_normalisation_sptr(const shared_ptr<BinNormalisation>&);
+//    //!
+//    //! \brief set_normalisation_stpr
+//    //!
+//    virtual void set_normalisation_sptr(const shared_ptr<BinNormalisation>&);
 
   // parameters
  protected:

@@ -82,8 +82,11 @@ public:
     virtual Succeeded process_data();
 
     virtual Succeeded
-    reconstruct(int,
+    reconstruct_iterative(int,
              shared_ptr<DiscretisedDensity<3, float> >&);
+
+    virtual Succeeded
+    reconstruct_analytic();
 
     //!
     //! \brief set_image_from_file

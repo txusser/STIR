@@ -80,6 +80,7 @@ IterativeReconstruction<TargetT>::set_defaults()
   this->report_objective_function_values_interval = 0;
 
    this->initial_data_manually_set = false;
+   this->has_setup = false;
 
 }
 
@@ -394,9 +395,10 @@ template <typename TargetT>
 void
 IterativeReconstruction<TargetT>::set_initial_data_ptr(const shared_ptr<TargetT>& arg)
 {
+    // If null_ptr then do nothing and let the reconstruction,
+    // initiliase as usual.
     if (is_null_ptr(arg))
-        error("Unable to set initial reconstruction image. Aborting...");
-
+        return;
     this->target_data_sptr = arg;
     initial_data_manually_set = true;
 }

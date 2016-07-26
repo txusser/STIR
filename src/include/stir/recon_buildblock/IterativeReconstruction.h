@@ -335,6 +335,14 @@ protected:
   //! inter-iteration filter
   shared_ptr<DataProcessor<TargetT> > inter_iteration_filter_ptr;
 
+  //!
+  //! \brief has_setup
+  //! \author Nikos Efthimiou
+  //! \details Highly experimental!! If the reconstruction is invoked
+  //! by some other code which calls reconstruct() intermittently, you
+  //! don't want to re-set_up.
+  bool has_setup;
+
 
   //!
   //! \brief data_manually_set

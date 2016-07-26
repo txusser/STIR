@@ -49,6 +49,8 @@
 
 #include "stir/recon_buildblock/IterativeReconstruction.h"
 
+#include <sstream>
+
 // The calculation of the attenuation coefficients
 #include "stir/recon_buildblock/ForwardProjectorByBinUsingRayTracing.h"
 #include "stir/recon_buildblock/ForwardProjectorByBinUsingProjMatrixByBin.h"
@@ -178,7 +180,6 @@ post_processing()
         error("Please define a reconstruction method.");
     }
 
-    std::string nsn =this->reconstruction_template_sptr->get_registered_name() ;
     if (this->reconstruction_template_sptr->get_registered_name() == "OSMAPOSL" ||
             this->reconstruction_template_sptr->get_registered_name() == "OSSPS")
     {
@@ -204,7 +205,7 @@ post_processing()
     // Load the measured input emission data and check if they need SSRB
     //
 
-    return Succeeded::yes;
+    return false;
 }
 
 ScatterEstimationByBin::
@@ -217,6 +218,9 @@ bool
 ScatterEstimationByBin::
 set_up_iterative()
 {
+    IterativeReconstruction <DiscretisedDensity<3, float> > * iterative_object =
+            dynamic_cast<IterativeReconstruction<DiscretisedDensity<3, float> > *> (this->reconstruction_template_sptr.get());
+
     shared_ptr<ProjData> input_projdata_sptr =
             ProjData::read_from_file(this->input_projdata_filename);
 
@@ -245,6 +249,8 @@ set_up_iterative()
         this->proj_data_info_2d_sptr.reset(
                     input_projdata_sptr->get_proj_data_info_sptr().get());
     }
+
+    this->reconstruction_template_sptr->set_input_data(this->input_projdata_2d_sptr);
 
     // Load the attenuation image.
     {
@@ -499,7 +505,7 @@ set_up_iterative()
     this->_multiplicative_data.reset(new ChainedBinNormalisation(_attenuation_correction,
                                                                  _normalisation_coeffs));
 
-    this->reconstruction_template_sptr->set_normalisation_sptr(this->_multiplicative_data);
+    iterative_object->set_normalisation_sptr(this->_multiplicative_data);
 
     //
     // Set additive (background) projdata
@@ -529,7 +535,7 @@ set_up_iterative()
             this->back_projdata_2d_sptr = back_projdata_sptr;
         }
 
-        this->reconstruction_template_sptr->set_additive_proj_data_sptr(this->back_projdata_2d_sptr);
+        iterative_object->set_additive_proj_data_sptr(this->back_projdata_2d_sptr);
     }
 
 
@@ -546,14 +552,14 @@ set_up_iterative()
     //    this->
     //  this->set_activity_image(this->activity_image_filename);
     //  this->set_density_image_for_scatter_points(this->density_image_for_scatter_points_filename);
-      return true;
+    return true;
 }
 
 bool
 ScatterEstimationByBin::
 set_up_analytic()
 {
-
+    //TODO : I have most stuff in tmp.
     return true;
 }
 
@@ -593,33 +599,33 @@ Succeeded
 ScatterEstimationByBin::
 process_data()
 {
+    // Get initial image if nessesary
+    if( is_null_ptr(this->activity_image_sptr) )
+    {
+        if (iterative_method)
+            reconstruct_iterative(0,
+                                  this->activity_image_sptr);
+        else
+            reconstruct_analytic();
+    }
 
-    for (int i_scat_iter = is_null_ptr(this->activity_image_sptr) ? 0 : 1;
+    for (int i_scat_iter = 1;
          i_scat_iter < this->num_scatter_iterations;
          i_scat_iter++)
     {
-        if (i_scat_iter == 0 )
-        {
-            // Get the initial activity image
-            if(is_null_ptr(this->activity_image_sptr))
-            {
-                // set data
-                //this->reconstruction_template_sptr->set_input_data(this->input_projdata_2d_sptr);
-                // Set normalisation
-                reconstruct(i_scat_iter,
-                            this->activity_image_sptr);
-            }
-            // Make a mask out of it
-        }
+
+        if (iterative_method)
+            reconstruct_iterative(i_scat_iter,
+                                  this->activity_image_sptr);
+        else
+            reconstruct_analytic();
+        // Make a mask out of it
+
 
         if (i_scat_iter == 2 ) // Average at 2
         {
 
         }
-
-        i
-        reconstruct(i_scat_iter,
-                    this->activity_image_sptr);
 
 
     }
@@ -629,28 +635,34 @@ process_data()
 
     // Simulate
 
-
+    return Succeeded::yes;
 }
 
 Succeeded
 ScatterEstimationByBin::
-reconstruct(int _current_iter_num,
-            shared_ptr<DiscretisedDensity<3, float> > & _current_estimate_sptr)
+reconstruct_iterative(int _current_iter_num,
+                      shared_ptr<DiscretisedDensity<3, float> > & _current_estimate_sptr)
 {
 
-    if (this->reconstruction_template_sptr->get_registered_name() == "OSMAPOSL" ||
-            this->reconstruction_template_sptr->get_registered_name() == "OSSPS")
-    {
-        IterativeReconstruction <DiscretisedDensity<3, float> > * iterative_object =
-                dynamic_cast<IterativeReconstruction<DiscretisedDensity<3, float> > *> (this->reconstruction_template_sptr.get());
+    IterativeReconstruction <DiscretisedDensity<3, float> > * iterative_object =
+            dynamic_cast<IterativeReconstruction<DiscretisedDensity<3, float> > *> (this->reconstruction_template_sptr.get());
+
+    if (!is_null_ptr(_current_estimate_sptr))
         iterative_object->set_initial_data_ptr(_current_estimate_sptr);
 
-        iterative_object->reconstruct();
-    }
-    else if (this->reconstruction_template_sptr->get_registered_name() == "FBP3D" )
-    {
-        int todo = 0;
-    }
+    iterative_object->reconstruct();
+
+    if (is_null_ptr(_current_estimate_sptr))
+        _current_estimate_sptr = iterative_object->get_target_image();
+
+    std::stringstream convert;   // stream used for the conversion
+
+    convert << "/Users/nikos/Desktop/Workspace/data/scatters_real/produced_data/initial_image_" <<
+               _current_iter_num;
+    std::string output_filename =  convert.str();
+    OutputFileFormat<DiscretisedDensity < 3, float > >::default_sptr()->
+            write_to_file(output_filename, *_current_estimate_sptr.get());
+
     //    //
     //    // Initial activity image.
     //    //
@@ -684,6 +696,13 @@ reconstruct(int _current_iter_num,
     //            OutputFileFormat<DiscretisedDensity < 3, float > >::default_sptr()->
     //                    write_to_file(this->initial_activity_image_filename, *activity_image_sptr.get());
     //    }
+}
+
+Succeeded
+ScatterEstimationByBin::
+reconstruct_analytic()
+{
+    //TODO
 }
 
 /****************** functions to compute scatter **********************/
