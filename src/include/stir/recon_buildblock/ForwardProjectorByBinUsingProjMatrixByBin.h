@@ -54,7 +54,7 @@ template <typename elemT> class RelatedViewgrams;
   It stores a shared_ptr to a ProjMatrixByBin object, which will be used
   to get the relevant elements of the projection matrix.
   */
-class ForwardProjectorByBinUsingProjMatrixByBin: 
+class ForwardProjectorByBinUsingProjMatrixByBin:
   public RegisteredParsingObject<ForwardProjectorByBinUsingProjMatrixByBin,
                                  ForwardProjectorByBin>
 { 

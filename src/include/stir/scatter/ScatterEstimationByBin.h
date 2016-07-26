@@ -82,11 +82,8 @@ public:
     virtual Succeeded process_data();
 
     virtual Succeeded
-    _iterate(int,
-             shared_ptr<ExamData>&,
-             shared_ptr<ExamData>&,
-             shared_ptr<ExamData>&,
-             shared_ptr<VoxelsOnCartesianGrid<float> >&);
+    reconstruct(int,
+             shared_ptr<DiscretisedDensity<3, float> >&);
 
     //!
     //! \brief set_image_from_file
@@ -117,7 +114,25 @@ public:
 protected:
     void set_defaults();
     void initialise_keymap();
+
+    //!
+    //! \brief post_processing
+    //! \return
+    //! \details This function initialised only the reconstruction method
+    //! and then calls either set_up_iterative() or set_up_analytic() because
+    //! the two reconstruction methods are substancially different.
     bool post_processing();
+
+    //!
+    //! \brief set_up_iterative
+    //! \return
+    bool set_up_iterative();
+
+    //!
+    //! \brief set_up_initialise_analytic
+    //! \return
+    //!
+    bool set_up_analytic();
 
     //!
     //! \brief proj_data_info_2d_ptr
@@ -334,6 +349,12 @@ protected:
 private:
 
     //!
+    //! \brief appy_mask
+    //! \details Mask a DiscretisedDensity
+    void
+    apply_mask_in_place(shared_ptr<DiscretisedDensity<3, float> >&);
+
+    //!
     //! \brief num_scatter_iterations
     //! \details The number of iterations the scatter estimation will perform.
     //! Default = 5.
@@ -348,6 +369,11 @@ private:
     //! \brief _scatter_simulation
     //! \details Class which will implement the scatter simulation.
     shared_ptr < ScatterSimulation > scatter_simulation_sptr;
+
+    //!
+    //! \brief iterative_method
+    //! \details Used for convinience. It is initialised on post_processing.
+    bool iterative_method;
 };
 
 

@@ -156,7 +156,6 @@ Scanner::Scanner(Type scanner_type)
                  3, 4, 8, 8, 8, 8 * 4, 1);
       break;
 
-
     case E961:
 
       set_params(E961,string_list("ECAT 961", "ECAT HR"),

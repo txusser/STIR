@@ -79,6 +79,8 @@ IterativeReconstruction<TargetT>::set_defaults()
   this->randomise_subset_order = false;
   this->report_objective_function_values_interval = 0;
 
+   this->initial_data_manually_set = false;
+
 }
 
 template <typename TargetT>
@@ -388,6 +390,17 @@ IterativeReconstruction<TargetT>::get_initial_data_ptr() const
     }
 }
 
+template <typename TargetT>
+void
+IterativeReconstruction<TargetT>::set_initial_data_ptr(const shared_ptr<TargetT>& arg)
+{
+    if (is_null_ptr(arg))
+        error("Unable to set initial reconstruction image. Aborting...");
+
+    this->target_data_sptr = arg;
+    initial_data_manually_set = true;
+}
+
 // KT 10122001 new
 // NE Updated to be able to define the dataset to reconstruct.
 template <typename TargetT>
@@ -397,7 +410,8 @@ reconstruct()
 {
   this->start_timers();
 
-  this->target_data_sptr.reset(this->get_initial_data_ptr());
+  if (!initial_data_manually_set)
+    this->target_data_sptr.reset(this->get_initial_data_ptr());
   if (this->set_up(this->target_data_sptr) == Succeeded::no)
     {
       this->stop_timers();

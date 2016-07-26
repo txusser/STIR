@@ -122,6 +122,13 @@ public:
   virtual TargetT *
     get_initial_data_ptr() const;
 
+  //!
+  //! \brief set_initial_data_ptr
+  //! \author Nikos Efthimiou
+  //! \details Set the initial image in real time.
+  virtual void
+    set_initial_data_ptr(const shared_ptr<TargetT>& );
+
   //! executes the reconstruction
   /*!
     Calls get_initial_data_ptr() and then
@@ -329,6 +336,14 @@ protected:
   shared_ptr<DataProcessor<TargetT> > inter_iteration_filter_ptr;
 
 
+  //!
+  //! \brief data_manually_set
+  //! \author Nikos Efthimiou
+  //! \details This is an agly way to know wether the initial reconstruction
+  //! image has been set by set_input_data(). Every time the reconstruction
+  //! returns it turns back to false and turns to true only if set_input_data()
+  //! is called again.
+  bool initial_data_manually_set;
 
   
   //! subiteration interval at which to apply inter-iteration filters 
