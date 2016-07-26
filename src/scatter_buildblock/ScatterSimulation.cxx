@@ -8,10 +8,15 @@
 #include "stir/Viewgram.h"
 #include "stir/is_null_ptr.h"
 #include "stir/IO/read_from_file.h"
+#include "stir/IO/write_to_file.h"
 #include "stir/info.h"
 #include "stir/error.h"
 #include <fstream>
 #include <boost/format.hpp>
+
+#include "stir/stir_math.h"
+#include "stir/zoom.h"
+#include "stir/ArrayFunction.h"
 
 START_NAMESPACE_STIR
 
@@ -29,6 +34,24 @@ Succeeded
 ScatterSimulation::
 process_data()
 {
+    if (is_null_ptr(this->density_image_for_scatter_points_sptr))
+    {
+        // subsample.
+    }
+
+    if (is_null_ptr(this->proj_data_info_ptr))
+    {
+        // subsample.
+    }
+
+    //    if (!this->recompute_sub_atten_image && !this->recompute_sub_projdata)
+    //    {
+    //        if (fabs(this->sub_vox_xy -
+    //                 this->sub_proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing()) > 1.E-2)
+    //            error("DataSymmetriesForBins_PET_CartesianGrid can currently only support z-grid spacing "
+    //                  "equal to the ring spacing of the scanner divided by an integer. Sorry\n");
+    //    }
+
     this->initialise_cache_for_scattpoint_det_integrals_over_attenuation();
     this->initialise_cache_for_scattpoint_det_integrals_over_activity();
     ViewSegmentNumbers vs_num;
@@ -114,7 +137,7 @@ process_data()
 
     bin_timer.stop();
     wall_clock_timer.stop();
-//    this->write_log(wall_clock_timer.value(), total_scatter);
+    //    this->write_log(wall_clock_timer.value(), total_scatter);
 
     if (detection_points_vector.size() != static_cast<unsigned int>(total_detectors))
     {
@@ -153,8 +176,8 @@ process_data_for_view_segment_num(const ViewSegmentNumbers& vs_num)
     // now compute scatter for all bins
     double total_scatter = 0;
     //TODO: Nikos : commented out.
-//    Viewgram<float> viewgram =
-//            this->output_proj_data_sptr->get_empty_viewgram(vs_num.view_num(), vs_num.segment_num());
+    //    Viewgram<float> viewgram =
+    //            this->output_proj_data_sptr->get_empty_viewgram(vs_num.view_num(), vs_num.segment_num());
 #ifdef STIR_OPENMP
 #pragma omp parallel for reduction(+:total_scatter) schedule(dynamic)
 #endif
@@ -167,16 +190,16 @@ process_data_for_view_segment_num(const ViewSegmentNumbers& vs_num)
         this->find_detectors(det_num_A, det_num_B, bin);
         const double scatter_ratio =
                 scatter_estimate(det_num_A, det_num_B);
-//TODO: Nikos : commented out.
-//        viewgram[bin.axial_pos_num()][bin.tangential_pos_num()] =
-//                static_cast<float>(scatter_ratio);
+        //TODO: Nikos : commented out.
+        //        viewgram[bin.axial_pos_num()][bin.tangential_pos_num()] =
+        //                static_cast<float>(scatter_ratio);
         total_scatter += scatter_ratio;
     } // end loop over bins
 
-//    if (this->output_proj_data_sptr->set_viewgram(viewgram) == Succeeded::no)
-//        error("ScatterEstimationByBin: error writing viewgram");
+    //    if (this->output_proj_data_sptr->set_viewgram(viewgram) == Succeeded::no)
+    //        error("ScatterEstimationByBin: error writing viewgram");
 
-//    return static_cast<double>(viewgram.sum());
+    //    return static_cast<double>(viewgram.sum());
 }
 
 
@@ -188,13 +211,17 @@ ScatterSimulation::set_defaults()
     this->random = true;
     this->use_cache = true;
 
-    this->sub_atten_image_filename = "";
+    this->density_image_filename = "";
+    this->density_image_for_scatter_points_filename = "";
     this->template_proj_data_filename = "";
 
     this->sub_vox_xy = -1.f;
     this->sub_vox_z = -1.f;
-    this->sub_num_dets_per_ring = -1.f;
-    this->sub_num_rings = -1.f;
+    this->sub_num_dets_per_ring = -1;
+    this->sub_num_rings = -1;
+    this->remove_cache_for_integrals_over_activity();
+    this->remove_cache_for_integrals_over_attenuation();
+
     this->remove_cache_for_integrals_over_activity();
     this->remove_cache_for_integrals_over_attenuation();
 }
@@ -211,27 +238,39 @@ ScatterSimulation::initialise_keymap()
 {
     this->parser.add_start_key("Scatter Simulation Parameters");
     this->parser.add_stop_key("end Scatter Simulation Parameters");
-    this->parser.add_key("projdata template filename",
-                         &this->template_proj_data_filename);
 
+    // Basics
+    this->parser.add_key("scatter template filename",
+                         &this->template_proj_data_filename);
+    this->parser.add_key("attenuation image filename",
+                         &this->density_image_filename);
+    this->parser.add_key("initial estimate image filename",
+                         &this->activity_image_filename);
+
+    // Subsampled attenuation image
     this->parser.add_key("recompute subsampled attenuation image",
                          &this->recompute_sub_atten_image);
     this->parser.add_key("subsampled attenuation image filename",
-                         &this->sub_atten_image_filename);
+                         &this->density_image_for_scatter_points_filename);
     this->parser.add_key("subsampled voxel size plane xy (mm/pixel)",
                          &this->sub_vox_xy);
     this->parser.add_key("subsampled voxel size on z axis (mm/pixel)",
                          &this->sub_vox_z);
+    // End of subsampled attenuation image
+
+    // Subsampled projdata
     this->parser.add_key("recompute subsampled projdata",
                          &this->recompute_sub_projdata);
-    this->parser.add_key("subsampled projdata template filename",
-                         &this->sub_proj_data_filename);
+    //    this->parser.add_key("subsampled projdata template filename",
+    //                         &this->sub_proj_data_filename);
     this->parser.add_key("number of subsampled detectors",
                          &this->sub_num_dets_per_ring);
     this->parser.add_key("number of subsampled rings",
                          &this->sub_num_rings);
 
-    this->parser.add_key("attenuation_threshold", &this->attenuation_threshold);
+    //End of Subsampled projdata.
+    this->parser.add_key("attenuation_threshold",
+                         &this->attenuation_threshold);
     this->parser.add_key("random", &this->random);
     this->parser.add_key("use_cache", &this->use_cache);
 }
@@ -241,86 +280,105 @@ bool
 ScatterSimulation::
 post_processing()
 {
+    // Handles only direct loads from drive.
 
-    // Load the scanner template
-    //this->set_template_proj_data_info_from_file(this->template_proj_data_filename);
+    if (this->template_proj_data_filename.size() > 0 && this->recompute_sub_projdata)
+        this->set_template_proj_data_info(this->template_proj_data_filename);
 
-}
+    if (this->activity_image_filename.size() > 0)
+        this->set_activity_image(this->activity_image_filename);
 
-Succeeded
-ScatterSimulation::
-subsample_atten_image()
-{
-//    //
-//    // Subsampling stuff.
-//    //
-//    int sub_num_dets_per_ring = -1;
-//    int sub_num_rings = -1;
-//    float sub_vox_xy = -1.f;
-//    float sub_vox_z  = -1.f;
+    if (this->density_image_filename.size() > 0)
+        this->set_density_image(this->density_image_filename);
 
-//    if (this->sub_num_dets_per_ring < 0 && this->sub_vox_xy < 0)
-//        error ("Please set either number of detectors in subsampled scanner and/or "
-//               "voxel size in subsampled image");
-//    if ( this->sub_num_rings < 0 && this->sub_vox_z < 0 )
-//        error ("Please set either subsampled number of rings and/or subsampled voxel z size");
+    if(this->density_image_for_scatter_points_filename.size() > 0 && this->recompute_sub_atten_image)
+        this->set_density_image_for_scatter_points(this->density_image_for_scatter_points_filename);
 
-//    // First Load if thats the case and then check
-//    if ( ( !this->recompute_sub_atten_image && (sub_atten_image_filename.size() > 0)))
-//    {
-//        this->set_sub_atten_image_sptr(this->get_image_from_file(this->sub_atten_image_filename));
-//        sub_vox_xy = this->sub_atten_image_sptr->get_voxel_size()[2];
-//        sub_vox_z = this->sub_atten_image_sptr->get_voxel_size()[1];
-//    }
-//    else if (this->recompute_sub_atten_image)
-//    {
-//        sub_vox_xy = (this->sub_vox_xy < 0) ? num_dets_to_vox_size(this->sub_num_dets_per_ring, true)
-//                                            : this->sub_vox_xy;
-//        sub_vox_z = (this->sub_vox_z < 0) ? num_dets_to_vox_size(this->sub_num_dets_per_ring, false)
-//                                          : this->sub_vox_z;
-//        subsample_image(this->atten_image_sptr,
-//                        this->sub_atten_image_sptr,
-//                        sub_vox_xy, sub_vox_z,
-//                        this->sub_atten_image_filename);
-//    }
-
-//    if ( !this->recompute_sub_projdata && (sub_proj_data_filename.size() > 0))
-//    {
-//        this->set_sub_proj_data_info_from_file(this->sub_proj_data_filename);
-
-//        sub_num_dets_per_ring = this->sub_proj_data_info_ptr->get_scanner_ptr()->get_num_detectors_per_ring();
-//        sub_num_rings = this->sub_proj_data_info_ptr->get_scanner_ptr()->get_num_rings();
-//    }
-//    else if (this->recompute_sub_projdata)
-//    {
-//        sub_num_dets_per_ring = (this->sub_num_dets_per_ring < 0 ) ? vox_size_to_num_dets(this->sub_vox_xy, true)
-//                                                                   : this->sub_num_dets_per_ring;
-//        sub_num_rings = (this->sub_num_rings < 0) ? vox_size_to_num_dets(this->sub_vox_z, false)
-//                                                  : this->sub_num_rings;
-
-//        if (sub_num_rings % 2 == 0)
-//            error("this z voxel size would leed to even number of rings, "
-//                  "which are supported currently.");
-
-//        subsample_projdata_info(this->proj_data_info_ptr,
-//                                sub_num_dets_per_ring, sub_num_rings,
-//                                this->sub_proj_data_filename);
-//    }
-
-//    // Check voxel size in comparison to detector size xy
-
-//    if (this->recompute_sub_atten_image && this->recompute_sub_projdata)
-//    {
-//        if (fabs(this->sub_atten_image_sptr->get_voxel_size()[1] -
-//                 this->sub_proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing()) > 1.E-2)
-//            error("DataSymmetriesForBins_PET_CartesianGrid can currently only support z-grid spacing "
-//                  "equal to the ring spacing of the scanner divided by an integer. Sorry\n");
-//    }
 }
 
 void
 ScatterSimulation::
-subsample_projdata_info(ProjDataInfoCylindricalNoArcCorr* _original_projdata_info,
+set_density_image_and_subsample(const shared_ptr<DiscretisedDensity<3,float> >& arg)
+{
+    this->set_density_image_sptr(arg);
+
+    this->reduce_voxel_size();
+
+    this->set_density_image_for_scatter_points_sptr(this->density_image_for_scatter_points_sptr);
+}
+
+void
+ScatterSimulation::
+set_projdata_and_subsample(const shared_ptr<ProjDataInfo > arg)
+{
+
+    this->original_proj_data_info_ptr = arg;
+    this->reduce_projdata_detector_num(arg);
+}
+
+void
+ScatterSimulation::
+reduce_voxel_size()
+{
+    //
+    // Subsampling stuff.
+    //
+
+    float sub_vox_xy = -1.f;
+    float sub_vox_z  = -1.f;
+
+    if (this->sub_num_dets_per_ring < 0 && this->sub_vox_xy < 0)
+        error ("Please set either number of detectors in subsampled scanner and/or "
+               "voxel size in subsampled image");
+    if ( this->sub_num_rings < 0 && this->sub_vox_z < 0 )
+        error ("Please set either subsampled number of rings and/or subsampled voxel z size");
+
+    // First Load if thats the case and then check
+
+    sub_vox_xy = (this->sub_vox_xy < 0) ? num_dets_to_vox_size(this->sub_num_dets_per_ring, true)
+                                        : this->sub_vox_xy;
+    sub_vox_z = (this->sub_vox_z < 0) ? num_dets_to_vox_size(this->sub_num_dets_per_ring, false)
+                                      : this->sub_vox_z;
+    subsample_image(this->density_image_sptr,
+                    this->density_image_for_scatter_points_sptr,
+                    sub_vox_xy, sub_vox_z,
+                    this->density_image_for_scatter_points_filename);
+}
+
+void
+ScatterSimulation::
+reduce_projdata_detector_num(const shared_ptr<ProjDataInfo >& arg)
+{
+    int sub_num_dets_per_ring = -1;
+    int sub_num_rings = -1;
+
+    if (this->sub_num_dets_per_ring < 0 && this->sub_vox_xy < 0)
+        error ("Please set either number of detectors in subsampled scanner and/or "
+               "voxel size in subsampled image");
+    if ( this->sub_num_rings < 0 && this->sub_vox_z < 0 )
+        error ("Please set either subsampled number of rings and/or subsampled voxel z size");
+
+    sub_num_dets_per_ring = (this->sub_num_dets_per_ring < 0 ) ? vox_size_to_num_dets(this->sub_vox_xy, true)
+                                                               : this->sub_num_dets_per_ring;
+    sub_num_rings = (this->sub_num_rings < 0) ? vox_size_to_num_dets(this->sub_vox_z, false)
+                                              : this->sub_num_rings;
+
+    float tot_length = this->original_proj_data_info_ptr->get_scanner_ptr()->get_num_rings() *
+            this->original_proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing();
+
+    if (sub_num_rings % 2 == 0)
+        error(boost::format("this z voxel size would lead to even number of rings, "
+                            "which are not currently supported. Try to divide with: "
+                            "%1%")  %tot_length);
+
+    subsample_projdata_info(arg,
+                            sub_num_dets_per_ring, sub_num_rings,
+                            this->template_proj_data_filename);
+}
+
+void
+ScatterSimulation::
+subsample_projdata_info(const shared_ptr<ProjDataInfo> _original_projdata_info,
                         int new_num_dets_per_ring, int new_num_rings,
                         std::string output_filename)
 {
@@ -342,7 +400,34 @@ subsample_projdata_info(ProjDataInfoCylindricalNoArcCorr* _original_projdata_inf
 
     // Effectively this is the subsampled voxel size.
     // We can get this information because the image is calculated first.
-    float default_bin_size = this->atten_image_sptr->get_voxel_size()[2];
+
+    float default_bin_size = 0.0;
+    // get FOV in mm
+
+    float ndd = this->original_proj_data_info_ptr->get_max_tangential_pos_num();
+    float naa = this->original_proj_data_info_ptr->get_min_tangential_pos_num();
+    Bin nb(0,0,0,ndd);
+
+    float fov_size_mm = this->original_proj_data_info_ptr->get_s(nb) * 2.f;
+
+    float new_angular_increment = _PI / new_num_dets_per_ring;
+    float new_s = tmpl_scanner.get_effective_ring_radius() * sin(new_angular_increment);
+
+
+    int new_num_view = static_cast<int>((new_num_dets_per_ring / 2) + 0.5);
+    int new_num_tang_pos = fov_size_mm / new_s;
+
+    int max_delta = 0;
+    int span = 1;
+
+    if (this->sub_vox_xy > 0.f)
+    {
+        default_bin_size = this->sub_vox_xy;
+    }
+    else
+    {
+        default_bin_size = new_angular_increment + 0.1;
+    }
 
     shared_ptr<Scanner> new_scanner_ptr(
                 new Scanner(Scanner::User_defined_scanner,
@@ -366,78 +451,86 @@ subsample_projdata_info(ProjDataInfoCylindricalNoArcCorr* _original_projdata_inf
                             tmpl_scanner.get_energy_resolution(),
                             tmpl_scanner.get_reference_energy()));
 
-//    if (new_scanner_ptr->check_consistency() != Succeeded::yes)
-//        error("Initialization of the subsampled scanner failed, sheck the number "
-//              "of detectors per ring and the number of rings\n");
-
-    // get FOV in mm
-
-    float ndd = this->proj_data_info_ptr->get_max_tangential_pos_num();
-    float naa = this->proj_data_info_ptr->get_min_tangential_pos_num();
-    Bin nb(0,0,0,ndd);
-
-    float fov_size_mm = this->proj_data_info_ptr->get_s(nb) * 2.f;
-
-    float new_angular_increment = _PI / new_num_dets_per_ring;
-    float new_s = tmpl_scanner.get_effective_ring_radius() * sin(new_angular_increment);
+    //    if (new_scanner_ptr->check_consistency() != Succeeded::yes)
+    //        error("Initialization of the subsampled scanner failed, sheck the number "
+    //              "of detectors per ring and the number of rings\n");
 
 
-    int new_num_view = static_cast<int>((new_num_dets_per_ring / 2) + 0.5);
-    int new_num_tang_pos = fov_size_mm / new_s;
-
-    int max_delta = 0;
-    int span = 1;
 
     ProjDataInfo* new_projdata_info =
             span == 0 ? ProjDataInfo::ProjDataInfoGE(new_scanner_ptr, max_delta, new_num_view, new_num_tang_pos, false)
                       : ProjDataInfo::ProjDataInfoCTI(new_scanner_ptr, span, max_delta, new_num_view, new_num_tang_pos, false);
 
     shared_ptr < ProjDataInfo > pr_sptr(new_projdata_info);
-    this->sub_proj_data_info_ptr = dynamic_cast<ProjDataInfoCylindricalNoArcCorr*>(pr_sptr->clone());
+    this->proj_data_info_ptr = dynamic_cast<ProjDataInfoCylindricalNoArcCorr*>(pr_sptr->clone());
 
-    if (output_filename.size() > 0)
-        shared_ptr<ProjData> proj_data_ptr(new ProjDataInterfile(this->template_exam_info_sptr,
-                                                                 pr_sptr, output_filename));
+    // TODO: How do I write only a header file????
+    //    if(this->template_proj_data_filename.size() > 0)
+    //    {
+    //        write_to_file(this->template_proj_data_filename,
+    //                      this->proj_data_info_ptr->);
+    //    }
+
+    this->total_detectors =
+            this->proj_data_info_ptr->get_scanner_ptr()->get_num_rings()*
+            this->proj_data_info_ptr->get_scanner_ptr()->get_num_detectors_per_ring ();
+
+    // reserve space to avoid reallocation, but the actual size will grow dynamically
+    this->detection_points_vector.reserve(total_detectors);
+
+    // remove any cached values as they'd be incorrect if the sizes changes
+    this->remove_cache_for_integrals_over_attenuation();
+    this->remove_cache_for_integrals_over_activity();
+
+    //    if (output_filename.size() > 0)
+    //        shared_ptr<ProjData> proj_data_ptr(new ProjDataInterfile(this->template_exam_info_sptr,
+    //                                                                 pr_sptr, output_filename));
 }
 
 void
 ScatterSimulation::
-subsample_image(shared_ptr<VoxelsOnCartesianGrid<float> >& _this_image_sptr,
-                shared_ptr<VoxelsOnCartesianGrid<float> >& _new_image_sptr,
+subsample_image(shared_ptr<DiscretisedDensity<3, float> >& _this_image_sptr,
+                shared_ptr<DiscretisedDensity<3, float> >& _new_image_sptr,
                 float& _sub_vox_xy, float& _sub_vox_z,
                 std::string output_filename)
 {
-//    CartesianCoordinate3D <float> _cur_vox = _this_image_sptr->get_voxel_size();
-//    float zoom_xy = _cur_vox.x() / _sub_vox_xy;
-//    float zoom_z = _cur_vox.z() / _sub_vox_z;
-//    int size_xy = _this_image_sptr->get_x_size() * zoom_xy + 0.999;
 
-//    if (size_xy % 2 == 0)
-//        size_xy += 1;
+    shared_ptr<VoxelsOnCartesianGrid<float> > attenuation_map(
+                dynamic_cast<VoxelsOnCartesianGrid<float> * >
+                (_this_image_sptr->clone()));
 
-//    int size_z = _this_image_sptr->get_z_size() * zoom_z + 0.999;
-//    float scale_att = zoom_xy * zoom_xy * zoom_z;
-//    // Just multiply with the scale factor.
-//    // TODO: N.E. Commented out.
-////    pow_times_add pow_times_add_object(0.0, scale_att, 1.0,
-////                                       NumericInfo<float>().min_value(),
-////                                       NumericInfo<float>().max_value());
-//    // zoom image
-//    const CartesianCoordinate3D<float>
-//            zooms(zoom_z, zoom_xy, zoom_xy);
-//    const CartesianCoordinate3D<float>
-//            offsets_in_mm = _this_image_sptr->get_origin();
-//    const CartesianCoordinate3D<int>
-//            new_sizes(size_z, size_xy, size_xy);
-//    VoxelsOnCartesianGrid<float> new_image =
-//            zoom_image(*_this_image_sptr.get(), zooms, offsets_in_mm, new_sizes);
-//    in_place_apply_function(new_image, pow_times_add_object);
-//    float dd = new_image.find_max();
-//    _new_image_sptr.reset(new_image.clone());
+    CartesianCoordinate3D <float> _cur_vox = attenuation_map->get_voxel_size();
+    float zoom_xy = _cur_vox.x() / _sub_vox_xy;
+    float zoom_z = _cur_vox.z() / _sub_vox_z;
+    int size_xy = attenuation_map->get_x_size() * zoom_xy + 0.999;
 
-//    // write it to file
-//    if (output_filename.size() > 0)
-//        write_to_file(output_filename, new_image);
+    if (size_xy % 2 == 0)
+        size_xy += 1;
+
+    int size_z = attenuation_map->get_z_size() * zoom_z + 0.999;
+    float scale_att = zoom_xy * zoom_xy * zoom_z;
+
+    // Just multiply with the scale factor.
+    pow_times_add pow_times_add_object(0.0f, scale_att, 1.0f,
+                                       0.0f,
+                                       10000.f);
+    // zoom image
+    const CartesianCoordinate3D<float>
+            zooms(zoom_z, zoom_xy, zoom_xy);
+    const CartesianCoordinate3D<float>
+            offsets_in_mm = attenuation_map->get_origin();
+    const CartesianCoordinate3D<int>
+            new_sizes(size_z, size_xy, size_xy);
+    VoxelsOnCartesianGrid<float> zoomed_image =
+            zoom_image(*attenuation_map.get(), zooms, offsets_in_mm, new_sizes);
+
+    in_place_apply_function(*attenuation_map, pow_times_add_object);
+
+    _new_image_sptr.reset(zoomed_image.clone());
+
+    // write it to file
+    if (output_filename.size() > 0)
+        write_to_file(density_image_for_scatter_points_filename, zoomed_image);
 }
 
 

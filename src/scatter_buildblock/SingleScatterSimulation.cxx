@@ -1,10 +1,10 @@
- #include "stir/scatter/SingleScatterSimulation.h"
+#include "stir/scatter/SingleScatterSimulation.h"
 
 START_NAMESPACE_STIR
 
 const char * const
 SingleScatterSimulation::registered_name =
-  "Single Scatter Simulation";
+        "Single Scatter Simulation";
 
 
 SingleScatterSimulation::
@@ -12,6 +12,12 @@ SingleScatterSimulation() :
     base_type()
 {
     this->set_defaults();
+}
+
+SingleScatterSimulation::
+SingleScatterSimulation(const std::string& parameter_filename)
+{
+    this->initialise(parameter_filename);
 }
 
 SingleScatterSimulation::
@@ -23,15 +29,35 @@ void
 SingleScatterSimulation::
 initialise_keymap()
 {
-    this->parser.add_start_key("Single Scatter Simulation Parameters");
-    this->parser.add_stop_key("end Single Scatter Simulation Parameters");
+    base_type::initialise_keymap();
+    //    this->parser.add_start_key("Single Scatter Simulation");
+    //    this->parser.add_stop_key("end Single Scatter Simulation");
+}
+
+void
+SingleScatterSimulation::
+initialise(const std::string& parameter_filename)
+{
+    if (parameter_filename.size() == 0)
+    {
+        this->set_defaults();
+        this->ask_parameters();
+    }
+    else
+    {
+        this->set_defaults();
+        if (!this->parse(parameter_filename.c_str()))
+        {
+            error("Error parsing input file %s, exiting", parameter_filename.c_str());
+        }
+    }
 }
 
 void
 SingleScatterSimulation::
 set_defaults()
 {
-
+    base_type::set_defaults();
 }
 
 void
@@ -45,7 +71,11 @@ bool
 SingleScatterSimulation::
 post_processing()
 {
+     base_type::post_processing();
+    // Probably not too many things, since most are going to be
+    // at the base type.
 
+    int nikos = 0;
 }
 
 std::string

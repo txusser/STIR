@@ -39,6 +39,13 @@ public:
     //! \details Default constructor
     SingleScatterSimulation();
 
+    //!
+    //! \brief ScatterSimulation
+    //! \param parameter_filename
+    //! \details Constructor with initialisation from parameter file
+    explicit
+    SingleScatterSimulation(const std::string& parameter_filename);
+
     virtual ~SingleScatterSimulation();
 
     //    virtual Succeeded
@@ -52,6 +59,7 @@ public:
 
 protected:
 
+    void initialise(const std::string& parameter_filename);
 
     virtual void set_defaults();
     virtual void initialise_keymap();

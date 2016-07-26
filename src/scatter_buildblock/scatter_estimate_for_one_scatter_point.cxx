@@ -29,6 +29,7 @@
 
 */
 #include "stir/scatter/ScatterSimulation.h"
+#include "stir/scatter/SingleScatterSimulation.h"
 #ifndef NDEBUG
 // currently necessary for assert below
 #include "stir/VoxelsOnCartesianGrid.h"

@@ -81,11 +81,6 @@ public:
 
     virtual Succeeded process_data();
 
-
-    // N.E: New main process_data funtion,
-    // the '_' will be removed later.
-    virtual Succeeded _process_data();
-
     virtual Succeeded
     _iterate(int,
              shared_ptr<ExamData>&,
@@ -179,7 +174,7 @@ protected:
     //!
     //! \brief input_data
     //! \details This memnbers holds the measured emission data.
-//    shared_ptr<ProjData> input_projdata_sptr;
+    //    shared_ptr<ProjData> input_projdata_sptr;
 
     shared_ptr<ProjData> input_projdata_2d_sptr;
     /** }@*/
@@ -241,6 +236,7 @@ protected:
     //! \details In this context the background data are only
     //! randoms.
     //  shared_ptr<ProjData> back_projdata_sptr;
+
     //!
     //! \brief background_projdata_2d_sptr
     //! \details Background projection data after SSRB
@@ -332,41 +328,26 @@ protected:
 
     /** @}*/
 
-    std::string output_proj_data_filename;
-    shared_ptr<ProjData> output_proj_data_sptr;
-
-protected:
-
-    //!
-    //! \brief calculate_attenuation_coefficients
-    //! \param proj_data_info_ptr
-    //! \param atten_image_sptr
-    //! \return
-    //! \details This function calculates the attenuation coefficients
-    //! from the attenuation image.
-    //! \warning This is a temp function, probably a new class
-    //! should be created, instead.
-    Succeeded
-    calculate_multiplicative_projdata(shared_ptr<ProjData> template_proj_data_ptr,
-                                      shared_ptr<VoxelsOnCartesianGrid<float> > atten_image_sptr,
-                                      shared_ptr<ProjData> out_proj_data_ptr,
-                                      std::string output_filename = "");
-
+    std::string output_projdata_filename;
+    shared_ptr<ProjData> output_projdata_sptr;
 
 private:
 
     //!
-    //! \brief _scatter_simulation
-    //! \details Class which will implement the scatter simulation.
-    shared_ptr < ScatterSimulation > _scatter_simulation;
+    //! \brief num_scatter_iterations
+    //! \details The number of iterations the scatter estimation will perform.
+    //! Default = 5.
+    int num_scatter_iterations;
 
     //!
-    //! \brief calculate_attenuation_projdata
-    //! \return
-    //! \details Forwards projects the attenuation image.
-    Succeeded
-    calculate_attenuation_projdata(shared_ptr<ProjData> &);
+    //! \brief scatter_sim_filename
+    //!
+    std::string scatter_sim_par_filename;
 
+    //!
+    //! \brief _scatter_simulation
+    //! \details Class which will implement the scatter simulation.
+    shared_ptr < ScatterSimulation > scatter_simulation_sptr;
 };
 
 

@@ -49,11 +49,11 @@ sample_scatter_points()
 
   const DiscretisedDensityOnCartesianGrid<3,float>& attenuation_map =
     dynamic_cast<const DiscretisedDensityOnCartesianGrid<3,float>& >
-    (*this->atten_image_sptr);
+    (*this->density_image_for_scatter_points_sptr);
 
   BasicCoordinate<3,int> min_index, max_index ;
   CartesianCoordinate3D<int> coord;
-  if(!this->atten_image_sptr->get_regular_range(min_index, max_index))
+  if(!this->density_image_for_scatter_points_sptr->get_regular_range(min_index, max_index))
     error("scatter points sampling works only on regular ranges, at the moment\n");    
   const VoxelsOnCartesianGrid<float>& image =
     dynamic_cast<const VoxelsOnCartesianGrid<float>&>(attenuation_map);

@@ -44,7 +44,7 @@ exp_integral_over_attenuation_image_between_scattpoint_det (const CartesianCoord
   /* projectors work in pixel units, so convert attenuation data 
      from cm^-1 to pixel_units^-1 */
   const float   rescale = 
-    dynamic_cast<const DiscretisedDensityOnCartesianGrid<3,float> &>(*atten_image_sptr).
+    dynamic_cast<const DiscretisedDensityOnCartesianGrid<3,float> &>(*density_image_sptr).
     get_grid_spacing()[3]/10;
 #else
   const float   rescale = 
@@ -53,7 +53,7 @@ exp_integral_over_attenuation_image_between_scattpoint_det (const CartesianCoord
 
   return
     exp(-rescale*
-        integral_between_2_points(*atten_image_sptr,
+        integral_between_2_points(*density_image_sptr,
                                   scatter_point,
                                   detector_coord)
         );

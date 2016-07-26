@@ -102,27 +102,23 @@ public:
     //! prompts the user to enter parameter values manually
     virtual void ask_parameters();
 
-    inline void set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>&);
-
-    shared_ptr<VoxelsOnCartesianGrid<float> > activity_image_sptr;
-
     //!
-    //! \brief set_activity_image_sptr
-    //!
-    inline Succeeded set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+    //! \brief activity_image_sptr
+    //! \details Image which will hold the activity estimates
+    shared_ptr<DiscretisedDensity<3,float> > activity_image_sptr;
 
     //!
-    //! \brief set_atten_image_sptr
-    //! \return
-    //! \details If called  from ScatterEstimationByBin then this refers to the
-    //! subsampled attenuation image.
-    inline Succeeded set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+    //! \brief activity_image_filename
+    //! \details Filename for the initial activity estimate.
+    std::string activity_image_filename;
+    //    //!
+    //    //! \brief set_atten_image_sptr
+    //    //! \return
+    //    //! \details If called  from ScatterEstimationByBin then this refers to the
+    //    //! subsampled attenuation image.
+    //    inline Succeeded set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
 
-    //!
-    //! \brief set_activity_image
-    //! \param filename
-    //!
-    inline void set_activity_image(const std::string& filename);
+
 
     //! find scatter points
     /*! This function sets scatt_points_vector and scatter_volume. It will also
@@ -131,18 +127,43 @@ public:
     void
     sample_scatter_points();
 
-    //!
-    //! \brief set_template_proj_data_info_from_file
-    //! \param filename
-    //! \details Sets the template of the ProjDataInfo from a file
-    inline void set_template_proj_data_info_from_file(const std::string& filename);
+
 
     //!
     //! \brief set_sub_proj_data_info_from_file
     //! \param filename
     //!
-    inline void
-    set_sub_proj_data_info_from_file(const std::string& filename);
+    //inline void
+    //set_sub_proj_data_info_from_file(const std::string& filename);
+
+    /**
+     *
+     * \name functions to set parameters
+     * @{
+     */
+
+    //!
+    //! \brief set_template_proj_data_info_sptr
+    //! \details Load the scatter template and perform basic checks.
+    inline void set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>&);
+
+    //!
+    //! \brief set_template_proj_data_info
+    //! \param filename
+    //!
+    inline
+    void set_template_proj_data_info(const std::string&);
+
+    //!
+    //! \brief set_activity_image_sptr
+    //!
+    inline Succeeded set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+
+    //!
+    //! \brief set_activity_image
+    //! \param filename
+    //!
+    inline void set_activity_image(const std::string& filename);
 
     //! create output projection data of same size as template_proj_data_info
     /*! \warning use set_template_proj_data_info() first.
@@ -153,17 +174,48 @@ public:
     inline void set_proj_data_from_file(const std::string& filename,
                                         shared_ptr<ProjData>& _this_projdata);
 
-    /**
-     *
-     * \name functions to set parameters
-     * @{
-     */
+    //!
+    //! \brief set_density_image_sptr
 
-    inline void set_attenuation_threshold(float _val);
+    inline void
+    set_density_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
 
-    inline void set_random_point(bool _val);
+    //!
+    //! \brief set_density_image_and_subsampled
+    //! \author Nikos Efthimiou
+    //! \warning This function has to called only if the density_image_for_scatter_points
+    //! has not been set in any other way. Because it is going to erase then and
+    //! recalculate them.
+    void
+    set_density_image_and_subsample(const shared_ptr<DiscretisedDensity<3,float> >&);
 
-    inline void set_cache_enabled(bool _val);
+    //!
+    //! \brief set_projdata_and_subsample
+    //!
+    void
+    set_projdata_and_subsample(const shared_ptr<ProjDataInfo >);
+
+    inline void
+    set_density_image(const std::string&);
+
+    //!
+    //! \brief set_density_image_for_scatter_points_sptr
+    //!
+    inline void
+    set_density_image_for_scatter_points_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
+
+    //!
+    //! \brief set_density_image_for_scatter_points
+    //! \param filename
+    //!
+    inline void
+    set_density_image_for_scatter_points(const std::string&);
+
+    inline void set_attenuation_threshold(const float&);
+
+    inline void set_random_point(const bool&);
+
+    inline void set_cache_enabled(const bool&);
 
     /** @}*/
 
@@ -219,14 +271,21 @@ protected:
     */
     bool use_cache;
 
-    void initialise(const std::string& parameter_filename);
-
     virtual void set_defaults();
     virtual void initialise_keymap();
 
-    //! used to check acceptable parameter ranges, etc...
+    //!
+    //! \brief post_processing
+    //! \return
+    //! \details used to check acceptable parameter ranges, etc...
+    //! It is going to take handle loading directly the proper files
+    //! (subsampled attenuation image and scanner). More complex options
+    //! will be handled at set_up().
     virtual bool post_processing();
 
+    //!
+    //! \brief sub_sample_atten_image
+    //! \return
     bool sub_sample_atten_image();
 
     enum image_type{act_image_type, att_image_type};
@@ -288,13 +347,25 @@ protected:
     //! \brief sub_atten_image_filename
     //! \details Input or output file name of the subsampled
     //! attenuation image, depends on the reconmpute_sub_atten_image
-    std::string sub_atten_image_filename;
+    std::string density_image_filename;
+
+    //!
+    //! \brief density_image_for_scatter_points_filename
+    //!
+    std::string density_image_for_scatter_points_filename;
+
+    shared_ptr< DiscretisedDensity<3, float> > density_image_sptr;
+
+    //!
+    //! \brief atten_image_filename∫
+    //! \details File name of the original attenuation image.
+    std::string orig_atten_image_filename;
 
     //!
     //! \brief sub_atten_image_sptr
-    //! \details This is the image with tha anatomical information
+    //! \details This is the image with the anatomical information
     //! \warning Previously density_image_for_scatter_points_sptr
-    shared_ptr<VoxelsOnCartesianGrid<float> > atten_image_sptr;
+    shared_ptr< DiscretisedDensity<3, float> > density_image_for_scatter_points_sptr;
 
     //!
     //! \brief sub_vox_xy
@@ -370,12 +441,12 @@ protected:
     //!
     //! \brief sub_template_proj_data_filename
     //!
-    std::string sub_proj_data_filename;
+//    std::string sub_proj_data_filename;
 
     //!
     //! \brief sub_proj_data_info_ptr
     //!
-    ProjDataInfoCylindricalNoArcCorr * sub_proj_data_info_ptr;
+    shared_ptr<ProjDataInfo> original_proj_data_info_ptr;
 
     //!
     //! \brief sub_num_dets_per_ring
@@ -443,8 +514,12 @@ private:
     Array<2,float> cached_activity_integral_scattpoint_det;
     Array<2,float> cached_attenuation_integral_scattpoint_det;
 
+    //!
+    //! \brief subsample_atten_image
+    void reduce_voxel_size();
 
-    Succeeded subsample_atten_image();
+    void
+    reduce_projdata_detector_num(const shared_ptr<ProjDataInfo >&);
 
     //! set-up cache for attenuation integrals
     /*! \warning This will not remove existing cached data (if the sizes match). If you need this,
@@ -466,8 +541,8 @@ private:
     //! \param _sub_vox_z The zoom factor on the z axis
     //! \param output_filename If set, the file to store the subsampled image
     //! \details Replaces the zoom_att_image.sh.
-    void subsample_image(shared_ptr<VoxelsOnCartesianGrid<float> > & _this_image_sptr,
-                         shared_ptr<VoxelsOnCartesianGrid<float> > & _new_image_sptr,
+    void subsample_image(shared_ptr<DiscretisedDensity<3, float> > & _this_image_sptr,
+                         shared_ptr<DiscretisedDensity<3, float> > & _new_image_sptr,
                          float& _sub_vox_xy, float& _sub_vox_z,
                          std::string output_filename = "");
 
@@ -478,9 +553,9 @@ private:
     //! \param output_filename
     //! \details A function to create a subsampled scanner and projdata info
     //! for a new number of detectors and rings.
-    void subsample_projdata_info(ProjDataInfoCylindricalNoArcCorr* _original_projdata_info,
-                            int new_num_dets_per_ring, int new_num_rings,
-                            std::string output_filename = "");
+    void subsample_projdata_info(const shared_ptr<ProjDataInfo> _original_projdata_info,
+                                 int new_num_dets_per_ring, int new_num_rings,
+                                 std::string output_filename = "");
     //!
     //! \brief dets_to_voxs
     //! \param _num

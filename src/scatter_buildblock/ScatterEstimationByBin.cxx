@@ -36,6 +36,7 @@
 #include "stir/DataProcessor.h"
 #include "stir/PostFiltering.h"
 #include "stir/scatter/CreateTailMaskFromACFs.h"
+#include "stir/scatter/SingleScatterSimulation.h"
 
 #include "stir/zoom.h"
 #include "stir/IO/write_to_file.h"
@@ -62,11 +63,18 @@ ScatterEstimationByBin::
 set_defaults()
 {
 
+    // All recomputes default true
     this->recompute_initial_activity_image = true;
+    this->recompute_atten_coeff = true;
+    this->recompute_mask_image = true;
+    this->recompute_mask_projdata = true;
+
     this->initial_activity_image_filename = "";
     this->atten_image_filename = "";
 
-    this->output_proj_data_filename = "";
+    this->output_projdata_filename = "";
+
+    this->num_scatter_iterations = 5;
 
 }
 
@@ -125,13 +133,22 @@ initialise_keymap()
     this->parser.add_key("initial activity image filename",
                          &this->initial_activity_image_filename);
 
+    // ITERATIONS RELATED
     this->parser.add_key("reconstruction template filename",
                          &this->reconstruction_template_par_filename);
+    this->parser.add_key("number of scatter iterations",
+                         &this->num_scatter_iterations);
+    //END ITERATIONS RELATED
+
+    //Scatter simulation
+    this->parser.add_key("scatter simulation parameters",
+                         &this->scatter_sim_par_filename);
+
     //    this->reconstruction_template_sptr.reset(new Reconstruction<DiscretisedDensity<3, float > > ( rec_filename ));
 
     // To this point.
 
-    this->parser.add_key("output_filename_prefix", &this->output_proj_data_filename);
+    this->parser.add_key("output_filename_prefix", &this->output_projdata_filename);
 
 
 }
@@ -156,6 +173,7 @@ post_processing()
     {
         error("Please define a reconstruction method.");
     }
+
 
     // create output (has to be AFTER set_template_proj_data_info)
     //    this->set_proj_data_from_file(this->output_proj_data_filename,
@@ -215,6 +233,31 @@ post_processing()
             error("The voxels in the x and y dimensions are different. Cannot zoom...  ");
 
     }
+
+    //
+    // ScatterSimulation
+    //
+
+    if (this->scatter_sim_par_filename.size() > 0 )
+    {
+        KeyParser local_parser;
+        local_parser.add_start_key("Scatter Simulation");
+        local_parser.add_stop_key("End Scatter Simulation");
+        local_parser.add_parsing_key("Simulation method", &this->scatter_simulation_sptr);
+        local_parser.parse(this->scatter_sim_par_filename.c_str());
+
+        // The image is provided to the simulation.
+        // and it will override anything that the ScatterSimulation.par file has done.
+        this->scatter_simulation_sptr->set_density_image_and_subsample(this->atten_image_sptr);
+        this->scatter_simulation_sptr->set_projdata_and_subsample(this->proj_data_info_2d_sptr);
+    }
+    else
+    {
+        error("Please define a scatter simulation method.");
+    }
+
+    return Succeeded::yes;
+
 
     //
     // Initialise the mask image.
@@ -513,9 +556,21 @@ ScatterEstimationByBin()
 
 Succeeded
 ScatterEstimationByBin::
-_process_data()
+process_data()
 {
 
+   for (int i_scat_iter = is_null_ptr(this->activity_image_sptr) ? 0 : 1;
+        i_scat_iter < this->num_scatter_iterations;
+        i_scat_iter++)
+    {
+       if (i_scat_iter == 0 )
+       {
+           // Get the initial activity image
+           // Make a mask out of it
+       }
+
+
+    }
     //LOOP { NUM
 
     // Iterate
@@ -570,15 +625,6 @@ _iterate(int _current_iter_num,
 
 /****************** functions to compute scatter **********************/
 
-Succeeded
-ScatterEstimationByBin::
-process_data()
-{
-
-}
-
-
-
 void
 ScatterEstimationByBin::
 write_log(const double simulation_time,
@@ -623,108 +669,6 @@ write_log(const double simulation_time,
     //            << axial_bins << " axial_bins * "
     //            << this->output_proj_data_sptr->get_num_tangential_poss()
     //            << " tangential_bins\n";
-}
-
-Succeeded
-ScatterEstimationByBin::
-calculate_attenuation_projdata(shared_ptr< ProjData > & _atten_sptr)
-{
-    //    shared_ptr<ForwardProjectorByBin> forw_projector_ptr;
-    //    shared_ptr<ProjMatrixByBin> PM(new  ProjMatrixByBinUsingRayTracing());
-    //    forw_projector_ptr.reset(new ForwardProjectorByBinUsingProjMatrixByBin(PM));
-    //    info(boost::format("\n\nForward projector used for the calculation of\n"
-    //                       "attenuation coefficients: %1%\n") % forw_projector_ptr->parameter_info());
-
-
-    //    if ( this->atten_coeff_filename.size() > 0)
-    //        _atten_sptr.reset(new ProjDataInterfile( this->input_projdata_sptr->get_exam_info_sptr(),// TODO this should possibly come from the image, or say it's an ACF File
-    //                                                 this->input_projdata_sptr->get_proj_data_info_ptr()->create_shared_clone(),
-    //                                                 this->atten_coeff_filename,
-    //                                                 std::ios::in | std::ios::out | std::ios::trunc));
-    //    else
-    //        _atten_sptr.reset(new ProjDataInMemory(this->input_projdata_sptr->get_exam_info_sptr(),// TODO this should possibly come from the image, or say it's an ACF File
-    //                                               this->input_projdata_sptr->get_proj_data_info_ptr()->create_shared_clone()));
-
-    //    _atten_sptr->fill(1.f);
-    //    // construct a normalisation object that does all the work for us.
-    //    shared_ptr<BinNormalisation> normalisation_ptr
-    //            (new BinNormalisationFromAttenuationImage(this->atten_image_sptr,
-    //                                                      forw_projector_ptr));
-
-    //    if (normalisation_ptr->set_up(this->input_projdata_sptr->get_proj_data_info_ptr()->create_shared_clone())
-    //            != Succeeded::yes)
-    //    {
-    //        error("calculate_attenuation_coefficients: set-up of normalisation failed\n");
-    //        return Succeeded::no;
-    //    }
-
-    //    const double start_frame = 0.0;
-    //    const double end_frame = 0.0;
-    //    shared_ptr<DataSymmetriesForViewSegmentNumbers>
-    //            symmetries_sptr(forw_projector_ptr->get_symmetries_used()->clone());
-    //    normalisation_ptr->apply(*_atten_sptr.get(), start_frame, end_frame, symmetries_sptr);
-    //    return Succeeded::yes;
-}
-
-
-
-Succeeded
-ScatterEstimationByBin::
-calculate_multiplicative_projdata(shared_ptr<ProjData> template_proj_data_ptr,
-                                  shared_ptr<VoxelsOnCartesianGrid<float> > atten_image_sptr,
-                                  shared_ptr<ProjData> out_proj_data_ptr,
-                                  std::string output_filename)
-{
-    //    shared_ptr<ForwardProjectorByBin> forw_projector_ptr;
-    //    shared_ptr<ProjMatrixByBin> PM(new  ProjMatrixByBinUsingRayTracing());
-    //    forw_projector_ptr.reset(new ForwardProjectorByBinUsingProjMatrixByBin(PM));
-    //    info(boost::format("\n\nForward projector used for the calculation of\n"
-    //                       "attenuation coefficients: %1%\n") % forw_projector_ptr->parameter_info());
-
-    //    if (this->normalization_coeffs_filename.size() > 0)
-    //    {
-    //        this->normalization_factors_sptr =
-    //                    ProjData::read_from_file(this->normalization_coeffs_filename);
-    //    }
-    //    else
-    //    {
-    ////        this->normalization_factors_sptr.reset(new ProjDataInMemory(this->template_exam_info_sptr,
-    ////                                                                        this->output_proj_data_sptr->get_proj_data_info_ptr()->create_shared_clone()));
-    //        this->normalization_factors_sptr->fill(1.f);
-    //    }
-
-
-    //    if (output_filename.size() == 0)
-    //        out_proj_data_ptr.reset(new ProjDataInMemory(template_proj_data_ptr->get_exam_info_sptr(),// TODO this should possibly come from the image, or say it's an ACF File
-    //                                                     template_proj_data_ptr->get_proj_data_info_ptr()->create_shared_clone()));
-
-    //    else
-    //        out_proj_data_ptr.reset(new ProjDataInterfile(template_proj_data_ptr->get_exam_info_sptr(),// TODO this should possibly come from the image, or say it's an ACF File
-    //                                                      template_proj_data_ptr->get_proj_data_info_ptr()->create_shared_clone(),
-    //                                                      output_filename, std::ios::in | std::ios::out | std::ios::trunc));
-
-    //    // fill with it with the normalization data which have been initialized
-    //    // either from a file or with 1s.
-    //    out_proj_data_ptr->fill(*this->normalization_factors_sptr);
-    //    // construct a normalisation object that does all the work for us.
-    //    shared_ptr < VoxelsOnCartesianGrid < float > > tmp_atten_image_sptr(atten_image_sptr->clone());
-    //    shared_ptr<BinNormalisation> normalisation_ptr
-    //            (new BinNormalisationFromAttenuationImage(tmp_atten_image_sptr,
-    //                                                      forw_projector_ptr));
-
-    //    if (normalisation_ptr->set_up(template_proj_data_ptr->get_proj_data_info_ptr()->create_shared_clone())
-    //            != Succeeded::yes)
-    //    {
-    //        error("calculate_attenuation_coefficients: set-up of normalisation failed\n");
-    //        return Succeeded::no;
-    //    }
-
-    //    // dummy values currently necessary for BinNormalisation, but they will be ignored
-    //    const double start_frame = 0;
-    //    const double end_frame = 0;
-    //    shared_ptr<DataSymmetriesForViewSegmentNumbers> symmetries_sptr(forw_projector_ptr->get_symmetries_used()->clone());
-    //    normalisation_ptr->apply(*out_proj_data_ptr, start_frame, end_frame, symmetries_sptr);
-    //    return Succeeded::yes;
 }
 
 END_NAMESPACE_STIR
