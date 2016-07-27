@@ -45,14 +45,14 @@ ScatterSimulation::
   total_Compton_cross_section(511.F); 
 
 float
-ScatterSimulation::
- single_scatter_estimate_for_one_scatter_point(
+SingleScatterSimulation::
+ simulate_for_one_scatter_point(
           const std::size_t scatter_point_num, 
           const unsigned det_num_A, 
           const unsigned det_num_B)
 {       
-/*  static const float max_single_scatter_cos_angle=
-    max_cos_angle(lower_energy_threshold,2.,energy_resolution);
+  static const float max_single_scatter_cos_angle=
+    max_cos_angle(this->template_exam_info_sptr->get_low_energy_thres(),2.,this->proj_data_info_ptr->get_scanner_ptr()->get_energy_resolution());
 
   //static const float min_energy=energy_lower_limit(lower_energy_threshold,2.,energy_resolution);
 
@@ -144,7 +144,7 @@ ScatterSimulation::
     cos_angle(scatter_point - detector_coord_B,
               detB_to_ring_center) ;
             
-  return scatter_ratio*cos_incident_angle_AS*cos_incident_angle_BS*dif_Compton_cross_section_value;*/
+  return scatter_ratio*cos_incident_angle_AS*cos_incident_angle_BS*dif_Compton_cross_section_value;
           
 }
 

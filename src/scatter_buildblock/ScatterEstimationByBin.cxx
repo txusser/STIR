@@ -70,7 +70,7 @@ set_defaults()
     // All recomputes default true
     this->recompute_initial_activity_image = true;
     this->recompute_atten_coeff = true;
-    this->recompute_mask_image = true;
+    this->recompute_mask_atten_image = true;
     this->recompute_mask_projdata = true;
 
     this->initial_activity_image_filename = "";
@@ -98,21 +98,31 @@ initialise_keymap()
     this->parser.add_key("attenuation image filename",
                          &this->atten_image_filename);
 
-    // MASK image
-    this->parser.add_key("mask image filename",
-                         &this->mask_image_filename);
-    this->parser.add_key("recompute mask image",
-                         &this->recompute_mask_image);
+    // MASK parameters
+    this->parser.add_key("mask attenuation image filename",
+                         &this->mask_atten_image_filename);
     this->parser.add_key("mask postfilter filename",
                          &this->mask_postfilter_filename);
-    this->parser.add_key("mask max threshold ",
-                         &this->mask_max_threshold);
-    this->parser.add_key("mask add scalar",
-                         &this->mask_add_scalar);
-    this->parser.add_key("mask min threshold",
-                         &this->mask_min_threshold);
-    this->parser.add_key("mask times scalar",
-                         &this->mask_times_scalar);
+    //-> for attenuation
+    this->parser.add_key("recompute mask attenuation image",
+                         &this->recompute_mask_atten_image);
+    this->parser.add_key("mask attenuation max threshold ",
+                         &this->mask_attenuation_image.max_threshold);
+    this->parser.add_key("mask attenuation add scalar",
+                         &this->mask_attenuation_image.add_scalar);
+    this->parser.add_key("mask attenuation min threshold",
+                         &this->mask_attenuation_image.min_threshold);
+    this->parser.add_key("mask attenuation times scalar",
+                         &this->mask_attenuation_image.times_scalar);
+    //-> for activity
+    this->parser.add_key("mask activity max threshold ",
+                         &this->mask_activity_image.max_threshold);
+    this->parser.add_key("mask activity add scalar",
+                         &this->mask_activity_image.add_scalar);
+    this->parser.add_key("mask activity min threshold",
+                         &this->mask_activity_image.min_threshold);
+    this->parser.add_key("mask activity times scalar",
+                         &this->mask_activity_image.times_scalar);
     // END MASK IMAGE
     // MASK PROJDATA
     this->parser.add_key("recompute mask projdata",
@@ -152,75 +162,13 @@ initialise_keymap()
 
     //    this->reconstruction_template_sptr.reset(new Reconstruction<DiscretisedDensity<3, float > > ( rec_filename ));
 
-    // To this point.
-
-    this->parser.add_key("output_filename_prefix", &this->output_projdata_filename);
-
-
+    this->parser.add_key("output filename prefix", &this->output_projdata_filename);
 }
 
 bool
 ScatterEstimationByBin::
 post_processing()
 {
-    //
-    // Initialise the reconstruction method
-    //
-
-    if (this->reconstruction_template_par_filename.size() > 0 )
-    {
-        KeyParser local_parser;
-        local_parser.add_start_key("Reconstruction");
-        local_parser.add_stop_key("End Reconstruction");
-        local_parser.add_parsing_key("reconstruction method", &this->reconstruction_template_sptr);
-        local_parser.parse(this->reconstruction_template_par_filename.c_str());
-    }
-    else
-    {
-        error("Please define a reconstruction method.");
-    }
-
-    if (this->reconstruction_template_sptr->get_registered_name() == "OSMAPOSL" ||
-            this->reconstruction_template_sptr->get_registered_name() == "OSSPS")
-    {
-        if (set_up_iterative() == false)
-            error("Initialisation Failed!");
-
-        this->iterative_method = true;
-    }
-    else if (this->reconstruction_template_sptr->get_registered_name() == "FBP3D" ||
-             this->reconstruction_template_sptr->get_registered_name() == "FBP2D")
-    {
-        if (set_up_analytic() == false)
-            error("Initialisation Failed!");
-
-        this->iterative_method = false;
-    }
-
-    // create output (has to be AFTER set_template_proj_data_info)
-    //    this->set_proj_data_from_file(this->output_proj_data_filename,
-    //                                  this->output_proj_data_sptr);
-
-    //
-    // Load the measured input emission data and check if they need SSRB
-    //
-
-    return false;
-}
-
-ScatterEstimationByBin::
-ScatterEstimationByBin()
-{
-    this->set_defaults();
-}
-
-bool
-ScatterEstimationByBin::
-set_up_iterative()
-{
-    IterativeReconstruction <DiscretisedDensity<3, float> > * iterative_object =
-            dynamic_cast<IterativeReconstruction<DiscretisedDensity<3, float> > *> (this->reconstruction_template_sptr.get());
-
     shared_ptr<ProjData> input_projdata_sptr =
             ProjData::read_from_file(this->input_projdata_filename);
 
@@ -250,7 +198,28 @@ set_up_iterative()
                     input_projdata_sptr->get_proj_data_info_sptr().get());
     }
 
-    this->reconstruction_template_sptr->set_input_data(this->input_projdata_2d_sptr);
+    if (!this->recompute_initial_activity_image && this->initial_activity_image_filename.size() > 0 )
+    {
+        this->activity_image_sptr =
+                read_from_file<DiscretisedDensity<3,float> >(this->initial_activity_image_filename);
+    }
+
+    //
+    // Initialise the reconstruction method
+    //
+
+    if (this->reconstruction_template_par_filename.size() > 0 )
+    {
+        KeyParser local_parser;
+        local_parser.add_start_key("Reconstruction");
+        local_parser.add_stop_key("End Reconstruction");
+        local_parser.add_parsing_key("reconstruction method", &this->reconstruction_template_sptr);
+        local_parser.parse(this->reconstruction_template_par_filename.c_str());
+    }
+    else
+    {
+        error("Please define a reconstruction method.");
+    }
 
     // Load the attenuation image.
     {
@@ -288,32 +257,80 @@ set_up_iterative()
         // and it will override anything that the ScatterSimulation.par file has done.
         this->scatter_simulation_sptr->set_density_image_and_subsample(this->atten_image_sptr);
         this->scatter_simulation_sptr->set_projdata_and_subsample(this->proj_data_info_2d_sptr);
+        this->scatter_simulation_sptr->set_exam_info_sptr(this->input_projdata_2d_sptr->get_exam_info_sptr());
     }
     else
     {
         error("Please define a scatter simulation method.");
     }
 
+    if (this->reconstruction_template_sptr->get_registered_name() == "OSMAPOSL" ||
+            this->reconstruction_template_sptr->get_registered_name() == "OSSPS")
+    {
+        if (set_up_iterative() == false)
+            error("Initialisation Failed!");
+
+        this->iterative_method = true;
+    }
+    else if (this->reconstruction_template_sptr->get_registered_name() == "FBP3D" ||
+             this->reconstruction_template_sptr->get_registered_name() == "FBP2D")
+    {
+        if (set_up_analytic() == false)
+            error("Initialisation Failed!");
+
+        this->iterative_method = false;
+    }
+
+    //     create output (has to be AFTER set_template_proj_data_info)
+
+    this->output_projdata_sptr.reset(new ProjDataInMemory(this->input_projdata_2d_sptr->get_exam_info_sptr(),
+                                                          this->input_projdata_2d_sptr->get_proj_data_info_sptr()->create_shared_clone()));
+
+
+
+    return false;
+}
+
+ScatterEstimationByBin::
+ScatterEstimationByBin()
+{
+    this->set_defaults();
+}
+
+bool
+ScatterEstimationByBin::
+set_up_iterative()
+{
+    IterativeReconstruction <DiscretisedDensity<3, float> > * iterative_object =
+            dynamic_cast<IterativeReconstruction<DiscretisedDensity<3, float> > *> (this->reconstruction_template_sptr.get());
+
+
+
+    this->reconstruction_template_sptr->set_input_data(this->input_projdata_2d_sptr);
+
+
+
     //
     // Initialise the mask image.
     //
 
-    if (this->recompute_mask_image)
+    if (this->recompute_mask_atten_image)
     {
         // Applying mask
         // 1. Clone from the original image.
         // 2. Apply to the new clone.
-        this->mask_image_sptr.reset(this->atten_image_sptr->clone());
-        this->apply_mask_in_place(this->mask_image_sptr);
+        this->mask_atten_image_sptr.reset(this->atten_image_sptr->clone());
+        this->apply_mask_in_place(this->mask_atten_image_sptr,
+                                  this->mask_attenuation_image);
 
-        if (this->mask_image_filename.size() > 0 )
+        if (this->mask_atten_image_filename.size() > 0 )
             OutputFileFormat<DiscretisedDensity<3,float> >::default_sptr()->
-                    write_to_file(this->mask_image_filename, *this->mask_image_sptr.get());
+                    write_to_file(this->mask_atten_image_filename, *this->mask_atten_image_sptr.get());
     }
-    else if (!this->recompute_mask_image && this->mask_image_filename.size() > 0)
+    else if (!this->recompute_mask_atten_image && this->mask_atten_image_filename.size() > 0)
     {
-        this->mask_image_sptr =
-                read_from_file<DiscretisedDensity<3, float> >(this->atten_image_filename);
+        this->mask_atten_image_sptr =
+                read_from_file<DiscretisedDensity<3, float> >(this->mask_atten_image_filename);
     }
     else
         error ("Please set the postfilter parameter filename or set to recompute it.");
@@ -322,7 +339,7 @@ set_up_iterative()
     if (this->recompute_mask_projdata)
     {
 
-        if (is_null_ptr(this->mask_image_sptr))
+        if (is_null_ptr(this->mask_atten_image_sptr))
             error("You cannot forward project if you have not set the mask image");
 
         shared_ptr<ForwardProjectorByBin> forw_projector_sptr;
@@ -332,12 +349,12 @@ set_up_iterative()
                            "attenuation coefficients: %1%\n") % forw_projector_sptr->parameter_info());
 
         forw_projector_sptr->set_up(this->input_projdata_2d_sptr->get_proj_data_info_ptr()->create_shared_clone(),
-                                    this->mask_image_sptr );
+                                    this->mask_atten_image_sptr );
 
         shared_ptr<ProjData> mask_projdata(new ProjDataInMemory(this->input_projdata_2d_sptr->get_exam_info_sptr(),
                                                                 this->input_projdata_2d_sptr->get_proj_data_info_ptr()->create_shared_clone()));
 
-        forw_projector_sptr->forward_project(*mask_projdata, *this->mask_image_sptr);
+        forw_projector_sptr->forward_project(*mask_projdata, *this->mask_atten_image_sptr);
 
         //add 1 to be able to use create_tail_mask_from_ACFs (which expects ACFs,
         //so complains if the threshold is too low)
@@ -565,7 +582,8 @@ set_up_analytic()
 
 void
 ScatterEstimationByBin::
-apply_mask_in_place(shared_ptr<DiscretisedDensity<3, float> >& arg)
+apply_mask_in_place(shared_ptr<DiscretisedDensity<3, float> >& arg,
+                    const mask_parameters& _this_mask)
 {
     // Re-reading every time should not be a problem, as it is
     // just a small txt file.
@@ -577,11 +595,13 @@ apply_mask_in_place(shared_ptr<DiscretisedDensity<3, float> >& arg)
     //  const float mult_scalar, const float power,
     //  const float min_threshold, const float max_threshold)
 
-    pow_times_add pow_times_add_object(this->mask_add_scalar,
-                                       this->mask_times_scalar,
+    // The power is hardcoded because in this context has no
+    // use.
+    pow_times_add pow_times_add_object(_this_mask.add_scalar,
+                                       _this_mask.times_scalar,
                                        1.0,
-                                       this->mask_min_threshold,
-                                       this->mask_max_threshold);
+                                       _this_mask.min_threshold,
+                                       _this_mask.max_threshold);
 
     // 1. filter the image
     filter.filter_ptr->apply(*arg.get());
@@ -599,7 +619,7 @@ Succeeded
 ScatterEstimationByBin::
 process_data()
 {
-    // Get initial image if nessesary
+    // Reconstruct an image ... if needed.
     if( is_null_ptr(this->activity_image_sptr) )
     {
         if (iterative_method)
@@ -607,18 +627,27 @@ process_data()
                                   this->activity_image_sptr);
         else
             reconstruct_analytic();
+
+        //        // Create the mask image
+        //        this->mask_act_image_sptr.reset(this->activity_image_sptr->clone());
+
+        //        // zoom the attenuation to the activity image
+
+        //        apply_mask_in_place(this->mask_act_image_sptr,
+        //                            this->mask_activity_image);
+
+        //            std::string output_filename = "./activity_mask";
+        if (this->initial_activity_image_filename.size() > 0 )
+            OutputFileFormat<DiscretisedDensity < 3, float > >::default_sptr()->
+                    write_to_file(this->initial_activity_image_filename, *this->activity_image_sptr.get());
     }
 
     for (int i_scat_iter = 1;
          i_scat_iter < this->num_scatter_iterations;
          i_scat_iter++)
     {
+        // TODO: Mask iteratively...
 
-        if (iterative_method)
-            reconstruct_iterative(i_scat_iter,
-                                  this->activity_image_sptr);
-        else
-            reconstruct_analytic();
         // Make a mask out of it
 
 
@@ -627,13 +656,25 @@ process_data()
 
         }
 
+        //filter ... optional
 
+        // simulate
+        scatter_simulation_sptr->set_output_proj_data(this->output_projdata_sptr);
+        scatter_simulation_sptr->set_activity_image_sptr(this->activity_image_sptr);
+        scatter_simulation_sptr->process_data();
+
+        // end simulate
+
+        if (iterative_method)
+            reconstruct_iterative(i_scat_iter,
+                                  this->activity_image_sptr);
+        else
+        {
+
+            reconstruct_analytic();
+            //TODO: threshold ... to cut the negative values
+        }
     }
-    //LOOP { NUM
-
-    // Iterate
-
-    // Simulate
 
     return Succeeded::yes;
 }
@@ -650,52 +691,22 @@ reconstruct_iterative(int _current_iter_num,
     if (!is_null_ptr(_current_estimate_sptr))
         iterative_object->set_initial_data_ptr(_current_estimate_sptr);
 
+    // Set the previous scatter estimate in the reconstruction process.
+    if(_current_iter_num > 0)
+        iterative_object->set_additive_proj_data_sptr(this->output_projdata_sptr);
+
     iterative_object->reconstruct();
 
     if (is_null_ptr(_current_estimate_sptr))
         _current_estimate_sptr = iterative_object->get_target_image();
 
-    std::stringstream convert;   // stream used for the conversion
+    //std::stringstream convert;   // stream used for the conversion
 
-    convert << "/Users/nikos/Desktop/Workspace/data/scatters_real/produced_data/initial_image_" <<
-               _current_iter_num;
-    std::string output_filename =  convert.str();
-    OutputFileFormat<DiscretisedDensity < 3, float > >::default_sptr()->
-            write_to_file(output_filename, *_current_estimate_sptr.get());
-
-    //    //
-    //    // Initial activity image.
-    //    //
-
-    //    if (!this->recompute_initial_activity_image && this->initial_activity_image_filename.size() > 0 )
-    //        this->set_activity_image_sptr( get_image_from_file(this->initial_activity_image_filename) );
-    //    else if (this->recompute_initial_activity_image)     // Initial reconstruction
-    //    {
-    //        if (is_null_ptr(this->reconstruction_template_sptr))
-    //            error("There was an error in the initialisation of the reconstruction object.");
-
-    //        this->reconstruction_template_sptr->set_input_data(this->input_projdata_sptr);
-
-    //        if (!is_null_ptr(this->back_projdata_sptr))
-    //            this->reconstruction_template_sptr->set_additive_proj_data_sptr(this->back_projdata_sptr);
-
-    //        // TODO: Set the multiplicative factor for the Analytic reconstruction.
-    //        // Currently implemented only in iterative reconstruction.
-    //        if (!is_null_ptr(this->atten_coeffs_sptr))
-    //            this->reconstruction_template_sptr->set_normalisation_proj_data_sptr(this->atten_coeffs_sptr);
-
-    //        // Should the attenuations/normalization be
-    //        // different from the subsampled attenuation ( which should include the bed attenuation) ???
-
-    //        this->reconstruction_template_sptr->reconstruct();
-
-    //        this->activity_image_sptr.reset( dynamic_cast < VoxelsOnCartesianGrid<float> * > (
-    //                reconstruction_template_sptr->get_target_image().get()));
-
-    //        if (this->initial_activity_image_filename.length() > 0)
-    //            OutputFileFormat<DiscretisedDensity < 3, float > >::default_sptr()->
-    //                    write_to_file(this->initial_activity_image_filename, *activity_image_sptr.get());
-    //    }
+    //    convert << "/Users/nikos/Desktop/Workspace/data/scatters_real/produced_data/initial_image_" <<
+    //               _current_iter_num;
+    //    std::string output_filename =  convert.str();
+    //    OutputFileFormat<DiscretisedDensity < 3, float > >::default_sptr()->
+    //            write_to_file(output_filename, *_current_estimate_sptr.get());
 }
 
 Succeeded

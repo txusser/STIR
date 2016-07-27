@@ -118,6 +118,12 @@ public:
     //    //! subsampled attenuation image.
     //    inline Succeeded set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
 
+    //!
+    //! \brief set_exam_info_sptr
+    //! \details Since July 2016, the information for the energy window and energy
+    //! resolution come from the ExamInfo.
+    inline void
+    set_exam_info_sptr(const shared_ptr<ExamInfo>&);
 
 
     //! find scatter points
@@ -142,10 +148,22 @@ public:
      * @{
      */
 
+    inline void
+    set_output_proj_data(const std::string&);
+
+    inline void
+    set_output_proj_data(const shared_ptr<ProjData>& );
+
+    inline shared_ptr<ProjData>
+    get_output_proj_data();
+
+
     //!
     //! \brief set_template_proj_data_info_sptr
     //! \details Load the scatter template and perform basic checks.
     inline void set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>&);
+
+
 
     //!
     //! \brief set_template_proj_data_info
@@ -461,21 +479,14 @@ protected:
 
     /** }@*/
 
-    float
-    single_scatter_estimate_for_one_scatter_point(const std::size_t scatter_point_num,
-                                                  const unsigned det_num_A,
-                                                  const unsigned det_num_B);
-
-
-    void
-    single_scatter_estimate(double& scatter_ratio_singles,
-                            const unsigned det_num_A,
-                            const unsigned det_num_B);
-
-
     virtual double
     scatter_estimate(const unsigned det_num_A,
                      const unsigned det_num_B);
+
+    virtual void
+    actual_scatter_estimate(double& scatter_ratio_singles,
+                            const unsigned det_num_A,
+                            const unsigned det_num_B) = 0;
 
 
 
@@ -531,6 +542,16 @@ private:
         call remove_cache_for_scattpoint_det_integrals_over_activity() first.
     */
     void initialise_cache_for_scattpoint_det_integrals_over_activity();
+
+    //!
+    //! \brief output_proj_data_filename
+    //!
+    std::string output_proj_data_filename;
+
+    //!
+    //! \brief output_proj_data_sptr
+    //!
+    shared_ptr<ProjData> output_proj_data_sptr;
 
 
     //!

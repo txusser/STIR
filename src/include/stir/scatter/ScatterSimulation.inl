@@ -136,6 +136,33 @@ set_density_image_for_scatter_points(const std::string& filename)
 //          (template_proj_data_sptr->get_proj_data_info_ptr()->clone());
 //}
 
+void
+ScatterSimulation::
+set_output_proj_data(const std::string& filename)
+{
+  this->output_proj_data_filename = filename;
+  // TODO get ExamInfo from image
+  shared_ptr<ExamInfo> exam_info_sptr(new ExamInfo);
+  this->output_proj_data_sptr.reset(new ProjDataInterfile(exam_info_sptr,
+                                                          this->proj_data_info_ptr->create_shared_clone(),
+                                                          this->output_proj_data_filename));
+}
+
+void
+ScatterSimulation::
+set_output_proj_data(const shared_ptr<ProjData> & arg)
+{
+  // TODO get ExamInfo from image
+  this->output_proj_data_sptr = arg;
+}
+
+shared_ptr<ProjData>
+ScatterSimulation::
+get_output_proj_data()
+{
+ return this->output_proj_data_sptr;
+}
+
 
 void
 ScatterSimulation::
@@ -172,6 +199,13 @@ set_template_proj_data_info(const std::string& filename)
             ProjData::read_from_file(this->template_proj_data_filename);
 
     this->set_template_proj_data_info_sptr(template_proj_data_sptr->get_proj_data_info_ptr()->create_shared_clone());
+}
+
+void
+ScatterSimulation::
+set_exam_info_sptr(const shared_ptr<ExamInfo>& arg)
+{
+    this->template_exam_info_sptr = arg;
 }
 
 void

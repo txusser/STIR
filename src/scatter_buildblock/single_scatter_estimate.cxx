@@ -21,6 +21,7 @@
   \ingroup scatter
   \brief Implementations of stir::ScatterEstimationByBin::scatter_estimate and stir::ScatterEstimationByBin::single_scatter_estimate
 
+  \author Nikos Efthimiou
   \author Charalampos Tsoumpas
   \author Pablo Aguiar
   \author Kris Thielemans
@@ -42,21 +43,22 @@ ScatterSimulation::
 scatter_estimate(const unsigned det_num_A, 
 		 const unsigned det_num_B)	
 {
-  double scatter_ratio_singles = 0;
+  double scatter_ratio = 0;
 
-  this->single_scatter_estimate(scatter_ratio_singles,
+  this->actual_scatter_estimate(scatter_ratio,
 				det_num_A, 
 				det_num_B);
 
- return scatter_ratio_singles;
+ return scatter_ratio;
 }      
 
 void
-ScatterSimulation::
-single_scatter_estimate(double& scatter_ratio_singles,
+SingleScatterSimulation::
+actual_scatter_estimate(double& scatter_ratio_singles,
 			const unsigned det_num_A, 
 			const unsigned det_num_B)
 {
+
 
   scatter_ratio_singles = 0;
 		
@@ -65,7 +67,7 @@ single_scatter_estimate(double& scatter_ratio_singles,
       ++scatter_point_num)
     {	
 	scatter_ratio_singles +=
-	  single_scatter_estimate_for_one_scatter_point(
+      simulate_for_one_scatter_point(
 							scatter_point_num,
 							det_num_A, det_num_B);	
 

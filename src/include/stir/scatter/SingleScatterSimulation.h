@@ -65,7 +65,27 @@ protected:
     virtual void initialise_keymap();
 
     //! used to check acceptable parameter ranges, etc...
-    virtual bool post_processing();
+//    virtual bool post_processing();
+
+
+    //!
+    //! \brief simulate_for_one_scatter_point
+    //! \param scatter_point_num
+    //! \param det_num_A
+    //! \param det_num_B
+    //! \return
+    //! \details This funtion used to be ScatterEstimationByBin::
+    //! single_scatter_estimate_for_one_scatter_point()
+    float
+    simulate_for_one_scatter_point(const std::size_t scatter_point_num,
+                                                  const unsigned det_num_A,
+                                                  const unsigned det_num_B);
+
+    virtual void
+    actual_scatter_estimate(double& scatter_ratio_singles,
+                            const unsigned det_num_A,
+                            const unsigned det_num_B);
+
 
 
 };

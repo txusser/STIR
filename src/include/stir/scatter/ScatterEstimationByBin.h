@@ -46,6 +46,19 @@ class ProjDataInfoCylindricalNoArcCorr;
 class ViewSegmentNumbers;
 class BinNormalisation;
 
+
+//!
+//! \bief mask_parameters
+//! \details A struct to hold the parameters for
+//! masking. Maybe It could be moved it to STIR math.
+typedef struct mask_parameters
+{
+    float max_threshold;
+    float add_scalar;
+    float min_threshold;
+    float times_scalar;
+};
+
 /*!
   \ingroup scatter
   \brief Estimate the scatter probability using a model-based approach
@@ -285,9 +298,14 @@ protected:
    */
 
     //!
-    //! \brief mask_image_filename
+    //! \brief mask_atten_image_filename
     //!
-    std::string mask_image_filename;
+    std::string mask_atten_image_filename;
+
+    //!
+    //! \brief mask_act_image_filename
+    //!
+    std::string mask_act_image_filename;
 
     //!
     //! \brief mask_postfilter_filename
@@ -297,32 +315,27 @@ protected:
     //!
     //! \brief recompute_mask_image
     //! \details recompute or load the mask image.
-    bool recompute_mask_image;
+    bool recompute_mask_atten_image;
 
     //!
-    //! \brief mask_image_sptr
+    //! \brief mask_atten_image_sptr
     //!
-    shared_ptr < DiscretisedDensity < 3, float >  > mask_image_sptr;
+    shared_ptr < DiscretisedDensity < 3, float >  > mask_atten_image_sptr;
 
     //!
-    //! \brief mask_max_threshold
+    //! \brief mask_act_image_sptr
     //!
-    float mask_max_threshold;
+    shared_ptr < DiscretisedDensity < 3, float > > mask_act_image_sptr;
 
     //!
-    //! \brief mask_add_scalar
-    //!
-    float mask_add_scalar;
+    //! \brief mask_activity_image
+    //! \details the set of parameters to mask the activity image
+    mask_parameters mask_activity_image;
 
     //!
-    //! \brief mask_min_threshold
-    //!
-    float mask_min_threshold;
-
-    //!
-    //! \brief mask_times_scalar
-    //!
-    float mask_times_scalar;
+    //! \brief mask_attenuation_image
+    //! \details the set of parameters to mask the attenuation image
+    mask_parameters mask_attenuation_image;
 
     //!
     //! \brief recompute_mask_projdata
@@ -355,7 +368,8 @@ private:
     //! \brief appy_mask
     //! \details Mask a DiscretisedDensity
     void
-    apply_mask_in_place(shared_ptr<DiscretisedDensity<3, float> >&);
+    apply_mask_in_place(shared_ptr<DiscretisedDensity<3, float> >&,
+                        const mask_parameters&);
 
     //!
     //! \brief num_scatter_iterations

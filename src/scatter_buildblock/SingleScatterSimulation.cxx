@@ -67,16 +67,15 @@ ask_parameters()
 
 }
 
-bool
-SingleScatterSimulation::
-post_processing()
-{
-     base_type::post_processing();
-    // Probably not too many things, since most are going to be
-    // at the base type.
-
-    int nikos = 0;
-}
+//bool
+//SingleScatterSimulation::
+//post_processing()
+//{
+//    base_type::post_processing();
+//    // Probably not too many things to do here,
+//    //since most are going to be
+//    // at the base type.
+//}
 
 std::string
 SingleScatterSimulation::

@@ -175,9 +175,8 @@ process_data_for_view_segment_num(const ViewSegmentNumbers& vs_num)
     }
     // now compute scatter for all bins
     double total_scatter = 0;
-    //TODO: Nikos : commented out.
-    //    Viewgram<float> viewgram =
-    //            this->output_proj_data_sptr->get_empty_viewgram(vs_num.view_num(), vs_num.segment_num());
+    Viewgram<float> viewgram =
+            this->output_proj_data_sptr->get_empty_viewgram(vs_num.view_num(), vs_num.segment_num());
 #ifdef STIR_OPENMP
 #pragma omp parallel for reduction(+:total_scatter) schedule(dynamic)
 #endif
@@ -190,16 +189,15 @@ process_data_for_view_segment_num(const ViewSegmentNumbers& vs_num)
         this->find_detectors(det_num_A, det_num_B, bin);
         const double scatter_ratio =
                 scatter_estimate(det_num_A, det_num_B);
-        //TODO: Nikos : commented out.
-        //        viewgram[bin.axial_pos_num()][bin.tangential_pos_num()] =
-        //                static_cast<float>(scatter_ratio);
+                viewgram[bin.axial_pos_num()][bin.tangential_pos_num()] =
+                        static_cast<float>(scatter_ratio);
         total_scatter += scatter_ratio;
     } // end loop over bins
 
-    //    if (this->output_proj_data_sptr->set_viewgram(viewgram) == Succeeded::no)
-    //        error("ScatterEstimationByBin: error writing viewgram");
+        if (this->output_proj_data_sptr->set_viewgram(viewgram) == Succeeded::no)
+            error("ScatterEstimationByBin: error writing viewgram");
 
-    //    return static_cast<double>(viewgram.sum());
+        return static_cast<double>(viewgram.sum());
 }
 
 
