@@ -18,9 +18,12 @@ ScatterSimulation::
 set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& arg)
 {
     if (is_null_ptr(arg) )
+    {
+        error("ScatterSimulation: Unable to set the activity image");
         return Succeeded::no;
+    }
 
-    this->activity_image_sptr = arg;
+    this->activity_image_sptr.reset( arg->clone()) ;
     this->remove_cache_for_integrals_over_activity();
 
     return Succeeded::yes;
@@ -148,15 +151,7 @@ set_output_proj_data(const std::string& filename)
                                                           this->output_proj_data_filename));
 }
 
-void
-ScatterSimulation::
-set_output_proj_data(const shared_ptr<ProjData> & arg)
-{
-  // TODO get ExamInfo from image
-  this->output_proj_data_sptr = arg;
-}
-
-shared_ptr<ProjData>
+shared_ptr<ProjData>&
 ScatterSimulation::
 get_output_proj_data()
 {
@@ -296,10 +291,10 @@ num_dets_to_vox_size(int _num, bool _axis)
 
     // _num = num of dets per ring
     if (_axis)
-        return ((this->original_proj_data_info_ptr->get_scanner_ptr()->get_inner_ring_radius() * _PI
+        return ((this->template_proj_data_info_ptr->get_scanner_ptr()->get_inner_ring_radius() * _PI
                  / _num) * 0.9f);
     else
-        return (this->proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing() * _num) /
+        return (this->template_proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing() * _num) /
                 ( 2.f * this->proj_data_info_ptr->get_scanner_ptr()->get_num_rings());
 
 }
@@ -309,12 +304,12 @@ ScatterSimulation::
 vox_size_to_num_dets(float _num, bool _axis)
 {
     if (_axis)
-        return (((this->original_proj_data_info_ptr->get_scanner_ptr()->get_inner_ring_radius() * _PI)
+        return (((this->template_proj_data_info_ptr->get_scanner_ptr()->get_inner_ring_radius() * _PI)
                  / _num) * 1.1f);
     else
     {
-        float tot_length = this->original_proj_data_info_ptr->get_scanner_ptr()->get_num_rings() *
-                this->original_proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing();
+        float tot_length = this->template_proj_data_info_ptr->get_scanner_ptr()->get_num_rings() *
+                this->template_proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing();
         return static_cast<int>(tot_length / _num +0.5f);
     }
 }

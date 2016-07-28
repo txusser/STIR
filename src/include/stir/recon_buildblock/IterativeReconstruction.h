@@ -127,7 +127,7 @@ public:
   //! \author Nikos Efthimiou
   //! \details Set the initial image in real time.
   virtual void
-    set_initial_data_ptr(const shared_ptr<TargetT>& );
+    set_initial_data_ptr(shared_ptr<TargetT>& );
 
   //! executes the reconstruction
   /*!

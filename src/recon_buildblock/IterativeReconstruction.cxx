@@ -393,7 +393,7 @@ IterativeReconstruction<TargetT>::get_initial_data_ptr() const
 
 template <typename TargetT>
 void
-IterativeReconstruction<TargetT>::set_initial_data_ptr(const shared_ptr<TargetT>& arg)
+IterativeReconstruction<TargetT>::set_initial_data_ptr(shared_ptr<TargetT>& arg)
 {
     // If null_ptr then do nothing and let the reconstruction,
     // initiliase as usual.

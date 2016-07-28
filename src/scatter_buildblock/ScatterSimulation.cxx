@@ -18,6 +18,8 @@
 #include "stir/zoom.h"
 #include "stir/ArrayFunction.h"
 
+#include "stir/ProjDataInMemory.h"
+
 START_NAMESPACE_STIR
 
 ScatterSimulation::
@@ -42,7 +44,11 @@ process_data()
     if (is_null_ptr(this->proj_data_info_ptr))
     {
         // subsample.
+
+        // initialise the output_proj_data
     }
+
+    this->output_proj_data_sptr->fill(0.f);
 
     //    if (!this->recompute_sub_atten_image && !this->recompute_sub_projdata)
     //    {
@@ -146,6 +152,12 @@ process_data()
         return Succeeded::no;
     }
 
+    std::string output_filename = "./scatter_estimated_in_0";
+
+    ProjDataInMemory* object =
+            dynamic_cast<ProjDataInMemory *> (this->output_proj_data_sptr.get());
+    object->write_to_file(output_filename);
+
     return Succeeded::yes;
 }
 
@@ -189,15 +201,15 @@ process_data_for_view_segment_num(const ViewSegmentNumbers& vs_num)
         this->find_detectors(det_num_A, det_num_B, bin);
         const double scatter_ratio =
                 scatter_estimate(det_num_A, det_num_B);
-                viewgram[bin.axial_pos_num()][bin.tangential_pos_num()] =
-                        static_cast<float>(scatter_ratio);
+        viewgram[bin.axial_pos_num()][bin.tangential_pos_num()] =
+                static_cast<float>(scatter_ratio);
         total_scatter += scatter_ratio;
     } // end loop over bins
 
-        if (this->output_proj_data_sptr->set_viewgram(viewgram) == Succeeded::no)
-            error("ScatterEstimationByBin: error writing viewgram");
+    if (this->output_proj_data_sptr->set_viewgram(viewgram) == Succeeded::no)
+        error("ScatterEstimationByBin: error writing viewgram");
 
-        return static_cast<double>(viewgram.sum());
+    return static_cast<double>(viewgram.sum());
 }
 
 
@@ -299,19 +311,21 @@ ScatterSimulation::
 set_density_image_and_subsample(const shared_ptr<DiscretisedDensity<3,float> >& arg)
 {
     this->set_density_image_sptr(arg);
-
     this->reduce_voxel_size();
-
     this->set_density_image_for_scatter_points_sptr(this->density_image_for_scatter_points_sptr);
 }
 
 void
 ScatterSimulation::
-set_projdata_and_subsample(const shared_ptr<ProjDataInfo > arg)
+set_projdata_and_subsample(const shared_ptr<ExamInfo> & _exam_info_sptr,
+                           const shared_ptr<ProjDataInfo >& _projdata_info_sptr)
 {
 
-    this->original_proj_data_info_ptr = arg;
-    this->reduce_projdata_detector_num(arg);
+    // Set the original but processs with the subsampled.
+    this->template_proj_data_info_ptr = _projdata_info_sptr;
+    // Make sure that _exam_info have been initialised.
+    this->template_exam_info_sptr = _exam_info_sptr;
+    this->reduce_projdata_detector_num(_projdata_info_sptr);
 }
 
 void
@@ -361,8 +375,8 @@ reduce_projdata_detector_num(const shared_ptr<ProjDataInfo >& arg)
     sub_num_rings = (this->sub_num_rings < 0) ? vox_size_to_num_dets(this->sub_vox_z, false)
                                               : this->sub_num_rings;
 
-    float tot_length = this->original_proj_data_info_ptr->get_scanner_ptr()->get_num_rings() *
-            this->original_proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing();
+    float tot_length = this->template_proj_data_info_ptr->get_scanner_ptr()->get_num_rings() *
+            this->template_proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing();
 
     if (sub_num_rings % 2 == 0)
         error(boost::format("this z voxel size would lead to even number of rings, "
@@ -402,11 +416,11 @@ subsample_projdata_info(const shared_ptr<ProjDataInfo> _original_projdata_info,
     float default_bin_size = 0.0;
     // get FOV in mm
 
-    float ndd = this->original_proj_data_info_ptr->get_max_tangential_pos_num();
-    float naa = this->original_proj_data_info_ptr->get_min_tangential_pos_num();
+    float ndd = _original_projdata_info->get_max_tangential_pos_num();
+    float naa = _original_projdata_info->get_min_tangential_pos_num();
     Bin nb(0,0,0,ndd);
 
-    float fov_size_mm = this->original_proj_data_info_ptr->get_s(nb) * 2.f;
+    float fov_size_mm = _original_projdata_info->get_s(nb) * 2.f;
 
     float new_angular_increment = _PI / new_num_dets_per_ring;
     float new_s = tmpl_scanner.get_effective_ring_radius() * sin(new_angular_increment);
@@ -469,6 +483,9 @@ subsample_projdata_info(const shared_ptr<ProjDataInfo> _original_projdata_info,
     //                      this->proj_data_info_ptr->);
     //    }
 
+    this->output_proj_data_sptr.reset( new ProjDataInMemory(this->template_exam_info_sptr,
+                                                            pr_sptr));
+
     this->total_detectors =
             this->proj_data_info_ptr->get_scanner_ptr()->get_num_rings()*
             this->proj_data_info_ptr->get_scanner_ptr()->get_num_detectors_per_ring ();
@@ -480,9 +497,6 @@ subsample_projdata_info(const shared_ptr<ProjDataInfo> _original_projdata_info,
     this->remove_cache_for_integrals_over_attenuation();
     this->remove_cache_for_integrals_over_activity();
 
-    //    if (output_filename.size() > 0)
-    //        shared_ptr<ProjData> proj_data_ptr(new ProjDataInterfile(this->template_exam_info_sptr,
-    //                                                                 pr_sptr, output_filename));
 }
 
 void

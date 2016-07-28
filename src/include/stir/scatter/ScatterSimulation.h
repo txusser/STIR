@@ -111,12 +111,6 @@ public:
     //! \brief activity_image_filename
     //! \details Filename for the initial activity estimate.
     std::string activity_image_filename;
-    //    //!
-    //    //! \brief set_atten_image_sptr
-    //    //! \return
-    //    //! \details If called  from ScatterEstimationByBin then this refers to the
-    //    //! subsampled attenuation image.
-    //    inline Succeeded set_atten_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >&);
 
     //!
     //! \brief set_exam_info_sptr
@@ -151,10 +145,7 @@ public:
     inline void
     set_output_proj_data(const std::string&);
 
-    inline void
-    set_output_proj_data(const shared_ptr<ProjData>& );
-
-    inline shared_ptr<ProjData>
+    inline shared_ptr<ProjData>&
     get_output_proj_data();
 
 
@@ -211,7 +202,8 @@ public:
     //! \brief set_projdata_and_subsample
     //!
     void
-    set_projdata_and_subsample(const shared_ptr<ProjDataInfo >);
+    set_projdata_and_subsample(const shared_ptr<ExamInfo> &,
+                               const shared_ptr<ProjDataInfo > &);
 
     inline void
     set_density_image(const std::string&);
@@ -464,7 +456,7 @@ protected:
     //!
     //! \brief sub_proj_data_info_ptr
     //!
-    shared_ptr<ProjDataInfo> original_proj_data_info_ptr;
+    shared_ptr<ProjDataInfo> template_proj_data_info_ptr;
 
     //!
     //! \brief sub_num_dets_per_ring

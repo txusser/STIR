@@ -96,7 +96,7 @@ public:
 
     virtual Succeeded
     reconstruct_iterative(int,
-             shared_ptr<DiscretisedDensity<3, float> >&);
+                          shared_ptr<DiscretisedDensity<3, float> >&);
 
     virtual Succeeded
     reconstruct_analytic();
@@ -199,14 +199,18 @@ protected:
 
     //!
     //! \brief input_projdata_filename
-    //! \details Filename of the measured emission data.
+    //! \details Filename of the measured emission 3D data.
     std::string input_projdata_filename;
 
     //!
-    //! \brief input_data
-    //! \details This memnbers holds the measured emission data.
-    //    shared_ptr<ProjData> input_projdata_sptr;
+    //! \brief input_projdata_3d_sptr
+    //! \details The full 3D projdata are used for the calculation of the 2D
+    //! and later for the upsampling back to 3D.
+    shared_ptr<ProjData> input_projdata_3d_sptr;
 
+    //!
+    //! \brief input_projdata_2d_sptr
+    //! \details The 2D projdata are used for the scatter estimation.
     shared_ptr<ProjData> input_projdata_2d_sptr;
     /** }@*/
 
@@ -244,12 +248,24 @@ protected:
     //!
     shared_ptr<ProjData> atten_projdata_2d_sptr;
 
+    //!
+    //! \brief atten_projdata_3d_sptr
+    //! \details The 3D attenuation projdata are used only in
+    //! the end of the scatter estimation.
+    shared_ptr< ProjData > atten_projdata_3d_sptr;
+
     /** @}*/
 
     //!
     //! \brief _multiplicative_data
     //! \details The multiplicative component of the reconsrtuction process.
-    shared_ptr<BinNormalisation> _multiplicative_data;
+    shared_ptr<BinNormalisation> multiplicative_data_2d;
+
+    //!
+    //! \brief multiplicative_data_3d
+    //! \details The multiplicatice component for the final inverse
+    //! SSRB
+    shared_ptr<BinNormalisation> multiplicative_data_3d;
 
     /**
     * \name Varianbles realted to the background proj data
@@ -290,6 +306,11 @@ protected:
     //! \brief normalisation_factors_2d_sptr
     //! \details normalisation projdata after SSRB
     shared_ptr<ProjData> norm_projdata_2d_sptr;
+
+    //!
+    //! \brief norm_projdata_3d_sptr
+    //!
+    shared_ptr<ProjData> norm_projdata_3d_sptr;
     /** @}*/
 
 
@@ -359,7 +380,7 @@ protected:
 
     /** @}*/
 
-    std::string output_projdata_filename;
+    //    std::string output_projdata_filename;
     shared_ptr<ProjData> output_projdata_sptr;
 
 private:
@@ -391,6 +412,42 @@ private:
     //! \brief iterative_method
     //! \details Used for convinience. It is initialised on post_processing.
     bool iterative_method;
+
+    //!
+    //! \brief max_scale_factor
+    //! \details Default value = 100
+    float max_scale_value;
+
+    //!
+    //! \brief min_scale_factor
+    //! \details Default value = 0.4
+    float min_scale_value;
+
+    //!
+    //! \brief half_filter_width
+    //!
+    float half_filter_width;
+
+    //!
+    //! \brief remove_interleaving
+    //!
+    bool remove_interleaving;
+
+    //!
+    //! \brief export_scatter_estimates_of_each_iteration
+    //!
+    bool export_scatter_estimates_of_each_iteration;
+
+    //!
+    //! \brief export_2d_projdata
+    //!
+    bool export_2d_projdata;
+
+    //!
+    //! \brief i_scatter_estimate_prefix
+    //!
+    std::string o_scatter_estimate_prefix;
+
 };
 
 
