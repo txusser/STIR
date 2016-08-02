@@ -145,23 +145,27 @@ public:
     inline void
     set_output_proj_data(const std::string&);
 
-    inline shared_ptr<ProjData>&
-    get_output_proj_data();
+    inline void
+    set_output_proj_data_sptr(const shared_ptr<ExamInfo>&,
+                              const shared_ptr<ProjDataInfo>&,
+                              const std::string &);
+
+    inline void
+    get_output_proj_data(shared_ptr<ProjData>&);
 
 
     //!
     //! \brief set_template_proj_data_info_sptr
     //! \details Load the scatter template and perform basic checks.
-    inline void set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>&);
-
-
+    inline void set_scatter_proj_data_info_sptr(const shared_ptr<ProjDataInfo>&);
 
     //!
     //! \brief set_template_proj_data_info
     //! \param filename
     //!
     inline
-    void set_template_proj_data_info(const std::string&);
+    void set_scatter_proj_data_info(const std::string&);
+
 
     //!
     //! \brief set_activity_image_sptr
@@ -329,12 +333,14 @@ protected:
     //!
     //! \brief template_proj_data_filename
     //! \details The file name for the Scanner template
-    std::string template_proj_data_filename;
+    std::string scatter_proj_data_filename;
 
     //!
     //! \brief proj_data_info_ptr
     //! \details The projection data info of the scanner template
     ProjDataInfoCylindricalNoArcCorr * proj_data_info_ptr;
+
+    shared_ptr<ProjDataInfo> proj_data_info_sptr;
 
     //!
     //! \brief template_exam_info_sptr
@@ -456,7 +462,7 @@ protected:
     //!
     //! \brief sub_proj_data_info_ptr
     //!
-    shared_ptr<ProjDataInfo> template_proj_data_info_ptr;
+    shared_ptr<ProjDataInfo> template_proj_data_info_sptr;
 
     //!
     //! \brief sub_num_dets_per_ring
@@ -512,7 +518,6 @@ protected:
     //@}
 
 
-private:
 
     Array<2,float> cached_activity_integral_scattpoint_det;
     Array<2,float> cached_attenuation_integral_scattpoint_det;
@@ -588,6 +593,8 @@ private:
     //! for a voxel size.
     inline int
     vox_size_to_num_dets(float _num, bool _axis);
+
+    int times;
 
 };
 

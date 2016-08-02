@@ -16,7 +16,7 @@ using std::vector;
 
 USING_NAMESPACE_STIR
 
-// N.E: Minimal header file to be able to use this class from other
+// Nikos Efthimiou: Minimal header file to be able to use this class from other
 // places in the code.
 
 // a function object that takes a power of a float, and then multiplies with a float, and finally adds a float

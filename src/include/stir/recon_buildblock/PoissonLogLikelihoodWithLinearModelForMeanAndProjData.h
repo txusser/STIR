@@ -213,10 +213,10 @@ public:
   void set_frame_num(const int);
   void set_frame_definitions(const TimeFrameDefinitions&);
 
-  virtual void set_normalisation_proj_data_sptr(const shared_ptr<ExamData> &);
+  virtual void set_normalisation_proj_data_sptr(const shared_ptr<ExamData>&);
   virtual void set_normalisation_sptr(const shared_ptr<BinNormalisation>&);
 
-  virtual void set_input_data(const shared_ptr<ExamData> &);
+  virtual void set_input_data(const shared_ptr<ExamData>&);
   //@}
   
   virtual void 
@@ -361,6 +361,8 @@ protected:
 
   void
     add_view_seg_to_sensitivity(TargetT& sensitivity, const ViewSegmentNumbers& view_seg_nums) const;
+
+  shared_ptr<ExamData> some_exam;
 };
 
 #ifdef STIR_MPI

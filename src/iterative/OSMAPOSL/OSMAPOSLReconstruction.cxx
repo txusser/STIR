@@ -308,8 +308,7 @@ Succeeded
 OSMAPOSLReconstruction<TargetT>::
 set_up(shared_ptr <TargetT > const& target_image_ptr)
 {
-    if (this->has_setup)
-        return Succeeded::yes;
+
   // TODO should use something like iterator_traits to figure out the 
   // type instead of hard-wiring float
   static const float small_num = 0.000001F;
@@ -384,7 +383,6 @@ set_up(shared_ptr <TargetT > const& target_image_ptr)
         }
 
     }
-  this->has_setup = true;
   return Succeeded::yes;
 }
 

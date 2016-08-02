@@ -84,7 +84,7 @@ set_defaults()
     this->half_filter_width = 3.f;
 
     this->iterative_method = true;
-
+    this->do_average_at_2 = true;
     this->export_scatter_estimates_of_each_iteration = false;
 
 }
@@ -171,6 +171,9 @@ initialise_keymap()
     this->parser.add_key("output scatter estimate name prefix",
                          &this->o_scatter_estimate_prefix);
 
+    this->parser.add_key("do average at 2",
+                         &this->do_average_at_2);
+
     this->parser.add_key("max scale value",
                          &this->max_scale_value);
     this->parser.add_key("min scale value",
@@ -228,7 +231,9 @@ post_processing()
     }
 
     //
-    // Initialise the reconstruction method
+    // Initialise the reconstruction method and output image
+    // We should not run set_up() at this point, because first we should add
+    // normalisation data.
     //
 
     if (this->reconstruction_template_par_filename.size() > 0 )
@@ -265,29 +270,6 @@ post_processing()
 
     }
 
-    //
-    // ScatterSimulation
-    //
-
-    if (this->scatter_sim_par_filename.size() > 0 )
-    {
-        KeyParser local_parser;
-        local_parser.add_start_key("Scatter Simulation");
-        local_parser.add_stop_key("End Scatter Simulation");
-        local_parser.add_parsing_key("Simulation method", &this->scatter_simulation_sptr);
-        local_parser.parse(this->scatter_sim_par_filename.c_str());
-
-        // The image is provided to the simulation.
-        // and it will override anything that the ScatterSimulation.par file has done.
-        this->scatter_simulation_sptr->set_density_image_and_subsample(this->atten_image_sptr);
-        this->scatter_simulation_sptr->set_projdata_and_subsample(this->input_projdata_2d_sptr->get_exam_info_sptr(),
-                                                                  this->proj_data_info_2d_sptr);
-    }
-    else
-    {
-        error("Please define a scatter simulation method.");
-    }
-
     if (this->reconstruction_template_sptr->get_registered_name() == "OSMAPOSL" ||
             this->reconstruction_template_sptr->get_registered_name() == "OSSPS")
     {
@@ -303,6 +285,40 @@ post_processing()
             error("Initialisation Failed!");
 
         this->iterative_method = false;
+    }
+
+    // Initialise the activity image and run reconstruction::set_up()
+    // Set up the output image.
+    this->activity_image_sptr.reset(new VoxelsOnCartesianGrid<float> ( *this->input_projdata_3d_sptr->get_proj_data_info_sptr() ) );
+    this->activity_image_sptr->fill(1.F);
+
+    this->reconstruction_template_sptr->set_up(this->activity_image_sptr);
+
+    //
+    // ScatterSimulation
+    //
+
+    if (this->scatter_sim_par_filename.size() > 0 )
+    {
+        KeyParser local_parser;
+        local_parser.add_start_key("Scatter Simulation");
+        local_parser.add_stop_key("End Scatter Simulation");
+        local_parser.add_parsing_key("Simulation method", &this->scatter_simulation_sptr);
+        local_parser.parse(this->scatter_sim_par_filename.c_str());
+
+        // The image is provided to the simulation.
+        // and it will override anything that the ScatterSimulation.par file has done.
+        this->scatter_simulation_sptr->set_density_image_and_subsample(this->atten_image_sptr);
+
+        this->scatter_simulation_sptr->set_projdata_and_subsample(this->input_projdata_2d_sptr->get_exam_info_sptr(),
+                                                                  this->proj_data_info_2d_sptr);
+
+        this->scatter_simulation_sptr->set_activity_image_sptr(this->activity_image_sptr);
+
+    }
+    else
+    {
+        error("Please define a scatter simulation method.");
     }
 
     //
@@ -396,9 +412,8 @@ post_processing()
             error (boost::format("Mask projdata filename %1% not found") %this->mask_projdata_filename );
     }
 
-    // Allocate the output projdata.
-    this->output_projdata_sptr.reset(new ProjDataInMemory(this->input_projdata_2d_sptr->get_exam_info_sptr(),
-                                                          this->input_projdata_2d_sptr->get_proj_data_info_sptr()->create_shared_clone()));
+
+
 
     return false;
 }
@@ -486,8 +501,8 @@ set_up_iterative()
             shared_ptr < ProjData> inv_norm_projdata_sptr(new ProjDataInMemory(this->norm_projdata_3d_sptr->get_exam_info_sptr(),
                                                                                this->norm_projdata_3d_sptr->get_proj_data_info_ptr()->create_shared_clone()));
 
-            inv_norm_projdata_sptr->fill(*this->norm_projdata_3d_sptr);
-
+            //            inv_norm_projdata_sptr->fill(*this->norm_projdata_3d_sptr);
+            inv_norm_projdata_sptr->fill(0.f);
             // We need to get norm2d=1/SSRB(1/norm3d))
             //1. add_scalar
             //2. mult_scalar
@@ -495,14 +510,15 @@ set_up_iterative()
             //4. min_threshold
             //5. max_threshold
 
-            pow_times_add pow_times_add_object(0.0f, 1.0f, -1.0f, 0.0f, 10000.00f);
+            pow_times_add pow_times_add_object(0.0f, 1.0f, -1.0f, NumericInfo<float>().min_value(),
+                                               NumericInfo<float>().max_value());
 
             for (int segment_num = inv_norm_projdata_sptr->get_min_segment_num();
                  segment_num <= inv_norm_projdata_sptr->get_max_segment_num();
                  ++segment_num)
             {
                 SegmentByView<float> segment_by_view =
-                        inv_norm_projdata_sptr->get_segment_by_view(segment_num);
+                        this->norm_projdata_3d_sptr->get_segment_by_view(segment_num);
 
                 in_place_apply_function(segment_by_view,
                                         pow_times_add_object);
@@ -595,6 +611,14 @@ set_up_iterative()
         iterative_object->set_additive_proj_data_sptr(this->back_projdata_2d_sptr);
     }
 
+    // Allocate the output projdata.
+    this->output_projdata_sptr.reset(new ProjDataInMemory(this->input_projdata_2d_sptr->get_exam_info_sptr(),
+                                                          this->input_projdata_2d_sptr->get_proj_data_info_sptr()->create_shared_clone()));
+
+    this->output_projdata_sptr->fill(0.F);
+
+    iterative_object->set_additive_proj_data_sptr(this->output_projdata_sptr);
+
     return true;
 }
 
@@ -629,6 +653,18 @@ apply_mask_in_place(shared_ptr<DiscretisedDensity<3, float> >& arg,
 
     // The power is hardcoded because in this context has no
     // use.
+
+    pow_times_add pow_times_thres_max(0.0f, 1.0f, 1.0f, NumericInfo<float>().min_value(),
+                                      0.001);
+    pow_times_add pow_times_add_scalar( -0.00099f, 1.0f, 1.0f, NumericInfo<float>().min_value(),
+                                        NumericInfo<float>().max_value());
+
+    pow_times_add pow_times_thres_min(0.0, 1.0f, 1.0f, 0.0f,
+                                      NumericInfo<float>().max_value());
+
+    pow_times_add pow_times_times( 0.0f, 100002.0f, 1.0f, NumericInfo<float>().min_value(),
+                                   NumericInfo<float>().max_value());
+
     pow_times_add pow_times_add_object(_this_mask.add_scalar,
                                        _this_mask.times_scalar,
                                        1.0,
@@ -644,7 +680,16 @@ apply_mask_in_place(shared_ptr<DiscretisedDensity<3, float> >& arg,
     // 5. times scalar
 
     in_place_apply_function(*arg.get(),
+                            pow_times_thres_max);
+    in_place_apply_function(*arg.get(),
+                            pow_times_add_scalar);
+    in_place_apply_function(*arg.get(),
+                            pow_times_thres_min);
+    in_place_apply_function(*arg.get(),
+                            pow_times_times);
+    in_place_apply_function(*arg.get(),
                             pow_times_add_object);
+
 
 }
 Succeeded
@@ -657,14 +702,17 @@ process_data()
 
     stir::BSpline::BSplineType  spline_type = stir::BSpline::linear;
 
-    shared_ptr<ProjData> unscaled_projdata_sptr;
+    shared_ptr<DiscretisedDensity <3,float> > act_image_for_averaging;
 
-    // Reconstruct an image ... if needed.
-    if( is_null_ptr(this->activity_image_sptr) )
+    shared_ptr <ProjData> unscaled;
+
+    this->scatter_simulation_sptr->get_output_proj_data(unscaled);
+
+    if( this->recompute_initial_activity_image )
     {
         if (iterative_method)
-            reconstruct_iterative(0,
-                                  this->activity_image_sptr);
+            reconstruct_iterative( 0,
+                                   this->activity_image_sptr);
         else
             reconstruct_analytic();
 
@@ -672,83 +720,146 @@ process_data()
             OutputFileFormat<DiscretisedDensity < 3, float > >::default_sptr()->
                     write_to_file(this->initial_activity_image_filename, *this->activity_image_sptr);
     }
+    else // load
+    {
+        this->activity_image_sptr =
+                read_from_file<DiscretisedDensity<3,float> >(this->initial_activity_image_filename);
+    }
 
     for (int i_scat_iter = 0;
          i_scat_iter < this->num_scatter_iterations;
          i_scat_iter++)
     {
 
-        if (i_scat_iter == 2 ) // Average at 2
+        // A small tricky to avoid writting to disk
+        if ( false)//this->do_average_at_2)
         {
+            if (i_scat_iter == 1) // hold the activity image 0
+            {
+                act_image_for_averaging.reset(this->activity_image_sptr->clone());
+            }
+            if (i_scat_iter == 2) // do average 0 and 1
+            {
+                if (is_null_ptr(act_image_for_averaging))
+                    error("Storing the first actibity estimate has failed at some point.");
+                // Write the previous estimate
+                //                {
+                //                    std::string output1= "./produced_data/act_image_for_averaging";
+                //                    OutputFileFormat<DiscretisedDensity<3,float> >::default_sptr()->
+                //                            write_to_file(output1, *act_image_for_averaging);
+                //                }
+                // write current estimate
+                //                {
+                //                    std::string output1= "./produced_data/current_estimate_for_averaging";
+                //                    OutputFileFormat<DiscretisedDensity<3,float> >::default_sptr()->
+                //                            write_to_file(output1, *this->activity_image_sptr);
+                //                }
 
+                std::transform(act_image_for_averaging->begin_all(), act_image_for_averaging->end_all(),
+                               this->activity_image_sptr->begin_all(),
+                               this->activity_image_sptr->begin_all(),
+                               std::plus<float>());
+
+                // write after sum
+
+                //                {
+                //                    std::string output1= "./produced_data/summed_for_averaging";
+                //                    OutputFileFormat<DiscretisedDensity<3,float> >::default_sptr()->
+                //                            write_to_file(output1, *this->activity_image_sptr);
+                //                }
+
+                pow_times_add divide_by_two (0.0f, 0.5f, 1.0f, NumericInfo<float>().min_value(),
+                                             NumericInfo<float>().max_value());
+
+                in_place_apply_function(*this->activity_image_sptr, divide_by_two);
+
+                // write after division.
+                //                {
+                //                    std::string output1= "./produced_data/final_for_averaging";
+                //                    OutputFileFormat<DiscretisedDensity<3,float> >::default_sptr()->
+                //                            write_to_file(output1, *this->activity_image_sptr);
+                //                }
+
+                // Have averaged ... turn false
+                this->do_average_at_2 = false;
+            }
         }
 
         //filter ... optional
-
         // simulate
-        scatter_simulation_sptr->set_activity_image_sptr(this->activity_image_sptr);
+        //        {
+        //            std::stringstream convert;   // stream used for the conversion
+        //            convert << "./produced_data/pre_simulation_act_image" << "_" <<
+        //                       i_scat_iter;
+        //            std::string output_filename =  convert.str();
+        //            OutputFileFormat<DiscretisedDensity<3,float> >::default_sptr()->
+        //                    write_to_file(output_filename, *this->activity_image_sptr);
+        //        }
+
         info("Scatter simulation in progress...");
+        this->scatter_simulation_sptr->set_activity_image_sptr(this->activity_image_sptr);
         this->scatter_simulation_sptr->process_data();
 
-        unscaled_projdata_sptr = this->scatter_simulation_sptr->get_output_proj_data();
+        //        {
+        //            std::stringstream convert;   // stream used for the conversion
+        //            convert << "./produced_data/post_simulation_act_image" << "_" <<
+        //                       i_scat_iter;
+        //            std::string output_filename =  convert.str();
+        //            OutputFileFormat<DiscretisedDensity<3,float> >::default_sptr()->
+        //                    write_to_file(output_filename, *this->activity_image_sptr);
+        //        }
 
-        // FOR DEBUG -- COMMENT OUT LATER
+        {
+            //          this->scatter_simulation_sptr->get_output_proj_data(unscaled);
+            // FOR DEBUG -- COMMENT OUT LATER
+            {
+                std::stringstream convert;   // stream used for the conversion
+                convert << "/Users/nikos/Desktop/Workspace/data/scatters_real/produced_data/unscaled_" <<
+                           i_scat_iter;
+                std::string output_filename =  convert.str();
+
+                dynamic_cast<ProjDataInMemory *> (unscaled.get())->write_to_file(output_filename);
+            }
+
+            // end simulation
+
+            // Set the min and max scale factors
+            if (i_scat_iter > 0)
+            {
+                local_max_scale_value = this->max_scale_value;
+                local_min_scale_value = this->min_scale_value;
+            }
+
+
+            upsample_and_fit_scatter_estimate(*this->output_projdata_sptr,
+                                              *this->input_projdata_2d_sptr,
+                                              *unscaled,
+                                              *this->multiplicative_data_2d,
+                                              *this->mask_projdata_sptr,
+                                              local_min_scale_value,
+                                              local_max_scale_value,
+                                              this->half_filter_width,
+                                              spline_type,
+                                              this->remove_interleaving);
+
+        }
+
         {
             std::stringstream convert;   // stream used for the conversion
-            convert << "/Users/nikos/Desktop/Workspace/data/scatters_real/produced_data/unscaled_" <<
+            convert << "/Users/nikos/Desktop/Workspace/data/scatters_real/produced_data/scaled_" <<
                        i_scat_iter;
             std::string output_filename =  convert.str();
 
-            dynamic_cast<ProjDataInMemory *> (unscaled_projdata_sptr.get())->write_to_file(output_filename);
+            dynamic_cast<ProjDataInMemory *> (this->output_projdata_sptr.get())->write_to_file(output_filename);
         }
 
-        // end simulate
+        info (">>>>>>DENUG 1<<<<<<<<");
 
-        // Upsample and fit scatter
-        //        (ProjData& scaled_scatter_proj_data,
-        //        const  ProjData& emission_proj_data,
-        //        const ProjData& scatter_proj_data,
-        //        const BinNormalisation& scatter_normalisation,
-        //        const ProjData& weights_proj_data,
-        //        const float min_scale_factor,
-        //        const float max_scale_factor,
-        //        const unsigned half_filter_width,
-        //        BSpline::BSplineType spline_type,
-        //        const bool remove_interleaving = true);
-
-
-        upsample_and_fit_scatter_estimate(*this->output_projdata_sptr,
-                                          *this->input_projdata_2d_sptr,
-                                          *unscaled_projdata_sptr,
-                                          *this->multiplicative_data_2d,
-                                          *this->mask_projdata_sptr,
-                                          local_min_scale_value,
-                                          local_max_scale_value,
-                                          this->half_filter_width,
-                                          spline_type,
-                                          this->remove_interleaving);
-
-        // Set the min and max scale factors
-        if (i_scat_iter == 0)
-        {
-            local_max_scale_value = this->max_scale_value;
-            local_min_scale_value = this->min_scale_value;
-        }
-
-
-        if (iterative_method)
-            reconstruct_iterative(i_scat_iter,
-                                  this->activity_image_sptr);
-        else
-        {
-            reconstruct_analytic();
-            //TODO: threshold ... to cut the negative values
-        }
 
         if (this->export_scatter_estimates_of_each_iteration ||
                 i_scat_iter == this->num_scatter_iterations -1 )
         {
-            info("\n\n>>>>>>DEBUG 1<<<<<<<<<\n\n");
+
             //this is complicated as the 2d scatter estimate was
             //divided by norm2d, so we need to undo this
             //unfortunately, currently the values in the gaps in the
@@ -762,16 +873,10 @@ process_data()
 
             shared_ptr<ProjData> temp_projdata ( new ProjDataInMemory (this->output_projdata_sptr->get_exam_info_sptr(),
                                                                        this->output_projdata_sptr->get_proj_data_info_sptr()));
-            //    info("\n\n>>>>>>DEBUG 2<<<<<<<<<\n\n");
             temp_projdata->fill(*this->output_projdata_sptr);
 
-            //1. add_scalar
-            //2. mult_scalar
-            //3. power
-            //4. min_threshold
-            //5. max_threshold
-            pow_times_add min_threshold (0.0f, 1.0f, 1.0f, 1e-9, 1000000.00f);
-
+            pow_times_add min_threshold (0.0f, 1.0f, 1.0f, 1e-9, NumericInfo<float>().max_value());
+            info (">>>>>>DENUG 4<<<<<<<<");
             for (int segment_num = temp_projdata->get_min_segment_num();
                  segment_num <= temp_projdata->get_max_segment_num();
                  ++segment_num)
@@ -786,8 +891,8 @@ process_data()
                     warning("Error set_segment %d\n", segment_num);
             }
 
-                info("\n\n>>>>>>DEBUG 3<<<<<<<<<\n\n");
-            pow_times_add add_scalar(1e-9, 1.0f, 1.0f, 0.0f, 1000000.00f);
+            pow_times_add add_scalar(-1e-9, 1.0f, 1.0f, NumericInfo<float>().min_value(),
+                                     NumericInfo<float>().max_value());
 
             for (int segment_num = temp_projdata->get_min_segment_num();
                  segment_num <= temp_projdata->get_max_segment_num();
@@ -804,7 +909,6 @@ process_data()
             }
 
             // ok, we can multiply with the norm
-                info("\n\n>>>>>>DEBUG 4<<<<<<<<<\n\n");
             for (int segment_num = temp_projdata->get_min_segment_num();
                  segment_num <= temp_projdata->get_max_segment_num();
                  ++segment_num)
@@ -821,7 +925,7 @@ process_data()
                 if (!(temp_projdata->set_segment(segment_by_view_data) == Succeeded::yes))
                     warning("Error set_segment %d\n", segment_num);
             }
-                info("\n\n>>>>>>DEBUG 5<<<<<<<<<\n\n");
+
             std::stringstream convert;   // stream used for the conversion
             convert << this->o_scatter_estimate_prefix << "_" <<
                        i_scat_iter;
@@ -831,18 +935,6 @@ process_data()
                                                                           this->input_projdata_3d_sptr->get_proj_data_info_sptr() ,
                                                                           output_filename,
                                                                           std::ios::in | std::ios::out | std::ios::trunc));
-                info("\n\n>>>>>>DEBUG 6<<<<<<<<<\n\n");
-            // Upsample and fit scatter
-            //        (ProjData& scaled_scatter_proj_data,
-            //        const  ProjData& emission_proj_data,
-            //        const ProjData& scatter_proj_data,
-            //        const BinNormalisation& scatter_normalisation,
-            //        const ProjData& weights_proj_data,
-            //        const float min_scale_factor,
-            //        const float max_scale_factor,
-            //        const unsigned half_filter_width,
-            //        BSpline::BSplineType spline_type,
-            //        const bool remove_interleaving = true);
 
             upsample_and_fit_scatter_estimate(*temp_projdata_3d,
                                               *this->input_projdata_3d_sptr,
@@ -850,55 +942,55 @@ process_data()
                                               *this->multiplicative_data_3d,
                                               *this->input_projdata_3d_sptr,
                                               1.0f,
-                                              100.0f,
+                                              1.0f,
                                               3.f,
                                               spline_type,
                                               false);
-                info("\n\n>>>>>>DEBUG 7<<<<<<<<<\n\n");
+        }
+
+        if (iterative_method)
+            reconstruct_iterative(i_scat_iter,
+                                  this->activity_image_sptr);
+        else
+        {
+            reconstruct_analytic();
+            //TODO: threshold ... to cut the negative values
         }
 
         this->output_projdata_sptr->fill(0.f);
-    }
 
-    // Inverse SSRB ... and save
-    if (this->o_scatter_estimate_prefix.size() > 0 )
-    {
     }
 
     info("\n\n>>>>>>Scatter Estimation finished !!!<<<<<<<<<\n\n");
     return Succeeded::yes;
 }
 
+
 Succeeded
 ScatterEstimationByBin::
 reconstruct_iterative(int _current_iter_num,
                       shared_ptr<DiscretisedDensity<3, float> > & _current_estimate_sptr)
 {
-    //    info("\n\n>>>>>>DEBUG 1<<<<<<<<<\n\n");
+
     IterativeReconstruction <DiscretisedDensity<3, float> > * iterative_object =
             dynamic_cast<IterativeReconstruction<DiscretisedDensity<3, float> > *> (this->reconstruction_template_sptr.get());
 
-    //    info("\n\n>>>>>>DEBUG 2<<<<<<<<<\n\n");
-    if (!is_null_ptr(_current_estimate_sptr))
-        iterative_object->set_initial_data_ptr(_current_estimate_sptr);
+    //    iterative_object->set_additive_proj_data_sptr(this->output_projdata_sptr);
+    iterative_object->set_start_subset_num(1);
+    iterative_object->reconstruct(_current_estimate_sptr);
 
-    //    info("\n\n>>>>>>DEBUG 3<<<<<<<<<\n\n");
-    // Set the previous scatter estimate in the reconstruction process.
-    if(_current_iter_num == 1)
-        iterative_object->set_additive_proj_data_sptr(this->output_projdata_sptr);
-    //    info("\n\n>>>>>>DEBUG 4<<<<<<<<<\n\n");
-    iterative_object->reconstruct();
 
-    if (is_null_ptr(_current_estimate_sptr))
-        _current_estimate_sptr = iterative_object->get_target_image();
 
-    //std::stringstream convert;   // stream used for the conversion
+    //     write reconstructed image. -- DEBUG
+    if (_current_iter_num >= 0)
+    {
+        std::stringstream name;
+        name << "./produced_data/recon_" << _current_iter_num;
+        std::string output = name.str();
+        OutputFileFormat<DiscretisedDensity<3,float> >::default_sptr()->
+                write_to_file(output, *_current_estimate_sptr);
+    }
 
-    //    convert << "/Users/nikos/Desktop/Workspace/data/scatters_real/produced_data/initial_image_" <<
-    //               _current_iter_num;
-    //    std::string output_filename =  convert.str();
-    //    OutputFileFormat<DiscretisedDensity < 3, float > >::default_sptr()->
-    //            write_to_file(output_filename, *_current_estimate_sptr.get());
 }
 
 Succeeded

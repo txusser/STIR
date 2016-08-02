@@ -454,7 +454,7 @@ set_zero_seg0_end_planes(const bool arg)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndProjData<TargetT>::
-set_additive_proj_data_sptr(const shared_ptr<ExamData> &arg)
+set_additive_proj_data_sptr(const shared_ptr<ExamData>& arg)
 {
   this->additive_proj_data_sptr.reset(dynamic_cast < ProjData * > (arg.get()) );
 }
@@ -486,7 +486,7 @@ set_frame_definitions(const TimeFrameDefinitions& arg)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndProjData<TargetT>::
-set_normalisation_sptr(const shared_ptr<BinNormalisation>& arg)
+set_normalisation_sptr(const shared_ptr<BinNormalisation> &arg)
 {
   this->normalisation_sptr = arg;
 }
@@ -503,7 +503,7 @@ set_normalisation_proj_data_sptr(const shared_ptr<ExamData>& arg)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndProjData<TargetT>::
-set_input_data(const shared_ptr<ExamData> & arg)
+set_input_data(const shared_ptr<ExamData>& arg)
 {
     this->proj_data_sptr.reset(dynamic_cast < ProjData * > (arg.get()) );
 }

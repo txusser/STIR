@@ -139,7 +139,7 @@ public  RegisteredParsingObject<PoissonLogLikelihoodWithLinearModelForMeanAndGat
   virtual void set_normalisation_proj_data_sptr(const shared_ptr<ExamData>&);
   virtual void set_additive_proj_data_sptr(const shared_ptr<ExamData>&);
 
-  virtual void set_input_data(const shared_ptr<ExamData> &);
+  virtual void set_input_data(const shared_ptr<ExamData>&);
   //@}
  protected:
   //! Filename with input projection data

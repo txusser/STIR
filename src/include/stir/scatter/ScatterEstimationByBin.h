@@ -448,6 +448,12 @@ private:
     //!
     std::string o_scatter_estimate_prefix;
 
+    //!
+    //! \brief do_average_at_2
+    //! \details Average the two first activity images 0 and 1.
+    //! Defaults true
+    bool do_average_at_2;
+
 };
 
 

@@ -57,11 +57,11 @@ SingleScatterSimulation::
   //static const float min_energy=energy_lower_limit(lower_energy_threshold,2.,energy_resolution);
 
   const CartesianCoordinate3D<float>& scatter_point =
-    scatt_points_vector[scatter_point_num].coord;
+    this->scatt_points_vector[scatter_point_num].coord;
   const CartesianCoordinate3D<float>& detector_coord_A =
-    detection_points_vector[det_num_A];
+    this->detection_points_vector[det_num_A];
   const CartesianCoordinate3D<float>& detector_coord_B =
-    detection_points_vector[det_num_B];
+    this->detection_points_vector[det_num_B];
   // note: costheta is -cos_angle such that it is 1 for zero scatter angle
   const float costheta =
     -cos_angle(detector_coord_A - scatter_point,

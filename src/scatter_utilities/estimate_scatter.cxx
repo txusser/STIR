@@ -34,16 +34,11 @@
 */
 
 #include "stir/scatter/ScatterEstimationByBin.h"
-// pre-pre-pre alpha
-//#include "stir/scatter/ScatterEstimationWithFit.h"
 #include "stir/Succeeded.h"
 /***********************************************************/     
 
 int main(int argc, const char *argv[])                                  
 {         
-
-  //stir::ScatterEstimationByBin scatter_estimation;
-  // pre- pre- pre- alpha
 
   stir::ScatterEstimationByBin scatter_estimation;
 

@@ -405,7 +405,7 @@ set_up_before_sensitivity(shared_ptr<TargetT > const& target_sptr)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearKineticModelAndDynamicProjectionData<TargetT>::
-set_input_data(const shared_ptr<ExamData> & arg)
+set_input_data(const shared_ptr<ExamData> &arg)
 {
      this->_dyn_proj_data_sptr.reset(dynamic_cast<DynamicProjData* > (arg.get()) );
 }

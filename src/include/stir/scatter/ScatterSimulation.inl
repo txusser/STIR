@@ -1,6 +1,7 @@
 #include "stir/scatter/ScatterSimulation.h"
 #include "stir/ProjDataInterfile.h"
 #include "stir/ProjDataInfo.h"
+#include "stir/ProjDataInMemory.h"
 #include "stir/ProjDataInfoCylindricalNoArcCorr.h"
 #include "stir/IO/read_from_file.h"
 #include "stir/is_null_ptr.h"
@@ -23,7 +24,7 @@ set_activity_image_sptr(const shared_ptr<DiscretisedDensity<3,float> >& arg)
         return Succeeded::no;
     }
 
-    this->activity_image_sptr.reset( arg->clone()) ;
+    this->activity_image_sptr = arg;
     this->remove_cache_for_integrals_over_activity();
 
     return Succeeded::yes;
@@ -75,13 +76,13 @@ ScatterSimulation::
 set_density_image_for_scatter_points_sptr(const shared_ptr<DiscretisedDensity<3,float> >& new_sptr)
 {
     this->density_image_for_scatter_points_sptr=new_sptr;
-    
+
     const DiscretisedDensityOnCartesianGrid<3,float>& attenuation_map =
             dynamic_cast<const DiscretisedDensityOnCartesianGrid<3,float>& >
             (*this->density_image_for_scatter_points_sptr);
 
     BasicCoordinate <3, float> sizes = attenuation_map.get_grid_spacing();
-    
+
     if (this->sub_vox_xy != sizes[2] ||
             this->sub_vox_z != sizes[1])
         error("Something went wrong in the attenuation image sunsampling");
@@ -141,29 +142,54 @@ set_density_image_for_scatter_points(const std::string& filename)
 
 void
 ScatterSimulation::
+set_output_proj_data_sptr(const shared_ptr<ExamInfo>& _exam,
+                          const shared_ptr<ProjDataInfo>& _info,
+                          const std::string & filename)
+{
+    if (filename.size() > 0 )
+        this->output_proj_data_sptr.reset(new ProjDataInterfile(_exam,
+                                                                _info,
+                                                                filename));
+    else
+        this->output_proj_data_sptr.reset( new ProjDataInMemory(_exam,
+                                                                _info));
+}
+
+void
+ScatterSimulation::
 set_output_proj_data(const std::string& filename)
 {
   this->output_proj_data_filename = filename;
   // TODO get ExamInfo from image
-  shared_ptr<ExamInfo> exam_info_sptr(new ExamInfo);
-  this->output_proj_data_sptr.reset(new ProjDataInterfile(exam_info_sptr,
-                                                          this->proj_data_info_ptr->create_shared_clone(),
-                                                          this->output_proj_data_filename));
+    if (is_null_ptr(this->template_exam_info_sptr))
+    {
+        shared_ptr<ExamInfo> exam_info_sptr(new ExamInfo);
+        this->output_proj_data_sptr.reset(new ProjDataInterfile(exam_info_sptr,
+                                                                this->proj_data_info_ptr->create_shared_clone(),
+                                                                this->output_proj_data_filename));
+    }
+    else
+        this->output_proj_data_sptr.reset(new ProjDataInterfile(this->template_exam_info_sptr,
+                                                                this->proj_data_info_ptr->create_shared_clone(),
+                                                                this->output_proj_data_filename));
+
+
 }
 
-shared_ptr<ProjData>&
+void
 ScatterSimulation::
-get_output_proj_data()
+get_output_proj_data(shared_ptr<ProjData>& arg)
 {
- return this->output_proj_data_sptr;
+ arg = this->output_proj_data_sptr;
 }
 
 
 void
 ScatterSimulation::
-set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>& new_sptr)
+set_scatter_proj_data_info_sptr(const shared_ptr<ProjDataInfo>& new_sptr)
 {
 
+    this->proj_data_info_sptr.reset(new_sptr->clone());
     this->proj_data_info_ptr = dynamic_cast<ProjDataInfoCylindricalNoArcCorr *>(new_sptr->clone());
 
     if (is_null_ptr(this->proj_data_info_ptr))
@@ -187,13 +213,13 @@ set_template_proj_data_info_sptr(const shared_ptr<ProjDataInfo>& new_sptr)
 
 void
 ScatterSimulation::
-set_template_proj_data_info(const std::string& filename)
+set_scatter_proj_data_info(const std::string& filename)
 {
-    this->template_proj_data_filename = filename;
-    shared_ptr<ProjData> template_proj_data_sptr =
-            ProjData::read_from_file(this->template_proj_data_filename);
+    this->scatter_proj_data_filename = filename;
+    shared_ptr<ProjData> tmp_proj_data_sptr =
+            ProjData::read_from_file(this->scatter_proj_data_filename);
 
-    this->set_template_proj_data_info_sptr(template_proj_data_sptr->get_proj_data_info_ptr()->create_shared_clone());
+    this->set_scatter_proj_data_info_sptr(tmp_proj_data_sptr->get_proj_data_info_ptr()->create_shared_clone());
 }
 
 void
@@ -289,12 +315,14 @@ ScatterSimulation::
 num_dets_to_vox_size(int _num, bool _axis)
 {
 
+    if (is_null_ptr(this->proj_data_info_ptr))
+        error("First you have to initialise the scatter projdatainfo");
     // _num = num of dets per ring
     if (_axis)
-        return ((this->template_proj_data_info_ptr->get_scanner_ptr()->get_inner_ring_radius() * _PI
+        return ((this->proj_data_info_ptr->get_scanner_ptr()->get_inner_ring_radius() * _PI
                  / _num) * 0.9f);
     else
-        return (this->template_proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing() * _num) /
+        return (this->proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing() * _num) /
                 ( 2.f * this->proj_data_info_ptr->get_scanner_ptr()->get_num_rings());
 
 }
@@ -303,13 +331,16 @@ int
 ScatterSimulation::
 vox_size_to_num_dets(float _num, bool _axis)
 {
+    if (is_null_ptr(this->template_proj_data_info_sptr))
+        error("First you have to initialise a template projdatainfo, for you "
+              "scatter projdata");
     if (_axis)
-        return (((this->template_proj_data_info_ptr->get_scanner_ptr()->get_inner_ring_radius() * _PI)
+        return (((this->template_proj_data_info_sptr->get_scanner_ptr()->get_inner_ring_radius() * _PI)
                  / _num) * 1.1f);
     else
     {
-        float tot_length = this->template_proj_data_info_ptr->get_scanner_ptr()->get_num_rings() *
-                this->template_proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing();
+        float tot_length = this->template_proj_data_info_sptr->get_scanner_ptr()->get_num_rings() *
+                this->template_proj_data_info_sptr->get_scanner_ptr()->get_ring_spacing();
         return static_cast<int>(tot_length / _num +0.5f);
     }
 }

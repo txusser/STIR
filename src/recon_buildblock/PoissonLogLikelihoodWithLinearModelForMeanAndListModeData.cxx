@@ -123,7 +123,7 @@ PoissonLogLikelihoodWithLinearModelForMeanAndListModeData<TargetT>::post_process
 template <typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndListModeData<TargetT>::
-set_input_data(const shared_ptr<ExamData> & arg)
+set_input_data(const shared_ptr<ExamData> &arg)
 {
     list_mode_data_sptr.reset(dynamic_cast<CListModeData* > (arg.get()) );
 }
@@ -139,7 +139,7 @@ set_additive_proj_data_sptr(const shared_ptr<ExamData> &arg)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndListModeData<TargetT>::
-set_normalisation_proj_data_sptr(const shared_ptr<ExamData> &arg)
+set_normalisation_proj_data_sptr(const shared_ptr<ExamData>& arg)
 {
     shared_ptr<ProjData> temp(dynamic_cast < ProjData * > (arg.get()) );
     this->normalisation_sptr.reset(new BinNormalisationFromProjData(temp));
@@ -148,7 +148,7 @@ set_normalisation_proj_data_sptr(const shared_ptr<ExamData> &arg)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndListModeData<TargetT>::
-set_normalisation_sptr(const shared_ptr<BinNormalisation> &arg)
+set_normalisation_sptr(const shared_ptr<BinNormalisation>& arg)
 {
     this->normalisation_sptr = arg;
 }

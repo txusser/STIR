@@ -48,6 +48,29 @@ process_data()
         // initialise the output_proj_data
     }
 
+    //    this->times +=1;
+    //    // write after division.
+    //    {
+    //        std::stringstream nikos;
+    //        nikos << "./activity_in_" << this->times ;
+    //        std::string output1= nikos.str();
+    //        OutputFileFormat<DiscretisedDensity<3,float> >::default_sptr()->
+    //                write_to_file(output1, *this->activity_image_sptr);
+    //    }
+
+    //    // write after division.
+    //    {
+    //        std::string output1= "./density_in_0";
+    //        OutputFileFormat<DiscretisedDensity<3,float> >::default_sptr()->
+    //                write_to_file(output1, *this->density_image_sptr);
+    //    }
+
+    //    {
+    //        std::string output1= "./density_scat_points_in_0";
+    //        OutputFileFormat<DiscretisedDensity<3,float> >::default_sptr()->
+    //                write_to_file(output1, *this->density_image_for_scatter_points_sptr);
+    //    }
+
     this->output_proj_data_sptr->fill(0.f);
 
     //    if (!this->recompute_sub_atten_image && !this->recompute_sub_projdata)
@@ -57,6 +80,9 @@ process_data()
     //            error("DataSymmetriesForBins_PET_CartesianGrid can currently only support z-grid spacing "
     //                  "equal to the ring spacing of the scanner divided by an integer. Sorry\n");
     //    }
+
+    // The activiy image has been changed, from another class.
+    this->remove_cache_for_integrals_over_activity();
 
     this->initialise_cache_for_scattpoint_det_integrals_over_attenuation();
     this->initialise_cache_for_scattpoint_det_integrals_over_activity();
@@ -216,6 +242,7 @@ process_data_for_view_segment_num(const ViewSegmentNumbers& vs_num)
 void
 ScatterSimulation::set_defaults()
 {
+    this->times = 0;
 
     this->attenuation_threshold =  0.01 ;
     this->random = true;
@@ -223,14 +250,12 @@ ScatterSimulation::set_defaults()
 
     this->density_image_filename = "";
     this->density_image_for_scatter_points_filename = "";
-    this->template_proj_data_filename = "";
+    this->scatter_proj_data_filename = "";
 
     this->sub_vox_xy = -1.f;
     this->sub_vox_z = -1.f;
     this->sub_num_dets_per_ring = -1;
     this->sub_num_rings = -1;
-    this->remove_cache_for_integrals_over_activity();
-    this->remove_cache_for_integrals_over_attenuation();
 
     this->remove_cache_for_integrals_over_activity();
     this->remove_cache_for_integrals_over_attenuation();
@@ -250,8 +275,8 @@ ScatterSimulation::initialise_keymap()
     this->parser.add_stop_key("end Scatter Simulation Parameters");
 
     // Basics
-    this->parser.add_key("scatter template filename",
-                         &this->template_proj_data_filename);
+    this->parser.add_key("scatter projdata filename",
+                         &this->scatter_proj_data_filename);
     this->parser.add_key("attenuation image filename",
                          &this->density_image_filename);
     this->parser.add_key("initial estimate image filename",
@@ -279,10 +304,10 @@ ScatterSimulation::initialise_keymap()
                          &this->sub_num_rings);
 
     //End of Subsampled projdata.
-    this->parser.add_key("attenuation_threshold",
+    this->parser.add_key("attenuation threshold",
                          &this->attenuation_threshold);
     this->parser.add_key("random", &this->random);
-    this->parser.add_key("use_cache", &this->use_cache);
+    this->parser.add_key("use cache", &this->use_cache);
 }
 
 
@@ -290,10 +315,11 @@ bool
 ScatterSimulation::
 post_processing()
 {
+
     // Handles only direct loads from drive.
 
-    if (this->template_proj_data_filename.size() > 0 && this->recompute_sub_projdata)
-        this->set_template_proj_data_info(this->template_proj_data_filename);
+    if (this->scatter_proj_data_filename.size() > 0 && !this->recompute_sub_projdata)
+        this->set_scatter_proj_data_info(this->scatter_proj_data_filename);
 
     if (this->activity_image_filename.size() > 0)
         this->set_activity_image(this->activity_image_filename);
@@ -301,18 +327,22 @@ post_processing()
     if (this->density_image_filename.size() > 0)
         this->set_density_image(this->density_image_filename);
 
-    if(this->density_image_for_scatter_points_filename.size() > 0 && this->recompute_sub_atten_image)
+    if(this->density_image_for_scatter_points_filename.size() > 0 && !this->recompute_sub_atten_image)
         this->set_density_image_for_scatter_points(this->density_image_for_scatter_points_filename);
 
+
+    return false;
 }
 
 void
 ScatterSimulation::
 set_density_image_and_subsample(const shared_ptr<DiscretisedDensity<3,float> >& arg)
 {
+    // smooth
     this->set_density_image_sptr(arg);
     this->reduce_voxel_size();
     this->set_density_image_for_scatter_points_sptr(this->density_image_for_scatter_points_sptr);
+    this->set_density_image_sptr(this->density_image_for_scatter_points_sptr);
 }
 
 void
@@ -322,10 +352,15 @@ set_projdata_and_subsample(const shared_ptr<ExamInfo> & _exam_info_sptr,
 {
 
     // Set the original but processs with the subsampled.
-    this->template_proj_data_info_ptr = _projdata_info_sptr;
+    this->template_proj_data_info_sptr = _projdata_info_sptr;
+
     // Make sure that _exam_info have been initialised.
     this->template_exam_info_sptr = _exam_info_sptr;
-    this->reduce_projdata_detector_num(_projdata_info_sptr);
+    this->reduce_projdata_detector_num(this->template_proj_data_info_sptr);
+
+    this->set_output_proj_data_sptr(this->template_exam_info_sptr,
+                                    this->proj_data_info_sptr,
+                                    this->output_proj_data_filename);
 }
 
 void
@@ -375,17 +410,21 @@ reduce_projdata_detector_num(const shared_ptr<ProjDataInfo >& arg)
     sub_num_rings = (this->sub_num_rings < 0) ? vox_size_to_num_dets(this->sub_vox_z, false)
                                               : this->sub_num_rings;
 
-    float tot_length = this->template_proj_data_info_ptr->get_scanner_ptr()->get_num_rings() *
-            this->template_proj_data_info_ptr->get_scanner_ptr()->get_ring_spacing();
+
 
     if (sub_num_rings % 2 == 0)
+    {
+        float tot_length = this->template_proj_data_info_sptr->get_scanner_ptr()->get_num_rings() *
+                this->template_proj_data_info_sptr->get_scanner_ptr()->get_ring_spacing();
+
         error(boost::format("this z voxel size would lead to even number of rings, "
                             "which are not currently supported. Try to divide with: "
                             "%1%")  %tot_length);
+    }
 
     subsample_projdata_info(arg,
                             sub_num_dets_per_ring, sub_num_rings,
-                            this->template_proj_data_filename);
+                            this->scatter_proj_data_filename);
 }
 
 void
@@ -429,9 +468,6 @@ subsample_projdata_info(const shared_ptr<ProjDataInfo> _original_projdata_info,
     int new_num_view = static_cast<int>((new_num_dets_per_ring / 2) + 0.5);
     int new_num_tang_pos = fov_size_mm / new_s;
 
-    int max_delta = 0;
-    int span = 1;
-
     if (this->sub_vox_xy > 0.f)
     {
         default_bin_size = this->sub_vox_xy;
@@ -467,35 +503,34 @@ subsample_projdata_info(const shared_ptr<ProjDataInfo> _original_projdata_info,
     //        error("Initialization of the subsampled scanner failed, sheck the number "
     //              "of detectors per ring and the number of rings\n");
 
+    //    const int max_seg_num = 0;
 
+    //    VectorWithOffset<int> num_axial_pos_per_segment(- max_seg_num ,
+    //                                                    max_seg_num);
 
-    ProjDataInfo* new_projdata_info =
-            span == 0 ? ProjDataInfo::ProjDataInfoGE(new_scanner_ptr, max_delta, new_num_view, new_num_tang_pos, false)
-                      : ProjDataInfo::ProjDataInfoCTI(new_scanner_ptr, span, max_delta, new_num_view, new_num_tang_pos, false);
+    //    VectorWithOffset<int> min_ring_difference(-max_seg_num,
+    //                                              max_seg_num);
+    //    VectorWithOffset<int> max_ring_difference(-max_seg_num,
+    //                                              max_seg_num);
 
-    shared_ptr < ProjDataInfo > pr_sptr(new_projdata_info);
-    this->proj_data_info_ptr = dynamic_cast<ProjDataInfoCylindricalNoArcCorr*>(pr_sptr->clone());
+    //    num_axial_pos_per_segment[0] = new_num_rings;
+    //    min_ring_difference[0] = 0;
+    //    max_ring_difference[0] = 0;
 
-    // TODO: How do I write only a header file????
-    //    if(this->template_proj_data_filename.size() > 0)
-    //    {
-    //        write_to_file(this->template_proj_data_filename,
-    //                      this->proj_data_info_ptr->);
-    //    }
+    int span = 1;
+    int max_delta = 0;
 
-    this->output_proj_data_sptr.reset( new ProjDataInMemory(this->template_exam_info_sptr,
-                                                            pr_sptr));
+    //    shared_ptr<ProjDataInfo> tmp_proj_data_info(
+    //                new ProjDataInfoCylindricalNoArcCorr(new_scanner_ptr,
+    //                                                     num_axial_pos_per_segment,
+    //                                                     min_ring_difference,
+    //                                                     max_ring_difference,
+    //                                                     new_num_view,
+    //                                                     new_num_tang_pos));
+    shared_ptr<ProjDataInfo> tmp_proj_data_info(
+                ProjDataInfo::ProjDataInfoCTI(new_scanner_ptr, span, max_delta, new_num_view, new_num_tang_pos, false));
 
-    this->total_detectors =
-            this->proj_data_info_ptr->get_scanner_ptr()->get_num_rings()*
-            this->proj_data_info_ptr->get_scanner_ptr()->get_num_detectors_per_ring ();
-
-    // reserve space to avoid reallocation, but the actual size will grow dynamically
-    this->detection_points_vector.reserve(total_detectors);
-
-    // remove any cached values as they'd be incorrect if the sizes changes
-    this->remove_cache_for_integrals_over_attenuation();
-    this->remove_cache_for_integrals_over_activity();
+    this->set_scatter_proj_data_info_sptr(tmp_proj_data_info);
 
 }
 

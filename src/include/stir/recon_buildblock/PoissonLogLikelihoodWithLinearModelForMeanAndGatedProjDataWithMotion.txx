@@ -332,7 +332,7 @@ set_time_gate_definitions(const TimeGateDefinitions & time_gate_definitions)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndGatedProjDataWithMotion<TargetT>::
-set_input_data(const shared_ptr<ExamData> & arg)
+set_input_data(const shared_ptr<ExamData>& arg)
 {
     this->_gated_proj_data_sptr.reset(dynamic_cast < GatedProjData * > (arg.get()) );
 }
@@ -340,7 +340,7 @@ set_input_data(const shared_ptr<ExamData> & arg)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndGatedProjDataWithMotion<TargetT>::
-set_additive_proj_data_sptr(const shared_ptr<ExamData> &arg)
+set_additive_proj_data_sptr(const shared_ptr<ExamData>& arg)
 {
   this->_additive_gated_proj_data_sptr.reset(dynamic_cast < GatedProjData * > (arg.get()) );
 }
@@ -348,7 +348,7 @@ set_additive_proj_data_sptr(const shared_ptr<ExamData> &arg)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndGatedProjDataWithMotion<TargetT>::
-set_normalisation_proj_data_sptr(const shared_ptr<ExamData> &arg)
+set_normalisation_proj_data_sptr(const shared_ptr<ExamData>& arg)
 {
     this->_normalisation_gated_proj_data_sptr.reset(dynamic_cast < GatedProjData * > (arg.get()) );
 }
@@ -356,7 +356,7 @@ set_normalisation_proj_data_sptr(const shared_ptr<ExamData> &arg)
 template<typename TargetT>
 void
 PoissonLogLikelihoodWithLinearModelForMeanAndGatedProjDataWithMotion<TargetT>::
-set_normalisation_sptr(const shared_ptr<BinNormalisation> &arg)
+set_normalisation_sptr(const shared_ptr<BinNormalisation>& arg)
 {
 //    this->_normalisation_gated_proj_data_sptr.reset(dynamic_cast < GatedProjData * > (arg.get()) );
     error ("Please use set_normalisation_proj_data_sptr, instead. ");
@@ -413,9 +413,9 @@ set_up_before_sensitivity(shared_ptr<TargetT > const& target_sptr)
 	this->_single_gate_obj_funcs[gate_num].set_projector_pair_sptr(this->_projector_pair_ptr);
 	this->_single_gate_obj_funcs[gate_num].set_proj_data_sptr(this->_gated_proj_data_sptr->get_proj_data_sptr(gate_num));
 	this->_single_gate_obj_funcs[gate_num].set_max_segment_num_to_process(this->_max_segment_num_to_process);
-	this->_single_gate_obj_funcs[gate_num].set_zero_seg0_end_planes(this->_zero_seg0_end_planes!=0);
-	if(this->_additive_gated_proj_data_sptr!=NULL)
-	  this->_single_gate_obj_funcs[gate_num].set_additive_proj_data_sptr(this->_additive_gated_proj_data_sptr->get_proj_data_sptr(gate_num));
+        this->_single_gate_obj_funcs[gate_num].set_zero_seg0_end_planes(this->_zero_seg0_end_planes!=0);
+        if(this->_additive_gated_proj_data_sptr!=NULL)
+          this->_single_gate_obj_funcs[gate_num].set_additive_proj_data_sptr(this->_additive_gated_proj_data_sptr->get_proj_data_sptr(gate_num));
 	this->_single_gate_obj_funcs[gate_num].set_num_subsets(this->num_subsets);
 	this->_single_gate_obj_funcs[gate_num].set_frame_num(1);//This should be gate...
 	std::vector<std::pair<double, double> > frame_times(1, std::pair<double,double>(0,1));

@@ -63,7 +63,7 @@ actual_scatter_estimate(double& scatter_ratio_singles,
   scatter_ratio_singles = 0;
 		
   for(std::size_t scatter_point_num =0;
-      scatter_point_num < scatt_points_vector.size();
+      scatter_point_num < this->scatt_points_vector.size();
       ++scatter_point_num)
     {	
 	scatter_ratio_singles +=
