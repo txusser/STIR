@@ -31,6 +31,10 @@
 #include "stir/recon_buildblock/BinNormalisation.h"
 #include "stir/RegisteredParsingObject.h"
 
+#include "stir/ViewSegmentNumbers.h"
+#include "stir/recon_buildblock/TrivialDataSymmetriesForBins.h"
+#include "stir/ProjData.h"
+
 START_NAMESPACE_STIR
 
 /*!
@@ -111,6 +115,8 @@ ChainedBinNormalisation(shared_ptr<BinNormalisation> const& apply_first,
 
   virtual float get_bin_efficiency(const Bin& bin,const double start_time, const double end_time) const;
  
+virtual void undo(ProjData&,const double start_time, const double end_time,
+          shared_ptr<DataSymmetriesForViewSegmentNumbers> = shared_ptr<DataSymmetriesForViewSegmentNumbers>()) const;
 
 private:
   shared_ptr<BinNormalisation> apply_first;

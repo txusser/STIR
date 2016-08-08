@@ -62,7 +62,7 @@ exp_integral_over_attenuation_image_between_scattpoint_det (const CartesianCoord
 
 float
 ScatterSimulation::
-integral_over_activity_image_between_scattpoint_det (const CartesianCoordinate3D<float>& scatter_point, 
+integral_over_activity_image_between_scattpoint_det (const CartesianCoordinate3D<float>& scatter_point,
                                                      const CartesianCoordinate3D<float>& detector_coord)
 {
   {

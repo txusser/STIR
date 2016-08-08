@@ -126,6 +126,8 @@ public:
     write_log(const double simulation_time,
               const float total_scatter);
 
+    bool run_debug_mode;
+
 
 protected:
     void set_defaults();
@@ -197,6 +199,8 @@ protected:
     //! Therefore the nane might change later.
     shared_ptr<DiscretisedDensity < 3, float > > activity_image_sptr;
 
+    shared_ptr<DiscretisedDensity < 3, float > > activity_image_lowres_sptr;
+
     //!
     //! \brief input_projdata_filename
     //! \details Filename of the measured emission 3D data.
@@ -227,10 +231,10 @@ protected:
     std::string atten_image_filename;
 
     //!
-    //! \brief recompute_atten_coeff
+    //! \brief recompute_atten_projdata
     //! \details If set to 1 the attenuation coefficients are going to
     //! be recalculated.
-    bool recompute_atten_coeff;
+    bool recompute_atten_projdata;
 
     //!
     //! \brief atten_coeff_filename
@@ -242,6 +246,8 @@ protected:
     //! \brief atten_image_sptr
     //!
     shared_ptr<DiscretisedDensity < 3, float > > atten_image_sptr;
+
+    shared_ptr<DiscretisedDensity <3, float> > atten_image_lowres_sptr;
 
     //!
     //! \brief atten_projdata_2d_sptr
@@ -261,11 +267,15 @@ protected:
     //! \details The multiplicative component of the reconsrtuction process.
     shared_ptr<BinNormalisation> multiplicative_data_2d;
 
+    shared_ptr<BinNormalisation> only_atten;
+
     //!
     //! \brief multiplicative_data_3d
     //! \details The multiplicatice component for the final inverse
     //! SSRB
     shared_ptr<BinNormalisation> multiplicative_data_3d;
+
+    shared_ptr<BinNormalisation> normalisation_data_3d;
 
     /**
     * \name Varianbles realted to the background proj data
@@ -407,6 +417,8 @@ private:
     //! \brief _scatter_simulation
     //! \details Class which will implement the scatter simulation.
     shared_ptr < ScatterSimulation > scatter_simulation_sptr;
+
+    shared_ptr<ProjData> multimulti2d;
 
     //!
     //! \brief iterative_method

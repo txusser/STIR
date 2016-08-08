@@ -1,13 +1,6 @@
  
 #ifndef __stir_IO_ExamData_H__
 #define __stir_IO_ExamData_H__
-/*!
-  \file
-  \ingroup
-  \brief
-
-  \author Nikos Efthimiou
-*/
 
 #include "stir/shared_ptr.h"
 #include <vector>
@@ -18,6 +11,10 @@ START_NAMESPACE_STIR
 
 class Succeeded;
 
+//!
+//! \brief The ExamData class
+//! \details The base class for every data type.
+//! \author Nikos Efthimiou
 class ExamData
 {
 public:

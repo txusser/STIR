@@ -77,15 +77,15 @@ set_density_image_for_scatter_points_sptr(const shared_ptr<DiscretisedDensity<3,
 {
     this->density_image_for_scatter_points_sptr=new_sptr;
 
-    const DiscretisedDensityOnCartesianGrid<3,float>& attenuation_map =
-            dynamic_cast<const DiscretisedDensityOnCartesianGrid<3,float>& >
-            (*this->density_image_for_scatter_points_sptr);
+//    const DiscretisedDensityOnCartesianGrid<3,float>& attenuation_map =
+//            dynamic_cast<const DiscretisedDensityOnCartesianGrid<3,float>& >
+//            (*this->density_image_for_scatter_points_sptr);
 
-    BasicCoordinate <3, float> sizes = attenuation_map.get_grid_spacing();
+//    BasicCoordinate <3, float> sizes = attenuation_map.get_grid_spacing();
 
-    if (this->sub_vox_xy != sizes[2] ||
-            this->sub_vox_z != sizes[1])
-        error("Something went wrong in the attenuation image sunsampling");
+//    if (this->sub_vox_xy != sizes[2] ||
+//            this->sub_vox_z != sizes[1])
+//        error("Something went wrong in the attenuation image subsampling");
 
     this->sample_scatter_points();
     this->remove_cache_for_integrals_over_attenuation();

@@ -19,6 +19,7 @@
 #include "stir/ArrayFunction.h"
 
 #include "stir/ProjDataInMemory.h"
+#include "stir/NumericInfo.h"
 
 START_NAMESPACE_STIR
 
@@ -178,11 +179,11 @@ process_data()
         return Succeeded::no;
     }
 
-    std::string output_filename = "./scatter_estimated_in_0";
+    //    std::string output_filename = "./scatter_estimated_in_0";
 
-    ProjDataInMemory* object =
-            dynamic_cast<ProjDataInMemory *> (this->output_proj_data_sptr.get());
-    object->write_to_file(output_filename);
+    //    ProjDataInMemory* object =
+    //            dynamic_cast<ProjDataInMemory *> (this->output_proj_data_sptr.get());
+    //    object->write_to_file(output_filename);
 
     return Succeeded::yes;
 }
@@ -342,7 +343,7 @@ set_density_image_and_subsample(const shared_ptr<DiscretisedDensity<3,float> >& 
     this->set_density_image_sptr(arg);
     this->reduce_voxel_size();
     this->set_density_image_for_scatter_points_sptr(this->density_image_for_scatter_points_sptr);
-    this->set_density_image_sptr(this->density_image_for_scatter_points_sptr);
+    //            this->set_density_image_sptr(this->density_image_for_scatter_points_sptr);
 }
 
 void
@@ -410,17 +411,15 @@ reduce_projdata_detector_num(const shared_ptr<ProjDataInfo >& arg)
     sub_num_rings = (this->sub_num_rings < 0) ? vox_size_to_num_dets(this->sub_vox_z, false)
                                               : this->sub_num_rings;
 
+    //    if (sub_num_rings % 2 == 0)
+    //    {
+    //        float tot_length = this->template_proj_data_info_sptr->get_scanner_ptr()->get_num_rings() *
+    //                this->template_proj_data_info_sptr->get_scanner_ptr()->get_ring_spacing();
 
-
-    if (sub_num_rings % 2 == 0)
-    {
-        float tot_length = this->template_proj_data_info_sptr->get_scanner_ptr()->get_num_rings() *
-                this->template_proj_data_info_sptr->get_scanner_ptr()->get_ring_spacing();
-
-        error(boost::format("this z voxel size would lead to even number of rings, "
-                            "which are not currently supported. Try to divide with: "
-                            "%1%")  %tot_length);
-    }
+    //        error(boost::format("this z voxel size would lead to even number of rings, "
+    //                            "which are not currently supported. Try to divide with: "
+    //                            "%1%")  %tot_length);
+    //    }
 
     subsample_projdata_info(arg,
                             sub_num_dets_per_ring, sub_num_rings,
@@ -557,19 +556,18 @@ subsample_image(shared_ptr<DiscretisedDensity<3, float> >& _this_image_sptr,
     int size_z = attenuation_map->get_z_size() * zoom_z + 0.999;
     float scale_att = zoom_xy * zoom_xy * zoom_z;
 
+
     // Just multiply with the scale factor.
     pow_times_add pow_times_add_object(0.0f, scale_att, 1.0f,
-                                       0.0f,
-                                       10000.f);
-    // zoom image
-    const CartesianCoordinate3D<float>
-            zooms(zoom_z, zoom_xy, zoom_xy);
-    const CartesianCoordinate3D<float>
-            offsets_in_mm = attenuation_map->get_origin();
-    const CartesianCoordinate3D<int>
-            new_sizes(size_z, size_xy, size_xy);
+                                       NumericInfo<float>().min_value(),
+                                       NumericInfo<float>().max_value());
+
     VoxelsOnCartesianGrid<float> zoomed_image =
-            zoom_image(*attenuation_map.get(), zooms, offsets_in_mm, new_sizes);
+            zoom_image(*attenuation_map.get(),
+                       CartesianCoordinate3D<float>(zoom_z, zoom_xy, zoom_xy),
+                       CartesianCoordinate3D<float>(0.0f, 0.0f, 0.0f),
+                       CartesianCoordinate3D<int>(size_z, size_xy, size_xy));
+
 
     in_place_apply_function(*attenuation_map, pow_times_add_object);
 
@@ -578,6 +576,7 @@ subsample_image(shared_ptr<DiscretisedDensity<3, float> >& _this_image_sptr,
     // write it to file
     if (output_filename.size() > 0)
         write_to_file(density_image_for_scatter_points_filename, zoomed_image);
+
 }
 
 

@@ -124,7 +124,7 @@ public:
 
     The default value for the symmetries means that TrivialDataSymmetriesForBins will be used.
   */
-  void undo(ProjData&,const double start_time, const double end_time, 
+  virtual void undo(ProjData&,const double start_time, const double end_time,
             shared_ptr<DataSymmetriesForViewSegmentNumbers> = shared_ptr<DataSymmetriesForViewSegmentNumbers>()) const; 
 
 };
