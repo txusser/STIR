@@ -68,13 +68,13 @@ PoissonLogLikelihoodWithLinearModelForMeanAndListModeDataWithProjMatrixByBin()
   this->set_defaults(); 
 } 
 
-template<typename TargetT>
-void
-PoissonLogLikelihoodWithLinearModelForMeanAndListModeDataWithProjMatrixByBin<TargetT>::
-set_normalisation_sptr(const shared_ptr<BinNormalisation>& arg)
-{
-    this->normalisation_sptr = arg;
-}
+//template<typename TargetT>
+//void
+//PoissonLogLikelihoodWithLinearModelForMeanAndListModeDataWithProjMatrixByBin<TargetT>::
+//set_normalisation_sptr(const shared_ptr<BinNormalisation>& arg)
+//{
+//    this->normalisation_sptr = arg;
+//}
 
 template <typename TargetT> 
 void  
@@ -104,17 +104,15 @@ initialise_keymap()
   this->parser.add_key("additive sinogram",&this->additive_projection_data_filename); 
  
   this->parser.add_key("num_events_to_store",&this->num_events_to_store);
-  this->parser.add_parsing_key("Bin Normalisation type", &this->normalisation_sptr);
-
 } 
 template <typename TargetT> 
 int 
 PoissonLogLikelihoodWithLinearModelForMeanAndListModeDataWithProjMatrixByBin<TargetT>::
 set_num_subsets(const int new_num_subsets)
 {
-//  if (new_num_subsets!=1)
-//    warning("PoissonLogLikelihoodWithLinearModelForMeanAndListModeDataWithProjMatrixByBin currently only supports 1 subset");
-//  this->num_subsets = 1;
+  if (new_num_subsets!=1)
+    warning("PoissonLogLikelihoodWithLinearModelForMeanAndListModeDataWithProjMatrixByBin currently only supports 1 subset");
+  this->num_subsets = 1;
   return this->num_subsets;
 }
 
@@ -264,16 +262,16 @@ PoissonLogLikelihoodWithLinearModelForMeanAndListModeDataWithProjMatrixByBin<Tar
         scanner_sptr->get_num_rings()-1;
     }
 
-     
-  if (this->additive_projection_data_filename != "0") 
-    { 
+
+  if (this->additive_projection_data_filename != "0")
+    {
       info(boost::format("Reading additive projdata data '%1%'")
            % additive_projection_data_filename  );
-      shared_ptr <ProjData> temp_additive_proj_data_sptr =  
-        ProjData::read_from_file(this->additive_projection_data_filename); 
+      shared_ptr <ProjData> temp_additive_proj_data_sptr =
+        ProjData::read_from_file(this->additive_projection_data_filename);
       this->additive_proj_data_sptr.reset(new ProjDataInMemory(* temp_additive_proj_data_sptr));
-    } 
-  
+    }
+
 
   this->proj_data_info_cyl_uncompressed_ptr.reset(
     dynamic_cast<ProjDataInfoCylindricalNoArcCorr *>(
@@ -338,18 +336,27 @@ compute_sub_gradient_without_penalty_plus_sensitivity(TargetT& gradient,
   CListRecord& record = *record_sptr; 
   //  int count_of_events=0;
   //int in_the_range =0;
-
-  if (num_events_to_store <= 0 )
+int more_events = 0 ;
+  if (num_events_to_store <= - 1)
+      more_events = this->list_mode_data_sptr->get_total_number_of_events();
+  else if (num_events_to_store == 0 )
+  {
           do_time_frame = true;
-      else
+          more_events = 1;
+  }
+  else
+  {
           do_time_frame = false;
-
-      int more_events = 0 ;
-
-      more_events =  do_time_frame? 1 : (num_events_to_store);
+          more_events = num_events_to_store;
+  }
 
   while (more_events)//this->list_mode_data_sptr->get_next_record(record) == Succeeded::yes)
   { 
+      if(!do_time_frame)
+           more_events -=1 ;
+
+       num_stored_events += 1;
+
       if (this->list_mode_data_sptr->get_next_record(record) == Succeeded::no)
               {
                   info("End of file!");
@@ -360,7 +367,7 @@ compute_sub_gradient_without_penalty_plus_sensitivity(TargetT& gradient,
       {
         current_time = record.time().get_time_in_secs();
       }
-    if (current_time >= end_time)
+    if (do_time_frame && current_time >= end_time)
       {
         break; // get out of while loop
       }
@@ -400,11 +407,6 @@ compute_sub_gradient_without_penalty_plus_sensitivity(TargetT& gradient,
             fwd_bin.set_bin_value(value);
           }
         float  measured_div_fwd = 0.0f;
-
-        if(!do_time_frame)
-             more_events -=1 ;
-
-         num_stored_events += 1;
 
          if (num_stored_events%100000L==0)
                          info( boost::format("Proccessed events: %1% ") % num_stored_events);

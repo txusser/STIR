@@ -224,6 +224,10 @@ public:
   //! Return if the file stores delayed events as well (as opposed to prompts)
   virtual bool has_delayeds() const = 0;
 
+  virtual
+  long long int
+  get_total_number_of_events() const = 0;
+
 protected:
   //! Has to be set by the derived class
   shared_ptr<Scanner> scanner_sptr;

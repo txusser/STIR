@@ -53,7 +53,7 @@ set_defaults()
   this->list_mode_filename =""; 
   this->frame_defs_filename ="";
   this->list_mode_data_sptr.reset(); 
-  this->current_frame_num =0; 
+  this->current_frame_num = 1;
  
   this->output_image_size_xy=-1; 
   this->output_image_size_z=-1; 
@@ -81,7 +81,7 @@ initialise_keymap()
   this->parser.add_key("time frame definition filename", &this->frame_defs_filename);
   // SM TODO -- later do not parse
   this->parser.add_key("time frame number", &this->current_frame_num);
-     
+       this->parser.add_parsing_key("Bin Normalisation type", &this->normalisation_sptr);
 } 
 
 template <typename TargetT>     

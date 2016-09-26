@@ -82,8 +82,6 @@ public:
 
   int set_num_subsets(const int new_num_subsets);
 
-  virtual void set_normalisation_sptr(const shared_ptr<BinNormalisation>&);
-
 protected:
   virtual double
     actual_compute_objective_function_without_penalty(const TargetT& current_estimate,
@@ -112,14 +110,7 @@ protected:
   //shared_ptr<ProjectorByBinPair> projector_by_bin_pair;
   
   //! points to the additive projection data
-  shared_ptr<ProjDataInMemory> additive_proj_data_sptr; 
-
-  //!
-  //! \brief normalisation_sptr
-  //! \author Nikos Efthimiou
-  //! \details The normalization sinogram. I am going to need it, if I want to be able
-  //! to run listmode reconstruction without any dependencies on sinogram based functions.
-  shared_ptr<BinNormalisation> normalisation_sptr;
+  shared_ptr<ProjDataInMemory> additive_proj_data_sptr;
 
   //!
   //! \brief num_events_to_store
