@@ -117,7 +117,7 @@ public:
   /*! 
     This would be used for instance to bring geometrically forward projected data to 
     the mean of the measured data. With the
-    notation of the class documentation, this would \c multiply by the factors 
+    notation of the class documentation, this would \c multiply by the factors
     \f$\mathrm{norm}_b \f$.
 
     This just loops over all RelatedViewgrams. 
@@ -125,7 +125,7 @@ public:
     The default value for the symmetries means that TrivialDataSymmetriesForBins will be used.
   */
   void undo(ProjData&,const double start_time, const double end_time, 
-            shared_ptr<DataSymmetriesForViewSegmentNumbers> = shared_ptr<DataSymmetriesForViewSegmentNumbers>()) const; 
+            shared_ptr<DataSymmetriesForViewSegmentNumbers> = shared_ptr<DataSymmetriesForViewSegmentNumbers>()) const;
 
 };
 

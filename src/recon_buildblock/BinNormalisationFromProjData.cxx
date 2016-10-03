@@ -163,6 +163,20 @@ undo(RelatedViewgrams<float>& viewgrams,const double start_time, const double en
 
   }
 
+void
+BinNormalisationFromProjData::
+undo(std::vector<Bin>& bins, const shared_ptr<DataSymmetriesForBins> & symmetries,
+     const double start_time, const double end_time) const
+{
+//    std::vector <float> normalization_values = norm_proj_data_ptr->get_related_bin_values(bins, symmetries);
+//    assert(bins.size() == normalization_values.size());
+
+//    for (unsigned int i = 0; i < bins.size(); i++)
+//    {
+//        bins[i].set_bin_value(bins.at(i).get_bin_value() / normalization_values.at(i));
+//    }
+}
+
 float 
 BinNormalisationFromProjData::get_bin_efficiency(const Bin& bin,const double start_time, const double end_time) const
 {

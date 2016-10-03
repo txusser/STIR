@@ -33,6 +33,7 @@
 #include "stir/ProjData.h"
 #include "stir/shared_ptr.h"
 #include <string>
+#include "DataSymmetriesForBins.h"
 
 START_NAMESPACE_STIR
 
@@ -97,6 +98,11 @@ public:
     passed in the constructor. 
   */
   virtual void undo(RelatedViewgrams<float>& viewgrams,const double start_time, const double end_time) const;
+
+    //! \details This is the a bin-wise undo function. It does the same thing as the Viewgram-wise.
+    virtual
+    void  undo(std::vector<Bin>& bins, const shared_ptr<DataSymmetriesForBins> &,
+               const double start_time, const double end_time) const;
 
   virtual float get_bin_efficiency(const Bin& bin,const double start_time, const double end_time) const;
  
