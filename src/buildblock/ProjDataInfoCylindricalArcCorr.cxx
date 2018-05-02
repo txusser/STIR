@@ -5,6 +5,8 @@
     Copyright (C) 2000- 2007, Hammersmith Imanet Ltd
     Copyright (C) 2018, University College London
     Copyright (C) 2018, University of Leeds
+    Copyright (C) 2018, University of Hull
+
     This file is part of STIR.
 
     This file is free software; you can redistribute it and/or modify
@@ -27,6 +29,7 @@
   \brief Implementation of non-inline functions of class 
   stir::ProjDataInfoCylindricalArcCorr
 
+  \author Nikos Efthimiou
   \author Sanida Mustafovic
   \author Kris Thielemans
   \author Palak Wadhwa
@@ -139,6 +142,13 @@ get_bin(const LOR<float>& lor) const
   // map this to a view which corresponds to Pi anyway.
   //PW phi-intrinsic_tilt included to get the accurate bin.view_number.
   bin.view_num() = round((lor_coords.phi()-scanner_ptr->get_default_intrinsic_tilt()) / get_azimuthal_angle_sampling());
+  // N.E:Added the  rotation before the assertion, to support tilting.
+
+  if (bin.view_num() < get_min_view_num())
+      bin.view_num() += get_num_views();
+  else if (bin.view_num() > get_max_view_num())
+      bin.view_num() -= get_num_views();
+
   assert(bin.view_num()>=0);
   assert(bin.view_num()<=get_num_views());
   const bool swap_direction =

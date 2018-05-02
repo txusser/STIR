@@ -4,6 +4,7 @@
     Copyright (C) 2013, University College London
     Copyright (C) 2013, Institute for Bioengineering of Catalonia
     Copyright (C) 2018, University of Leeds
+    Copyright (C) 2018, University of Hull
 
     This file is part of STIR.
 
@@ -26,6 +27,7 @@
 
   \brief Implementation of inline functions of class stir::ProjDataInfoCylindrical
 
+  \author Nikos Efthimiou
   \author Sanida Mustafovic
   \author Kris Thielemans
   \author Palak Wadhwa
@@ -69,8 +71,10 @@ initialise_ring_diff_arrays_if_not_done_yet() const
 
 //PW Added the view offset from the scanner, code may now support intrinsic tilt.
 float
+//N.E: Added proper casting.
 ProjDataInfoCylindrical::get_phi(const Bin& bin)const
-{ return bin.view_num()*azimuthal_angle_sampling + scanner_ptr->get_default_intrinsic_tilt();}
+{return static_cast<float>(bin.view_num())*azimuthal_angle_sampling + scanner_ptr->get_default_intrinsic_tilt();}
+
 
 
 float

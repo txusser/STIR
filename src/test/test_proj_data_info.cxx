@@ -7,6 +7,7 @@
 
   \brief Test program for stir::ProjDataInfo hierarchy
 
+  \author Nikos Efthimiou
   \author Sanida Mustafovic
   \author Kris Thielemans
   \author Palak Wadhwa
@@ -18,6 +19,7 @@
     Copyright (C) 2000- 2011, Hammersmith Imanet Ltd
     Copyright (C) 2018, University College London
     Copyright (C) 2018, University of Leeds
+    Copyright (C) 2018, University of Hull
     This file is part of STIR.
 
     This file is free software; you can redistribute it and/or modify

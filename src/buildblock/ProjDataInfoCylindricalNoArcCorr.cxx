@@ -5,6 +5,8 @@
     Copyright (C) 2011-07-01 - 2011, Kris Thielemans
     Copyright (C) 2018, University College London
     Copyright (C) 2018, University of Leeds
+    Copyright (C) 2018, University of Hull
+
     This file is part of STIR.
 
     This file is free software; you can redistribute it and/or modify
@@ -26,8 +28,9 @@
   \brief Implementation of non-inline functions of class 
   stir::ProjDataInfoCylindricalNoArcCorr
 
-  \author Kris Thielemans
+  \author Nikos Efthimiou
   \author Palak Wadhwa
+  \author Kris Thielemans
 
 */
 
@@ -202,10 +205,25 @@ initialise_uncompressed_view_tangpos_to_det1det2() const
 	    min_tang_pos_num, max_tang_pos_num);
     }
 
-  uncompressed_view_tangpos_to_det1det2.grow(0,num_detectors/2-1);
+  const int max_num_views = num_detectors/2;
+  const int view_offset = round(get_scanner_ptr()->get_default_intrinsic_tilt()
+                                  / get_azimuthal_angle_sampling());
+
+  //N.E: Preallocate
+   uncompressed_view_tangpos_to_det1det2.grow(0,num_detectors/2-1);
+   for (int v_num=0; v_num<=num_detectors/2-1; ++v_num)
+     uncompressed_view_tangpos_to_det1det2[v_num].grow(min_tang_pos_num, max_tang_pos_num);
+
+
   for (int v_num=0; v_num<=num_detectors/2-1; ++v_num)
   {
-    uncompressed_view_tangpos_to_det1det2[v_num].grow(min_tang_pos_num, max_tang_pos_num);
+
+    // N.E: Tilt stuff....
+    int _v_num = v_num - view_offset;
+    if (_v_num < 0)
+        _v_num += max_num_views;
+    else if(_v_num > max_num_views)
+        _v_num -= max_num_views;
 
     for (int tp_num=min_tang_pos_num; tp_num<=max_tang_pos_num; ++tp_num)
     {
@@ -214,9 +232,9 @@ initialise_uncompressed_view_tangpos_to_det1det2() const
          Note for implementation: avoid using % with negative numbers
          so add num_detectors before doing modulo num_detectors)
         */
-      uncompressed_view_tangpos_to_det1det2[v_num][tp_num].det1_num = 
+      uncompressed_view_tangpos_to_det1det2[_v_num][tp_num].det1_num =
         (v_num + (tp_num >> 1) + num_detectors) % num_detectors;
-      uncompressed_view_tangpos_to_det1det2[v_num][tp_num].det2_num = 
+      uncompressed_view_tangpos_to_det1det2[_v_num][tp_num].det2_num =
         (v_num - ( (tp_num + 1) >> 1 ) + num_detectors/2) % num_detectors;
     }
   }
@@ -249,6 +267,9 @@ initialise_det1det2_to_uncompressed_view_tangpos() const
   //const int min_tang_pos_num = -(num_detectors/2);
   //const int max_tang_pos_num = -(num_detectors/2)+num_detectors;
   const int max_num_views = num_detectors/2;
+
+  const int view_offset = round(get_scanner_ptr()->get_default_intrinsic_tilt()
+                                  / get_azimuthal_angle_sampling());
 
   det1det2_to_uncompressed_view_tangpos.grow(0,num_detectors-1);
   for (int det1_num=0; det1_num<num_detectors; ++det1_num)
@@ -311,6 +332,13 @@ initialise_det1det2_to_uncompressed_view_tangpos() const
           swap_detectors = 1;
         }
       }
+
+      //N.E: Tilt stuff ...
+      view_num -= view_offset;
+      if (view_num < 0)
+          view_num += max_num_views;
+      else if(view_num > max_num_views)
+          view_num -= max_num_views;
       
       det1det2_to_uncompressed_view_tangpos[det1_num][det2_num].view_num = view_num;
       det1det2_to_uncompressed_view_tangpos[det1_num][det2_num].tang_pos_num = tang_pos_num;
