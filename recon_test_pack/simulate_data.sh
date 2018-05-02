@@ -37,7 +37,7 @@ atten_image=$2
 template_sino=$3
 
 echo "===  create ACFs"
-calculate_attenuation_coefficients --ACF my_acfs.hs ${atten_image} ${template_sino} > my_create_acfs.log 2>&1
+calculate_attenuation_coefficients --PMRT --ACF my_acfs.hs ${atten_image} ${template_sino} > my_create_acfs.log 2>&1
 if [ $? -ne 0 ]; then 
   echo "ERROR running calculate_attenuation_coefficients. Check my_create_acfs.log"; exit 1; 
 fi
