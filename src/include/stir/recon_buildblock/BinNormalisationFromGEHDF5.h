@@ -104,7 +104,7 @@ private:
   Array<1,float> axial_t2_array;
   Array<1,float> trans_t1_array;
   shared_ptr<SinglesRates> singles_rates_ptr;
-  Array<2,float> geometric_factors;
+  Array<3,float> geometric_factors;
   Array<2,float> efficiency_factors;
   Array<2,float> crystal_interference_factors;
   shared_ptr<Scanner> scanner_ptr;

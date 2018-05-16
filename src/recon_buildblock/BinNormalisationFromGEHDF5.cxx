@@ -199,7 +199,9 @@ BinNormalisationFromGEHDF5()
 BinNormalisationFromGEHDF5::
 BinNormalisationFromGEHDF5(const string& filename)
 {
-  read_norm_data(filename);
+    set_defaults();
+    normalisation_GEHDF5_filename = filename;
+    read_norm_data(normalisation_GEHDF5_filename);
 }
 
 Succeeded
@@ -290,16 +292,17 @@ read_norm_data(const string& filename)
     normalisation data.    
   */
 
-   const int min_tang_pos_num = -(scanner_ptr->get_max_num_non_arccorrected_bins())/2;
-   const int max_tang_pos_num = min_tang_pos_num +scanner_ptr->get_max_num_non_arccorrected_bins()- 1;
+  const int min_tang_pos_num = -(scanner_ptr->get_max_num_non_arccorrected_bins())/2;
+  const int max_tang_pos_num = min_tang_pos_num +scanner_ptr->get_max_num_non_arccorrected_bins()- 1;
 
    //geometric_factors = 
    //  Array<2,float>(IndexRange2D(0,127-1, //XXXXnrm_subheader_ptr->num_geo_corr_planes-1,
    //                             min_tang_pos_num, max_tang_pos_num));
 
-   geometric_factors =
-     Array<3,float>(IndexRange3D(0,1981-1, //XXXXnrm_subheader_ptr->num_geo_corr_planes-1,
-                                min_tang_pos_num, max_tang_pos_num, 0, 16));
+  geometric_factors =
+          Array<3,float>(IndexRange3D( 0, 15,
+                                       0, 1980,
+                                       min_tang_pos_num, max_tang_pos_num));
 
    {
      //  int slice = 0;
@@ -526,7 +529,7 @@ read_norm_data(const string& filename)
   }
 
   
-#if 1
+#if 0
    // to test pipe the obtained values into file
     ofstream out_geom;
     ofstream out_inter;
@@ -717,12 +720,12 @@ get_bin_efficiency(const Bin& bin, const double start_time, const double end_tim
 	  }
 	if (this->use_geometric_factors())
 	  {
-	    lor_efficiency_this_pair *=
-#ifdef SAME_AS_PETER
-              1.F;
-#else	    // this is 3dbkproj (at the moment)
-	    geometric_factors[geo_plane_num][uncompressed_bin.tangential_pos_num()];
-#endif
+//	    lor_efficiency_this_pair *=
+//#ifdef SAME_AS_PETER
+//              1.F;
+//#else	    // this is 3dbkproj (at the moment)
+//	    geometric_factors[geo_plane_num][uncompressed_bin.tangential_pos_num()];
+//#endif
 	  }
 	lor_efficiency += lor_efficiency_this_pair;
       }

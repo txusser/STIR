@@ -61,6 +61,10 @@ set(buildblock_simple_tests
         test_GeneralisedPoissonNoiseGenerator
 )
 
+if (HAVE_HDF5)
+	list(APPEND ${dir_INVOLVED_TEST_EXE_SOURCES} test_HDF5)
+endif()
+
 include(stir_test_exe_targets)
 
 foreach(source ${buildblock_simple_tests})

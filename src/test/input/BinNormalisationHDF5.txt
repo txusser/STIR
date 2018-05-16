@@ -1,0 +1,7 @@
+START :=
+Bin Normalisation type:= From GE HDF5
+Bin Normalisation From GE HDF5 := 
+	normalisation_filename := /home/nikos/Desktop/norm3d
+	use_detector_efficiencies := 1
+End Bin Normalisation From GE HDF5 :=
+END :=
