@@ -422,7 +422,7 @@ read_norm_data(const string& filename)
        using namespace H5;
        using namespace std;
 
-       DataSet dataset = this->h5data.get_file().openDataSet("/SegmentData/Segment4/3D_Norm_Correction/slice8");
+       DataSet dataset = this->h5data.get_file().openDataSet("/SegmentData/Segment4/3D_Norm_Correction/slice1");
         /*
           * Get dataspace of the dataset.
           */
