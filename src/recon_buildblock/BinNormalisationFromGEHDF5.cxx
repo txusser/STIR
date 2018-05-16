@@ -296,6 +296,179 @@ read_norm_data(const string& filename)
    //geometric_factors = 
    //  Array<2,float>(IndexRange2D(0,127-1, //XXXXnrm_subheader_ptr->num_geo_corr_planes-1,
    //                             min_tang_pos_num, max_tang_pos_num));
+
+   geometric_factors =
+     Array<3,float>(IndexRange3D(0,1981-1, //XXXXnrm_subheader_ptr->num_geo_corr_planes-1,
+                                min_tang_pos_num, max_tang_pos_num, 0, 16));
+
+   {
+     //  int slice = 0;
+
+       //PW Open the list mode file here.
+     //      this->open( _listmode_filename );
+
+
+      // SinglesRates::scanner_sptr = GEHDF5Data::scanner_sptr;
+        // Get total number of bins for this type of scanner.
+     //  const int total_singles_units = SinglesRates::scanner_sptr->get_num_singles_units();
+
+     //PW Get the total number of time slices from the HDF5 file format.
+
+    // H5::DataSet dataset2=this->file.openDataSet("/HeaderData/SinglesHeader/numValidSamples");
+
+   //  dataset2.read(&_num_time_slices,H5::PredType::NATIVE_INT);
+   //  std::cout << "\n Number of time slices :  " << _num_time_slices << "\n\n";
+
+
+       /* PW Modifies this bit to get th time slices from GE HDF5 instead of Sgl.
+     Calculate number of time slices from the length of the data (file size minus header).
+       _num_time_slices =
+         static_cast<int>((end_stream_position - static_cast<streampos>(512)) /
+                          SIZE_OF_SINGLES_RECORD);
+     */
+
+        // Allocate the main array.
+//       _singles = Array<2, int>(IndexRange2D(0, _num_time_slices - 1, 0, total_singles_units - 1));
+
+
+
+
+    //   while ( slice < _num_time_slices) {
+
+   //  std::cout<<"Now processing sample"<< slice+1 <<std::endl;
+
+     //PW Open the dataset from that file here.
+   //   char datasetname[300];
+    //  sprintf(datasetname,"/Singles/CrystalSingles/sample%d", slice+1 );
+   //  H5::DataSet dataset=this->file.openDataSet(datasetname);
+
+//     const int    NX_SUB = 45;    // hyperslab dimensions
+  //   const int    NY_SUB = 448;
+  //   const int    NX = 45;        // output buffer dimensions
+   //  const int    NY = 448;
+   //  const int    RANK_OUT = 2;
+
+     //PW Now find out the type of this dataset.
+    //       H5T_class_t type_class = dataset.getTypeClass();
+
+     //PW Get datatype class and print it out.
+
+    //       if( type_class == H5T_INTEGER )
+     //      {
+    //      std::cout << "Data set has INTEGER type" << std::endl;
+
+     //PW Get the integer type
+
+     //     H5::IntType intype = dataset.getIntType();
+
+     //    H5std_string order_string;
+          //    H5T_order_t order = intype.getOrder( order_string );
+          //   std::cout << order_string << std::endl;
+
+               //PW Get size of the data element stored in file and print it.
+
+          //    size_t size = intype.getSize();
+         //     std::cout << "Data size is " << size << std::endl;
+         //  }
+
+     //PW Get dataspace of the dataset.
+        //   H5::DataSpace dataspace = dataset.getSpace();
+
+     //PW Get the number of dimensions in the dataspace.
+        //   int rank = dataspace.getSimpleExtentNdims();
+
+     //PW Get the dimension size of each dimension in the dataspace and display them.
+
+        //   hsize_t dims_out[2];
+       //    int ndims = dataspace.getSimpleExtentDims( dims_out, NULL);
+       //    std::cout << "rank " << rank << ", dimensions " <<
+         //      (unsigned long)(dims_out[0]) << " x " <<
+         //      (unsigned long)(dims_out[1]) << std::endl;
+
+     //PW Define hyperslab in the dataset; implicitly giving strike and block NULL.
+
+        //   hsize_t offset[2];   // TODO hyperslab offset in the file
+        //   hsize_t count[2];    // TODO size of the hyperslab in the file
+        //   offset[0] = 0;
+         //  offset[1] = 0;
+          // count[0]  = NX_SUB;
+          // count[1]  = NY_SUB;
+          // dataspace.selectHyperslab( H5S_SELECT_SET, count, offset );
+     //PW Define the memory dataspace.
+      //     hsize_t dimsm[2];              /* TODO memory space dimensions */
+      //     dimsm[0] = NX;
+      //     dimsm[1] = NY;
+       //    H5::DataSpace memspace( RANK_OUT, dimsm );
+
+     //PW Define memory hyperslab.
+
+      //     hsize_t      offset_out[2];   // hyperslab offset in memory
+       //    hsize_t      count_out[2];    // size of the hyperslab in memory
+      //     offset_out[0] = 0;
+      //     offset_out[1] = 0;
+      //     count_out[0]  = NX_SUB;
+      //     count_out[1]  = NY_SUB;
+      //     memspace.selectHyperslab( H5S_SELECT_SET, count_out, offset_out );
+     //PW Read data from hyperslab in the file into the hyperslab in memory.
+
+       //    dataset.read( _singles[slice].get_data_ptr(), H5::PredType::NATIVE_INT, memspace, dataspace );
+       //    _singles[slice].release_data_ptr();
+
+
+      // Increment the slice index.
+       //  ++slice;
+
+
+       using namespace H5;
+       using namespace std;
+
+       DataSet dataset = this->h5data.get_file().openDataSet("/SegmentData/Segment4/3D_Norm_Correction/slice8");
+        /*
+          * Get dataspace of the dataset.
+          */
+         DataSpace dataspace = dataset.getSpace();
+         /*
+          * Get the number of dimensions in the dataspace.
+          */
+         int rank = dataspace.getSimpleExtentNdims();
+         /*
+          * Get the dimension size of each dimension in the dataspace and
+          * display them.
+          */
+         hsize_t dims_out[2];
+         dataspace.getSimpleExtentDims( dims_out, NULL);
+         cout << "rank " << rank << ", dimensions " <<
+             (unsigned long)(dims_out[0]) << " x " <<
+             (unsigned long)(dims_out[1]) << endl;
+         /*
+          * Define hyperslab in the dataset; implicitly giving strike and
+          * block NULL.
+          */
+         hsize_t      offset[2];   // hyperslab offset in the file
+         hsize_t      count[2];    // size of the hyperslab in the file
+         offset[0] = 0;
+         offset[1] = 0;
+         count[0]  = dims_out[0];
+         count[1]  = dims_out[1];
+         dataspace.selectHyperslab( H5S_SELECT_SET, count, offset );
+
+         /*
+          * Define the memory dataspace.
+          */
+         hsize_t     dimsm[2];              /* memory space dimensions */
+         dimsm[0] = dims_out[0];
+         dimsm[1] = dims_out[1];
+         DataSpace memspace( 2, dimsm );
+         /*
+          * Read data from hyperslab in the file into the hyperslab in
+          * memory and display the data.
+          */
+         Array<1,float> data(dimsm[0]*dimsm[1]);
+         dataset.read( data.get_data_ptr(), PredType::NATIVE_FLOAT, memspace, dataspace);
+         data.release_data_ptr();
+         std::copy(data.begin(), data.end(), geometric_factors.begin_all());
+   }
+
   efficiency_factors =
     Array<2,float>(IndexRange2D(0,scanner_ptr->get_num_rings()-1,
 		   0, scanner_ptr->get_num_detectors_per_ring()-1));
