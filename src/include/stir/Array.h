@@ -74,8 +74,20 @@ the object. However, as grow() is a virtual function, Array::grow is
 called, which initialises new elements first to 0.
 */
 
+class ArrayInterface
+{
+public:
+    virtual int get_num_dimensions() const
+    {
+        return num_dim;
+    }
+protected:
+    int num_dim;
+};
+
 template <int num_dimensions, typename elemT>
-class Array : public NumericVectorWithOffset<Array<num_dimensions-1, elemT>, elemT>
+class Array : public NumericVectorWithOffset<Array<num_dimensions-1, elemT>, elemT>,
+public ArrayInterface
 {
 #ifdef SWIG
   // work-around swig problem. It gets confused when using a private (or protected)
@@ -251,7 +263,7 @@ public:
 
 //! The 1-dimensional (partial) specialisation of Array. 
 template <class elemT>
-class Array<1, elemT> : public NumericVectorWithOffset<elemT, elemT>
+class Array<1, elemT> : public NumericVectorWithOffset<elemT, elemT>, public ArrayInterface
 #ifdef STIR_USE_BOOST
       ,
 			 boost::operators<Array<1, elemT>, NumericVectorWithOffset<elemT, elemT> >,

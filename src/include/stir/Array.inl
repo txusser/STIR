@@ -63,13 +63,16 @@ grow(const IndexRange<num_dimensions>& range)
 template <int num_dimensions, typename elemT>
 Array<num_dimensions, elemT>::Array()
 : base_type()
-{}
+{
+    num_dim = num_dimensions;
+}
 
 template <int num_dimensions, typename elemT>
 Array<num_dimensions, elemT>::Array(const IndexRange<num_dimensions>& range)
 : base_type()
 {
   grow(range);
+  num_dim = num_dimensions;
 }
 
 template <int num_dimensions, typename elemT>
@@ -80,7 +83,9 @@ Array<num_dimensions, elemT>::Array(const self& t)
 Array<num_dimensions, elemT>::Array(const base_type& t)
 #endif
 :  base_type(t)
-{}
+{
+    num_dim = num_dimensions;
+}
 
 template <int num_dimensions, typename elemT>
 Array<num_dimensions, elemT>::~Array()
@@ -386,13 +391,14 @@ Array<1, elemT>::grow(const IndexRange<1>& range)
 template <class elemT>
 Array<1, elemT>::Array()
 : base_type()
-{ }
+{ num_dim = 1; }
 
 template <class elemT>
 Array<1, elemT>::Array(const IndexRange<1>& range)
 : base_type()
 {
   grow(range);
+  num_dim = 1;
 }
 
 template <class elemT>
@@ -400,13 +406,14 @@ Array<1, elemT>::Array(const int min_index, const int max_index)
 : base_type()
 {
   grow(min_index, max_index);
+  num_dim = 1;
 }
 
 
 template <class elemT>
 Array<1, elemT>::Array(const base_type &il)
 : base_type(il)
-{}
+{num_dim = 1;}
 
 template <typename elemT>
 Array<1, elemT>::~Array()
