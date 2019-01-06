@@ -1,6 +1,7 @@
 /*
     Copyright (C) 2003-2011 Hammersmith Imanet Ltd (CListRecordECAT.h)
     Copyright (C) 2013 University College London (major mods for GE Dimension data)
+    Copyright (C) 2017-2018 University of Leeds
 */
 /*!
   \file
@@ -11,6 +12,7 @@
   without approval from GE.
 
   \author Kris Thielemans
+  \author Palak Wadhwa
 */
 
 #ifndef __stir_listmode_CListRecordGESigna_H__
@@ -67,6 +69,7 @@ class CListEventDataGESigna
   }
   inline void get_detection_position(DetectionPositionPair<>& det_pos) const
   {
+<<<<<<< HEAD
     if (deltaTime<0)
     {
       det_pos.pos1().tangential_coord() = hiXtalTransAxID;
@@ -83,6 +86,13 @@ class CListEventDataGESigna
       det_pos.pos2().axial_coord() = hiXtalAxialID;
       det_pos.timing_pos() = get_tof_bin();
     }
+=======
+    det_pos.pos1().tangential_coord() = 447 - loXtalTransAxID;
+    det_pos.pos1().axial_coord() = loXtalAxialID;
+    det_pos.pos2().tangential_coord() = 447 - hiXtalTransAxID;
+//    std::cout << hiXtalTransAxID << " "  << loXtalTransAxID << std::endl;
+    det_pos.pos2().axial_coord() = hiXtalAxialID;
+>>>>>>> upstream_hackathon/introduction_of_HDF5_wrapper
   }
   inline bool is_event() const
     {

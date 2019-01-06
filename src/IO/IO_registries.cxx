@@ -62,6 +62,7 @@
 #ifdef HAVE_HDF5
 #include "stir/IO/GESignaListmodeInputFileFormat.h"
 #endif
+
 //! Addition for SAFIR listmode input file format
 #include "stir/IO/SAFIRCListmodeInputFileFormat.h"
 

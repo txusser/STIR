@@ -30,8 +30,7 @@
 
 #include "stir/shared_ptr.h"
 #include "stir/Succeeded.h"
-
-#include "H5Cpp.h"
+#include "stir/IO/HDF5Wrapper.h"
 #include <string>
 #include <iostream>
 #include <vector>
@@ -72,8 +71,13 @@ public:
   //! Constructor taking a stream
   /*! Data will be assumed to start at the start of the DataSet.
       If reset() is used, it will go back to this starting position.*/ 
-  inline
-    InputStreamWithRecordsFromHDF5(const shared_ptr<H5::DataSet>& ,
+//  explicit
+//    InputStreamWithRecordsFromHDF5(const shared_ptr<H5::DataSet>& ,
+//                           const std::size_t size_of_record_signature,
+//                           const std::size_t max_size_of_record);
+
+  explicit
+    InputStreamWithRecordsFromHDF5(const std::string filename,
                            const std::size_t size_of_record_signature,
                            const std::size_t max_size_of_record);
 
@@ -82,7 +86,9 @@ public:
 
   inline
   virtual 
-    Succeeded get_next_record(RecordT& record) const;
+    Succeeded get_next_record(RecordT& record);
+
+  virtual Succeeded set_up();
 
   //! go back to starting position
   inline
@@ -117,11 +123,17 @@ public:
 
 private:
 
-  shared_ptr<H5::DataSet> dataset_sptr;
+  shared_ptr<HDF5Wrapper> input_sptr;
+
+  shared_ptr<char> data_sptr;
+
+  uint64_t m_list_size = 0 ;
+
   std::streampos starting_stream_position;
   mutable std::streampos current_offset;
   std::vector<std::streampos> saved_get_positions;
 
+  const std::string m_filename;
   const std::size_t size_of_record_signature;
   const std::size_t max_size_of_record;
 

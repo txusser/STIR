@@ -12,8 +12,9 @@ set(${dir_LIB_SOURCES}
   ProjDataInfoCylindricalArcCorr 
   ProjDataInfoCylindricalNoArcCorr 
   ArcCorrection 
-  ProjDataFromStream 
-  ProjDataGEAdvance 
+  ProjDataFromHDF5
+  ProjDataFromStream  
+  ProjDataGEAdvance
   ProjDataInMemory 
   ProjDataInterfile 
   Scanner 
@@ -87,6 +88,12 @@ include(stir_lib_target)
 # TODO Remove but currently needed for ProjData.cxx, DynamicDisc*cxx, TimeFrameDef
 if (LLN_FOUND)
   target_link_libraries(buildblock ${LLN_LIBRARIES})
+endif()
+
+if (HDF5_FOUND)
+ list(APPEND ${dir_LIB_SOURCES}
+    ProjDataFromHDF5
+ )
 endif()
 
 if (RDF_FOUND)

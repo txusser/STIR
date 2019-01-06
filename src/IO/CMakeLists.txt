@@ -68,7 +68,7 @@ endif()
 
 if (HDF5_FOUND)
  list(APPEND ${dir_LIB_SOURCES}
-    GEHDF5Data
+    HDF5Wrapper
  )
 endif()
 

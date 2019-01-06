@@ -37,7 +37,7 @@
 #include "stir/data/SinglesRates.h"
 #include "stir/Scanner.h"
 #include "stir/Array.h"
-#include "stir/IO/GEHDF5Data.h"
+#include "stir/IO/HDF5Wrapper.h"
 #include <string>
 
 #ifndef STIR_NO_NAMESPACE
@@ -134,8 +134,8 @@ private:
   virtual bool post_processing();
 
   string normalisation_GEHDF5_filename;
-  
-  GEHDF5Data h5data;
+  shared_ptr<HDF5Wrapper> m_input_hdf5_sptr;
+  HDF5Wrapper h5data;
 };
 
 END_NAMESPACE_STIR
