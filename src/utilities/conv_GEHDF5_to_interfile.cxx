@@ -61,15 +61,15 @@ int main(int argc,char **argv)
     info("Converting RDF Uncompressed Sinogram to STIR interfile");
     shared_ptr<ProjData> template_projdata_ptr = ProjData::read_from_file(argv[3]);
     ProjDataInterfile proj_data(template_projdata_ptr->get_exam_info_sptr(), template_projdata_ptr->get_proj_data_info_sptr(),
-                                output_filename, std::ios::out);
+                                output_filename, std::ios::out,ProjDataFromStream::Timing_Segment_View_AxialPos_TangPos,NumericType::FLOAT);
 
 
     ProjDataFromHDF5 projDataGE(template_projdata_info_sptr, rdf_filename);
-
+for(int i_tof = projDataGE.get_min_tof_pos_num(); i_tof <= projDataGE.get_max_tof_pos_num(); ++i_tof)
    for (int i_seg = projDataGE.get_min_segment_num(); i_seg <= projDataGE.get_max_segment_num(); ++i_seg)
         for(int i_view = projDataGE.get_min_view_num(); i_view <= projDataGE.get_max_view_num(); ++i_view)
         {
-            Viewgram<float> ret_viewgram = projDataGE.get_viewgram(i_view, i_seg);
+            Viewgram<float> ret_viewgram = projDataGE.get_viewgram(i_view, i_seg,false,i_tof);
             proj_data.set_viewgram(ret_viewgram);
         }
     info("Sinogram converted");

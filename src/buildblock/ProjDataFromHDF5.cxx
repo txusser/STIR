@@ -112,7 +112,22 @@ Array<1,unsigned char> buffer(total_size);
 m_input_hdf5_sptr->get_from_dataset(offset, count, stride, block, buffer);
 std::copy(buffer.begin(), buffer.end(), tof_data[view_num].begin_all());
 }
-
+ ofstream write_tof_data;
+ write_tof_data.open("uncompressed_sino_tof_data.txt",ios::out);
+ for ( int i =tof_data.get_min_index(); i<=tof_data.get_max_index();i++)
+   {
+     for ( int j =tof_data[i].get_min_index(); j <=tof_data[i].get_max_index(); j++)
+        {
+         for(int k = tof_data[i][j].get_min_index(); k <=tof_data[i][j].get_max_index(); k++)
+         {
+             for(int l=tof_data[i][j][k].get_min_index(); l <=tof_data[i][j][k].get_max_index(); l++)
+             {
+             write_tof_data << tof_data[i][j][k][l] << "   " ;
+               }
+                      write_tof_data << std::endl;
+               }
+         }
+ }
 }
 
 void ProjDataFromHDF5::initialise_segment_sequence()
@@ -151,7 +166,7 @@ get_viewgram(const int view_num, const int segment_num,
              const bool make_num_tangential_poss_odd,const int timing_pos) const
 {
     std::cout<<"Now processing segment "<<segment_num<<"for view "<<view_num<<std::endl;
-    Viewgram<float> ret_viewgram = get_empty_viewgram(view_num, segment_num, make_num_tangential_poss_odd);
+    Viewgram<float> ret_viewgram = get_empty_viewgram(view_num, segment_num, make_num_tangential_poss_odd,timing_pos);
     ret_viewgram.fill(0.0);
     //! \todo NE: Get the number of tof positions from the proj_data_info_ptr
     const unsigned int num_tof_poss = 27;
@@ -160,23 +175,12 @@ get_viewgram(const int view_num, const int segment_num,
     // PW Attempt to flip the tangential and view numbers.
    for (int tang_pos = ret_viewgram.get_min_tangential_pos_num(), i_tang = 0; tang_pos <= ret_viewgram.get_max_tangential_pos_num(), i_tang<=static_cast<unsigned long long int>(get_num_tangential_poss())-1; ++tang_pos, ++i_tang)
       for(int i_axial=0, axial_pos = seg_ax_offset[find_segment_index_in_sequence(segment_num)]; i_axial<=static_cast<unsigned long long int>(get_num_axial_poss(segment_num))-1 , axial_pos <= seg_ax_offset[find_segment_index_in_sequence(segment_num)]+static_cast<unsigned long long int>(get_num_axial_poss(segment_num))-1; i_axial++, axial_pos++)
-        for (int tof_poss = 0; tof_poss <= num_tof_poss-1; tof_poss++)
       {
-                ret_viewgram[i_axial][-tang_pos] += static_cast<float> (tof_data[223-view_num][i_tang][tof_poss][axial_pos]);
-            }
+                ret_viewgram[i_axial][-tang_pos] = static_cast<float> (tof_data[223-view_num][i_tang][timing_pos][axial_pos]);
+      }
 
-#if 0
-    ofstream write_tof_data;
-    write_tof_data.open("uncompressed_sino_tof_data.txt",ios::out);
-    for ( int i =tof_data.get_min_index(); i<=tof_data.get_max_index();i++)
-      {
-        for ( int j =tof_data[i].get_min_index(); j <=tof_data[i].get_max_index(); j++)
-           {
-            for(int k = tof_data[i][j].get_min_index(); k <=tof_data[i][j].get_max_index(); k++)
-         write_tof_data << tof_data[i][j][k] << "   " ;
-           }
-                  write_tof_data << std::endl;
-           }
+
+
 
     ofstream write_ret_viewgram_data;
     write_ret_viewgram_data.open("uncompressed_sino_ret_viewgram_data.txt",ios::out);
@@ -188,7 +192,7 @@ get_viewgram(const int view_num, const int segment_num,
            }
                   write_ret_viewgram_data << std::endl;
            }
-#endif
+
     return ret_viewgram;
 }
 
