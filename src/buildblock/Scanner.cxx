@@ -399,43 +399,43 @@ Scanner::Scanner(Type scanner_type)
                1, 1.F, 1.F);
     break;
 
-case PETMR_Signa: 
+  case PETMR_Signa:
 
-    set_params(PETMR_Signa, string_list("GE PET/MR Signa", "GE PET/MR Signa"), 
-	       45, 
-	       357, 
-	       331, // TODO
-	       2 * 224,
-           311.9F,
-	       9.4F,  
-           5.56F,
-           2.01565F, // TO CHECK
-	       static_cast<float>(-5.23*_PI/180),//sign? TODO value
-	       5,
-	       4,
-           9, 4, 1, 1, 1,
-               0.0F, 511.F,
-		   (short int)(351),
-		   (float)(89.0F/13.0F), //TODO
-		   (float)(390.0F) );
-    break;
+        set_params(PETMR_Signa, string_list("GE PET/MR Signa", "GE PET/MR Signa"),
+               45,
+               357,
+               331, // TODO
+               2 * 224,
+               311.9F,
+               9.4F,
+               5.56F,
+               2.01565F, // TO CHECK
+               static_cast<float>(-5.23*_PI/180),//sign? TODO value
+               5,
+               4,
+               9, 4, 1, 1, 1,
+                    0.0F, 511.F,
+               (short int)(351),
+               (float)(13.02F), //TODO
+               (float)(390.0F) );
+      break;
 
   case PETMR_Signa_nonTOF:
 
       set_params(PETMR_Signa_nonTOF, string_list("GE PET/MR Signa nonTOF", "GE PET/MR Signa nonTOF"),
-             45,
-             357,
-             331, // TODO
-             2 * 224,
-                 317.0F,
-             9.4F,
-             5.55F,
-             2.1306F, // TO CHECK
-             static_cast<float>(-5.23*_PI/180),//sign? TODO value
-             5,
-             4,
-             9, 4, 1, 1, 1,
-                 0.0F, 511.F,
+                 45,
+                 357,
+                 331, // TODO
+                 2 * 224,
+                 311.9F,
+                 9.4F,
+                 5.56F,
+                 2.01565F, // TO CHECK
+                 static_cast<float>(-5.23*_PI/180),//sign? TODO value
+                 5,
+                 4,
+                 9, 4, 1, 1, 1,
+                      0.0F, 511.F,
              (short int)(0),
              (float)(0), //TODO
              (float)(0) );
