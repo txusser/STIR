@@ -232,10 +232,9 @@ public:
   }
 
   virtual shared_ptr<ProjDataInfo> get_proj_data_info_sptr() const;
-
+  void set_proj_data_info_sptr(shared_ptr<ProjDataInfo>);
 protected:
 
-  void set_proj_data_info_sptr(shared_ptr<ProjDataInfo>);
   //! Has to be set by the derived class
   //  shared_ptr<ExamInfo> exam_info_sptr;
     shared_ptr<Scanner> scanner_sptr;

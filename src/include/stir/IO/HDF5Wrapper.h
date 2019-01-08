@@ -109,14 +109,14 @@ public:
     inline const H5::H5File& get_file() const;
 
     ~HDF5Wrapper() {}
+    
+    shared_ptr<Scanner> scanner_sptr;
 
 protected:
 
     Succeeded initialise_scanner_from_HDF5();
 
     Succeeded initialise_exam_info();
-
-    shared_ptr<Scanner> scanner_sptr;
 
     shared_ptr<ExamInfo> exam_info_sptr;
 
