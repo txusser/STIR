@@ -223,7 +223,7 @@ post_processing()
     }
   shared_ptr<ProjData> template_proj_data_ptr =
     ProjData::read_from_file(template_proj_data_name);
-
+this->lm_data_ptr->set_proj_data_info_sptr(template_proj_data_ptr->get_proj_data_info_sptr());
   template_proj_data_info_ptr.reset(template_proj_data_ptr->get_proj_data_info_ptr()->clone());
 
   // propagate relevant metadata
