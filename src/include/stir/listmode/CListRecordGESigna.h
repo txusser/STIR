@@ -71,18 +71,18 @@ class CListEventDataGESigna
   {
     if (deltaTime<0)
     {
-      det_pos.pos1().tangential_coord() = 447-hiXtalTransAxID;
+      det_pos.pos1().tangential_coord() = 447-loXtalTransAxID;
       det_pos.pos1().axial_coord() = hiXtalAxialID;
-      det_pos.pos2().tangential_coord() = 447-loXtalTransAxID;
+      det_pos.pos2().tangential_coord() = 447-hiXtalTransAxID;
       det_pos.pos2().axial_coord() = loXtalAxialID;
       det_pos.timing_pos() = -get_tof_bin();
     }
     else
     {
-      det_pos.pos1().tangential_coord() = 447-loXtalTransAxID;
-      det_pos.pos1().axial_coord() = loXtalAxialID;
-      det_pos.pos2().tangential_coord() = 447-hiXtalTransAxID;
-      det_pos.pos2().axial_coord() = hiXtalAxialID;
+      det_pos.pos1().tangential_coord() = 447-hiXtalTransAxID;
+      det_pos.pos1().axial_coord() = hiXtalAxialID;
+      det_pos.pos2().tangential_coord() = 447-loXtalTransAxID;
+      det_pos.pos2().axial_coord() = loXtalAxialID;
       det_pos.timing_pos() = get_tof_bin();
     }
   }

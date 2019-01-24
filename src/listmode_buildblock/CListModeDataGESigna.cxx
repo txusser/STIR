@@ -39,12 +39,12 @@ get_name() const
   return listmode_filename;
 }
 
-shared_ptr<stir::ProjDataInfo> 
-CListModeDataGESigna::
-get_proj_data_info_sptr() const
-{
-  return this->proj_data_info_sptr;
-}
+//shared_ptr<stir::ProjDataInfo>
+//CListModeDataGESigna::
+//get_proj_data_info_sptr() const
+//{
+//  return this->proj_data_info_sptr;
+//}
 
 std::time_t 
 CListModeDataGESigna::
@@ -58,7 +58,7 @@ shared_ptr <CListRecord>
 CListModeDataGESigna::
 get_empty_record_sptr() const
 {
-  shared_ptr<CListRecord> sptr(new CListRecordT(this->proj_data_info_sptr));
+  shared_ptr<CListRecord> sptr(new CListRecordT(this->get_proj_data_info_sptr()));
   return sptr;
 }
 
@@ -93,13 +93,14 @@ open_lm_file()
   //! \todo N.E: Probably can do without the HDF5Wrapper here.
   HDF5Wrapper inputFile(listmode_filename);
   CListModeData::scanner_sptr = inputFile.get_scanner_sptr();
-    this->proj_data_info_sptr.reset(ProjDataInfo::ProjDataInfoCTI(input_sptr->get_scanner_sptr(),
+  shared_ptr<ProjDataInfo> tmp(ProjDataInfo::ProjDataInfoCTI(input_sptr->get_scanner_sptr(),
                                                                   /*span=*/ 2,
                                                                   input_sptr->get_scanner_sptr()->get_num_rings()-1,
                                                                   input_sptr->get_scanner_sptr()->get_num_detectors_per_ring()/2,
                                                                   input_sptr->get_scanner_sptr()->get_max_num_non_arccorrected_bins(),
                                                                   /*arc_corrected =*/ false,
                                                                   /*tof_mash_factor = TODO*/ 13));
+  this->set_proj_data_info_sptr(tmp);
   //! \todo N.E: Remove hard-coded sizes;
   current_lm_data_ptr.
   reset(

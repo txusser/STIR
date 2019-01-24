@@ -35,9 +35,6 @@ public:
   virtual std::string
     get_name() const;
 
-  virtual shared_ptr<stir::ProjDataInfo>     
-    get_proj_data_info_sptr() const;
-
   virtual
     std::time_t get_scan_start_time_in_secs_since_1970() const;
 
@@ -66,7 +63,6 @@ private:
 
   typedef CListRecordGESigna CListRecordT;
   std::string listmode_filename;
-  shared_ptr<stir::ProjDataInfo> proj_data_info_sptr;
   shared_ptr<InputStreamWithRecordsFromHDF5<CListRecordT> > current_lm_data_ptr;
   float lm_start_time;
   float lm_duration;
