@@ -112,22 +112,22 @@ Array<1,unsigned char> buffer(total_size);
 m_input_hdf5_sptr->get_from_dataset(offset, count, stride, block, buffer);
 std::copy(buffer.begin(), buffer.end(), tof_data[view_num].begin_all());
 }
- ofstream write_tof_data;
- write_tof_data.open("uncompressed_sino_tof_data.txt",ios::out);
- for ( int i =tof_data.get_min_index(); i<=tof_data.get_max_index();i++)
-   {
-     for ( int j =tof_data[i].get_min_index(); j <=tof_data[i].get_max_index(); j++)
-        {
-         for(int k = tof_data[i][j].get_min_index(); k <=tof_data[i][j].get_max_index(); k++)
-         {
-             for(int l=tof_data[i][j][k].get_min_index(); l <=tof_data[i][j][k].get_max_index(); l++)
-             {
-             write_tof_data << tof_data[i][j][k][l] << "   " ;
-               }
-                      write_tof_data << std::endl;
-               }
-         }
- }
+ //ofstream write_tof_data;
+// write_tof_data.open("uncompressed_sino_tof_data.txt",ios::out);
+// for ( int i =tof_data.get_min_index(); i<=tof_data.get_max_index();i++)
+  // {
+    // for ( int j =tof_data[i].get_min_index(); j <=tof_data[i].get_max_index(); j++)
+      //  {
+        // for(int k = tof_data[i][j].get_min_index(); k <=tof_data[i][j].get_max_index(); k++)
+//         {
+  //           for(int l=tof_data[i][j][k].get_min_index(); l <=tof_data[i][j][k].get_max_index(); l++)
+    //         {
+      //       write_tof_data << tof_data[i][j][k][l] << "   " ;
+        //       }
+          //            write_tof_data << std::endl;
+            //   }
+//         }
+// }
 }
 
 void ProjDataFromHDF5::initialise_segment_sequence()
@@ -182,16 +182,16 @@ get_viewgram(const int view_num, const int segment_num,
 
 
 
-    ofstream write_ret_viewgram_data;
-    write_ret_viewgram_data.open("uncompressed_sino_ret_viewgram_data.txt",ios::out);
-    for ( int i =ret_viewgram.get_min_index(); i<=ret_viewgram.get_max_index();i++)
-      {
-        for ( int j =ret_viewgram[i].get_min_index(); j <=ret_viewgram[i].get_max_index(); j++)
-           {
-         write_ret_viewgram_data << ret_viewgram[i][j] << "   " ;
-           }
-                  write_ret_viewgram_data << std::endl;
-           }
+    //ofstream write_ret_viewgram_data;
+    //write_ret_viewgram_data.open("uncompressed_sino_ret_viewgram_data.txt",ios::out);
+    //for ( int i =ret_viewgram.get_min_index(); i<=ret_viewgram.get_max_index();i++)
+     // {
+      //  for ( int j =ret_viewgram[i].get_min_index(); j <=ret_viewgram[i].get_max_index(); j++)
+       //    {
+        // write_ret_viewgram_data << ret_viewgram[i][j] << "   " ;
+         //  }
+         //         write_ret_viewgram_data << std::endl;
+          // }
 
     return ret_viewgram;
 }
