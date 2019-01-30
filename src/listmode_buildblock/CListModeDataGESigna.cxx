@@ -93,13 +93,12 @@ open_lm_file()
   //! \todo N.E: Probably can do without the HDF5Wrapper here.
   HDF5Wrapper inputFile(listmode_filename);
   CListModeData::scanner_sptr = inputFile.get_scanner_sptr();
-  shared_ptr<ProjDataInfo> tmp(ProjDataInfo::ProjDataInfoCTI(input_sptr->get_scanner_sptr(),
-                                                                  /*span=*/ 2,
+  shared_ptr<ProjDataInfo> tmp(ProjDataInfo::ProjDataInfoGE(input_sptr->get_scanner_sptr(),
                                                                   input_sptr->get_scanner_sptr()->get_num_rings()-1,
                                                                   input_sptr->get_scanner_sptr()->get_num_detectors_per_ring()/2,
                                                                   input_sptr->get_scanner_sptr()->get_max_num_non_arccorrected_bins(),
                                                                   /*arc_corrected =*/ false,
-                                                                  /*tof_mash_factor = TODO*/ 13));
+                                                                  /*tof_mash_factor = TODO*/ 1));
   this->set_proj_data_info_sptr(tmp);
   //! \todo N.E: Remove hard-coded sizes;
   current_lm_data_ptr.
