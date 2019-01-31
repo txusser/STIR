@@ -53,7 +53,8 @@ inline void
 ProjMatrixByBin::
 get_proj_matrix_elems_for_one_bin(
                                   ProjMatrixElemsForOneBin& probabilities,
-                                  const Bin& bin) STIR_MUTABLE_CONST
+                                  const Bin& bin,
+        shared_ptr<ProjDataInfo> twoPointsProjDataInfo_sptr) STIR_MUTABLE_CONST
 {  
   // start_timers(); TODO, can't do this in a const member
   
@@ -83,7 +84,10 @@ get_proj_matrix_elems_for_one_bin(
                                  this->tof_enabled)
     {
         LORInAxialAndNoArcCorrSinogramCoordinates<float> lor;
-        proj_data_info_sptr->get_LOR(lor, bin);
+        if (twoPointsProjDataInfo_sptr == NULL)
+            this->proj_data_info_sptr->get_LOR(lor, bin);
+        else
+            twoPointsProjDataInfo_sptr->get_LOR(lor, bin);
         LORAs2Points<float> lor2(lor);
         probabilities.set_bin(bin);
         // now apply TOF kernel and transform to original bin
@@ -123,7 +127,10 @@ get_proj_matrix_elems_for_one_bin(
                                    this->tof_enabled)
       {
           LORInAxialAndNoArcCorrSinogramCoordinates<float> lor;
-          proj_data_info_sptr->get_LOR(lor, bin);
+          if (twoPointsProjDataInfo_sptr == NULL)
+              this->proj_data_info_sptr->get_LOR(lor, bin);
+          else
+              twoPointsProjDataInfo_sptr->get_LOR(lor, bin);
           LORAs2Points<float> lor2(lor);
           probabilities.set_bin(bin);
           // now apply TOF kernel and transform to original bin
@@ -182,12 +189,12 @@ ProjMatrixByBin::apply_tof_kernel_and_symm_transformation(ProjMatrixElemsForOneB
         high_dist = ((proj_data_info_sptr->tof_bin_boundaries_mm[probabilities.get_bin_ptr()->timing_pos_num()].high_lim - d2) * r_sqrt2_gauss_sigma);
 
 
-        if ((low_dist >= 4.f && high_dist >= 4.f) ||
-                (low_dist <= -4.f && high_dist <= -4.f))
-        {
-            *element_ptr = ProjMatrixElemsForOneBin::value_type(c, 0.0f);
-            continue;
-        }
+//        if ((low_dist >= 4.f && high_dist >= 4.f) ||
+//                (low_dist <= -4.f && high_dist <= -4.f))
+//        {
+//            *element_ptr = ProjMatrixElemsForOneBin::value_type(c, 0.0f);
+//            continue;
+//        }
 
         get_tof_value(low_dist, high_dist, new_value);
         new_value *= element_ptr->get_value();

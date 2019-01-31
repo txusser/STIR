@@ -464,6 +464,15 @@ compute_sub_gradient_without_penalty_plus_sensitivity(TargetT& gradient,
   Bin measured_bin;
   Bin fwd_bin;
 
+  shared_ptr<Scanner> tmpScanner(new Scanner(Scanner::PETMR_Signa));
+  shared_ptr<ProjDataInfo> tmp(ProjDataInfo::ProjDataInfoCTI(tmpScanner,
+                                                                  /*span=*/ 1,
+                                                                  tmpScanner->get_num_rings()-1,
+                                                                  tmpScanner->get_num_detectors_per_ring()/2,
+                                                                  tmpScanner->get_max_num_non_arccorrected_bins(),
+                                                                  /*arc_corrected =*/ false,
+                                                                  /*tof_mash_factor = TODO*/ 1));
+
   //go to the beginning of this frame
   //  list_mode_data_sptr->set_get_position(start_time);
   // TODO implement function that will do this for a random time
@@ -532,7 +541,8 @@ compute_sub_gradient_without_penalty_plus_sensitivity(TargetT& gradient,
         }
 
             this->PM_sptr->get_proj_matrix_elems_for_one_bin(proj_matrix_row,
-                                                                      measured_bin);
+                                                                      measured_bin,
+                                                             tmp);
 
         //in_the_range++;
         fwd_bin.set_bin_value(0.0f);

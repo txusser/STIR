@@ -69,22 +69,60 @@ class CListEventDataGESigna
   }
   inline void get_detection_position(DetectionPositionPair<>& det_pos) const
   {
-    if (deltaTime<0)
-    {
-      det_pos.pos1().tangential_coord() = 447-loXtalTransAxID;
-      det_pos.pos1().axial_coord() = loXtalAxialID;
-      det_pos.pos2().tangential_coord() = 447-hiXtalTransAxID;
-      det_pos.pos2().axial_coord() = hiXtalAxialID;
-      det_pos.timing_pos() = -get_tof_bin();
-    }
-    else
-    {
-      det_pos.pos1().tangential_coord() = 447-hiXtalTransAxID;
-      det_pos.pos1().axial_coord() = hiXtalAxialID;
-      det_pos.pos2().tangential_coord() = 447-loXtalTransAxID;
-      det_pos.pos2().axial_coord() = loXtalAxialID;
-      det_pos.timing_pos() = get_tof_bin();
-    }
+
+      //N.E and P.W. (31/01/2019): This is the most accurate sorting based on the
+      // document provided by GE. But we could not see any benefit
+      // from using it. So we will use the code below the commented,
+      // because is faster and gives the exact same images for our data.
+//      if (loXtalTransAxID > hiXtalTransAxID)
+//      {
+//          det_pos.pos1().tangential_coord() = 447-hiXtalTransAxID;
+//          det_pos.pos1().axial_coord() = hiXtalAxialID;
+
+//          det_pos.pos2().tangential_coord() = 447-loXtalTransAxID;
+//          det_pos.pos2().axial_coord() = loXtalAxialID;
+//          det_pos.timing_pos() = deltaTime;
+//      }
+//      else
+//      {
+//          det_pos.pos2().tangential_coord() = 447-hiXtalTransAxID;
+//          det_pos.pos2().axial_coord() = hiXtalAxialID;
+
+//          det_pos.pos1().tangential_coord() = 447-loXtalTransAxID;
+//          det_pos.pos1().axial_coord() = loXtalAxialID;
+//          det_pos.timing_pos() = -deltaTime;
+//      }
+
+//    if (det_pos.timing_pos() < 0)
+//    {
+//        int tmp = det_pos.pos2().tangential_coord();
+//        det_pos.pos2().tangential_coord() =  det_pos.pos1().tangential_coord() ;
+//        det_pos.pos1().tangential_coord() = tmp;
+
+//        tmp = det_pos.pos2().axial_coord();
+//        det_pos.pos2().axial_coord() =  det_pos.pos1().axial_coord() ;
+//        det_pos.pos1().axial_coord() = tmp;
+
+//        det_pos.timing_pos() *= -1;
+//    }
+
+      if (deltaTime<0)
+      {
+          det_pos.pos1().tangential_coord() = 447-loXtalTransAxID;
+          det_pos.pos1().axial_coord() = loXtalAxialID;
+          det_pos.pos2().tangential_coord() = 447-hiXtalTransAxID;
+          det_pos.pos2().axial_coord() = hiXtalAxialID;
+          det_pos.timing_pos() = -get_tof_bin();
+      }
+      else
+      {
+          det_pos.pos1().tangential_coord() = 447-hiXtalTransAxID;
+          det_pos.pos1().axial_coord() = hiXtalAxialID;
+          det_pos.pos2().tangential_coord() = 447-loXtalTransAxID;
+          det_pos.pos2().axial_coord() = loXtalAxialID;
+          det_pos.timing_pos() = get_tof_bin();
+      }
+
   }
   inline bool is_event() const
     {

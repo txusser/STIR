@@ -130,7 +130,8 @@ public:
   inline void 
     get_proj_matrix_elems_for_one_bin(
        ProjMatrixElemsForOneBin&,
-       const Bin&) STIR_MUTABLE_CONST;
+       const Bin&,
+          shared_ptr<ProjDataInfo> twoPointsProjDataInfo_sptr=NULL) STIR_MUTABLE_CONST;
 
 #if 0
   // TODO
