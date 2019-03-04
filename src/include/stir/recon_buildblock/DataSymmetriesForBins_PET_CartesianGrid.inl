@@ -96,6 +96,11 @@ find_transform_z(
   }
 }
 
+int DataSymmetriesForBins_PET_CartesianGrid::
+find_transform_tim(
+         const int timmin_pos_num) const
+{
+}
 SymmetryOperation*
 DataSymmetriesForBins_PET_CartesianGrid::
 find_sym_op_bin0(   					 
@@ -113,6 +118,12 @@ find_sym_op_bin0(
 	do_symmetry_shift_z ?
 	num_planes_per_axial_pos[segment_num]*axial_pos_num
 	: 0;
+
+  // TOF:0 does not need flipping, since we enforce an odd number of TOF bins.
+  // The basic bins are those with negative timming
+  const int tim_flip =
+          do_symmetry_flip_timing ? find_transform_tim(timing_pos_num) : 0;
+
   
   const int view180 = num_views;
 
@@ -123,6 +134,7 @@ find_sym_op_bin0(
 #ifndef NDEBUG
   // This variable is only used in assert() at the moment, so avoid compiler 
   // warning by defining it only when in debug mode
+  // Essential, a TOF symmetry is fliping the LOR elementr;
   const int view0   = 0;
 #endif
   const int view135 = view180/4*3;
@@ -131,21 +143,21 @@ find_sym_op_bin0(
 
   if (  do_symmetry_90degrees_min_phi && view_num > view90 && view_num <= view135) {  //(90, 135 ]
     if ( !do_symmetry_swap_segment || segment_num >= 0)	
-      return new SymmetryOperation_PET_CartesianGrid_swap_xmy_yx(view180, axial_pos_num, z_shift);          
+      return new SymmetryOperation_PET_CartesianGrid_swap_xmy_yx(view180, axial_pos_num, z_shift, tim_flip);
     else               
-      return new SymmetryOperation_PET_CartesianGrid_swap_xmy_yx_zq(view180, axial_pos_num, z_shift, transform_z);		   // seg < 0    				 			 
+      return new SymmetryOperation_PET_CartesianGrid_swap_xmy_yx_zq(view180, axial_pos_num, z_shift, transform_z, tim_flip);		   // seg < 0
   } 
   else if ( do_symmetry_90degrees_min_phi && view_num > view45 && view_num <= view90  ) { // [ 45,  90] 		 
     if ( !do_symmetry_swap_segment || segment_num >= 0)  
-      return new SymmetryOperation_PET_CartesianGrid_swap_xy_yx_zq(view180, axial_pos_num, z_shift, transform_z);  					 			  			 
+      return new SymmetryOperation_PET_CartesianGrid_swap_xy_yx_zq(view180, axial_pos_num, z_shift, transform_z, tim_flip);
     else
-      return new SymmetryOperation_PET_CartesianGrid_swap_xy_yx(view180, axial_pos_num, z_shift); // seg < 0   //KT????????????  different for view90, TODO				  
+      return new SymmetryOperation_PET_CartesianGrid_swap_xy_yx(view180, axial_pos_num, z_shift, tim_flip, tim_flip); // seg < 0   //KT????????????  different for view90, TODO
   }  
   else if( do_symmetry_180degrees_min_phi && view_num > view90/* && view_num <= view180 */){   // (135, 180) but (90,180) for reduced symmetry case
     if( !do_symmetry_swap_segment || segment_num >= 0)   
-      return new SymmetryOperation_PET_CartesianGrid_swap_xmx_zq(view180, axial_pos_num, z_shift, transform_z);  
+      return new SymmetryOperation_PET_CartesianGrid_swap_xmx_zq(view180, axial_pos_num, z_shift, transform_z, tim_flip);
     else 	            
-      return new SymmetryOperation_PET_CartesianGrid_swap_xmx(view180, axial_pos_num, z_shift);	  // seg < 0        				
+      return new SymmetryOperation_PET_CartesianGrid_swap_xmx(view180, axial_pos_num, z_shift, tim_flip);	  // seg < 0
   } 
   else 
   {

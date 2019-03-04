@@ -206,6 +206,9 @@ private:
   inline int find_transform_z(
 			 const int segment_num, 
 			 const int  axial_pos_num) const;
+
+  inline int find_transform_tim(
+          const int timing_pos_num) const;
   
   inline SymmetryOperation* 
     find_sym_op_general_bin(   
