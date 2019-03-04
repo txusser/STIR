@@ -101,7 +101,8 @@ DataSymmetriesForBins_PET_CartesianGrid::
 find_sym_op_bin0(   					 
                  int segment_num, 
                  int view_num, 
-                 int axial_pos_num) const
+                 int axial_pos_num,
+                 int timing_pos_num) const
 {
   // note: if do_symmetry_shift_z==true, then basic axial_pos_num will be 0
   const int transform_z = 
@@ -169,7 +170,8 @@ find_sym_op_general_bin(
                         int s, 
                         int segment_num, 
                         int view_num, 
-                        int axial_pos_num) const
+                        int axial_pos_num,
+                        int timing_pos_num) const
 { 
   // note: if do_symmetry_shift_z==true, then basic axial_pos_num will be 0
   const int transform_z = 
@@ -339,7 +341,7 @@ find_basic_view_segment_numbers(ViewSegmentNumbers& v_s) const
 
 bool  
 DataSymmetriesForBins_PET_CartesianGrid::
-find_basic_bin(int &segment_num, int &view_num, int &axial_pos_num, int &tangential_pos_num) const 
+find_basic_bin(int &segment_num, int &view_num, int &axial_pos_num, int &tangential_pos_num, int &timing_pos_num) const
 {
   ViewSegmentNumbers v_s(view_num, segment_num);
 
@@ -350,6 +352,7 @@ find_basic_bin(int &segment_num, int &view_num, int &axial_pos_num, int &tangent
 
   if ( do_symmetry_swap_s && tangential_pos_num < 0      )  { tangential_pos_num   = - tangential_pos_num ; change=true;};
   if ( do_symmetry_shift_z && axial_pos_num != 0    )  { axial_pos_num  =  0;     change = true; }   
+  if ( do_symmetry_flip_timing && timing_pos_num < 0) {timing_pos_num = -timing_pos_num; change = true;}
   
   return change;
 }
@@ -359,7 +362,7 @@ DataSymmetriesForBins_PET_CartesianGrid::
 find_basic_bin(Bin& b) const 
 {
   return 
-    find_basic_bin(b.segment_num(), b.view_num(), b.axial_pos_num(), b.tangential_pos_num());
+    find_basic_bin(b.segment_num(), b.view_num(), b.axial_pos_num(), b.tangential_pos_num(), b.timing_pos_num());
 }
 
 
@@ -371,8 +374,8 @@ DataSymmetriesForBins_PET_CartesianGrid::
   unique_ptr<SymmetryOperation> 
     sym_op(
       (b.tangential_pos_num()==0) ?
-        find_sym_op_bin0(b.segment_num(), b.view_num(), b.axial_pos_num()) :
-        find_sym_op_general_bin(b.tangential_pos_num(), b.segment_num(), b.view_num(), b.axial_pos_num())
+        find_sym_op_bin0(b.segment_num(), b.view_num(), b.axial_pos_num(), b.timing_pos_num()) :
+        find_sym_op_general_bin(b.tangential_pos_num(), b.segment_num(), b.view_num(), b.axial_pos_num(), b.timing_pos_num())
       ); 
   find_basic_bin(b);
   return sym_op;
