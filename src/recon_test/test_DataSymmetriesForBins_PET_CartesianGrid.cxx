@@ -425,7 +425,6 @@ run_tests_all_symmetries(const shared_ptr<ProjDataInfo>& proj_data_info_sptr,
 	"do_symmetry_swap_s := 1\n"
 	"do_symmetry_shift_z := 1\n"
     "do_symmetry_flip_timing := 1\n"
-    "do_symmetry_flip_timing := 0\n"
 	"End Ray Tracing Matrix Parameters :=\n";
       if (check(proj_matrix_with_sym.parse(str), 
 		 "parsing projection matrix parameters"))
