@@ -61,7 +61,7 @@ private:
 public:
   SymmetryOperation_PET_CartesianGrid_z_shift(const int axial_pos_shift, const int z_shift, const int k_shift)
     : axial_pos_shift(axial_pos_shift), z_shift(z_shift)
-  {}
+  {SymmetryOperation::k_shift = k_shift;}
 
   inline void 
     transform_bin_coordinates(Bin&) const;
@@ -90,7 +90,7 @@ private:
 public:
   SymmetryOperation_PET_CartesianGrid_swap_xmx_zq(const int num_views, const int axial_pos_shift, const int z_shift, const int q, const int k_shift)
     : view180(num_views), axial_pos_shift(axial_pos_shift), z_shift(z_shift), q(q)
-  {}
+  {SymmetryOperation::k_shift = k_shift;}
 
   inline void 
     transform_bin_coordinates(Bin&) const;
@@ -125,7 +125,7 @@ private:
 public:
   SymmetryOperation_PET_CartesianGrid_swap_xmy_yx_zq(const int num_views, const int axial_pos_shift, const int z_shift, const int q, const int k_shift)
     : view180(num_views), axial_pos_shift(axial_pos_shift), z_shift(z_shift), q(q)
-  {}
+  {SymmetryOperation::k_shift = k_shift;}
 
   inline void 
     transform_bin_coordinates(Bin&) const;
@@ -158,7 +158,7 @@ private:
 public:
   SymmetryOperation_PET_CartesianGrid_swap_xy_yx_zq(const int num_views, const int axial_pos_shift, const int z_shift, const int q, const int k_shift)
     : view180(num_views), axial_pos_shift(axial_pos_shift), z_shift(z_shift), q(q)
-  {}
+  {SymmetryOperation::k_shift = k_shift;}
 
   inline void 
     transform_bin_coordinates(Bin&) const;
@@ -190,7 +190,7 @@ private:
 public:
   SymmetryOperation_PET_CartesianGrid_swap_xmy_yx(const int num_views, const int axial_pos_shift, const int z_shift, const int k_shift)
     : view180(num_views), axial_pos_shift(axial_pos_shift), z_shift(z_shift)
-  {}
+  {SymmetryOperation::k_shift = k_shift;}
 
   inline void 
     transform_bin_coordinates(Bin&) const;
@@ -222,7 +222,7 @@ private:
 public:
   SymmetryOperation_PET_CartesianGrid_swap_xy_yx(const int num_views, const int axial_pos_shift, const int z_shift, const int k_shift)
     : view180(num_views), axial_pos_shift(axial_pos_shift), z_shift(z_shift)
-  {}
+  {SymmetryOperation::k_shift = k_shift;}
 
   inline void 
     transform_bin_coordinates(Bin&) const;
