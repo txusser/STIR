@@ -34,7 +34,6 @@ set(${dir_LIB_SOURCES}
   InterfileDynamicDiscretisedDensityOutputFileFormat 
   InterfileParametricDiscretisedDensityOutputFileFormat
   MultiDynamicDiscretisedDensityOutputFileFormat
-
   GIPL_ImageFormat
 ) 
 
@@ -66,6 +65,12 @@ if (CERN_ROOT_FOUND)
  )
 endif()
 
+if (SIMSET_FOUND)
+	list(APPEND ${dir_LIB_SOURCES}
+		InputStreamFromSimSET
+	)
+endif()
+
 if(AVW_FOUND)
   list(APPEND ${dir_LIB_SOURCES}
     stir_AVW
@@ -89,6 +94,11 @@ endif()
 if (ITK_FOUND) 
   target_link_libraries(IO ITKCommon ${ITK_LIBRARIES})
 endif()
+
+if (SIMSET_FOUND)
+  target_link_libraries(IO ${SIMSET_LIBRARIES})
+endif()
+
 
 # currently needed for ParametricDensity (TODO get rid of this somehow?)
 target_link_libraries(IO modelling_buildblock )

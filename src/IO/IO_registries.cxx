@@ -70,6 +70,11 @@
 #include "stir/IO/InputStreamFromROOTFileForECATPET.h"
 #endif
 
+#ifdef HAVE_SIMSET
+#include "stir/IO/SimSETListmodeInputFileFormat.h"
+#include "stir/IO/InputStreamFromSimSET.h"
+#endif
+
 #ifdef HAVE_ITK
 #include "stir/IO/ITKOutputFileFormat.h"
 #include "stir/IO/ITKImageInputFileFormat.h"
@@ -97,6 +102,15 @@ static RegisterInputFileFormat<SAFIRCListmodeInputFileFormat> LMdummySAFIR(4);
 static RegisterInputFileFormat<ROOTListmodeInputFileFormat> LMdummyROOT(6);
 static InputStreamFromROOTFileForCylindricalPET::RegisterIt dummy60606;
 static InputStreamFromROOTFileForECATPET::RegisterIt dummy606062;
+#endif
+
+//!
+//! \brief LMdummySimSET
+//! \author Nikos Efthimiou
+//! \details SimSET support
+#ifdef HAVE_SIMSET
+static RegisterInputFileFormat<SimSETListmodeInputFileFormat> LMdummySimSET(7);
+//static InputStreamFromSimSET::RegisterIt dummy70707;
 #endif
 
 #ifdef HAVE_LLN_MATRIX
