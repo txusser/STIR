@@ -14,8 +14,12 @@
   find_path(SIMSET_INCLUDE_DIRS NAME SystemDependent.h PATHS ${SIMSET_ROOT_DIR}
         DOC "location of SIMSET include files")
   
-  find_library(SIMSET_LIBRARIES NAME simset HINTS ${SIMSET_ROOT_DIR}
+  find_library(SIMSET_LIBRARIES NAME Simset HINTS ${SIMSET_ROOT_DIR}
         DOC "location of SIMSET library")
+        
+if (SIMSET_LIBRARIES)
+  message(STATUS "AVAILABLE SIMSET LIBRARIES: " ${SIMSET_LIBRARIES})
+endif()
 
 # handle the QUIETLY and REQUIRED arguments and set LLN_FOUND to TRUE if 
 # all listed variables are TRUE
