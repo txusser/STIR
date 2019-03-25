@@ -28,18 +28,18 @@
 
 START_NAMESPACE_STIR
 
-//unsigned long int
-//InputStreamFromSimSET::
-//get_total_number_of_events() const
-//{
-////    return nentries;
-//}
+unsigned long int
+InputStreamFromSimSET::
+get_total_number_of_events() const
+{
+    return static_cast<unsigned long int>(numPhotons);
+}
 
 Succeeded
 InputStreamFromSimSET::
 reset()
 {
-//    current_position = starting_stream_position;
+    curFileIndex = startFileIndex;
     return Succeeded::yes;
 }
 
@@ -47,31 +47,31 @@ InputStreamFromSimSET::SavedPosition
 InputStreamFromSimSET::
 save_get_position()
 {
-//    assert(current_position <= nentries);
-//    saved_get_positions.push_back(current_position);
-//    return saved_get_positions.size()-1;
+    assert(curFileIndex <= numPhotons);
+    saved_get_positions.push_back(curFileIndex);
+    return saved_get_positions.size()-1;
 }
 
 Succeeded
 InputStreamFromSimSET::
 set_get_position(const InputStreamFromSimSET::SavedPosition& pos)
 {
-
+    curFileIndex = pos;
     return Succeeded::yes;
 }
 
-std::vector<std::streampos>
+std::vector<LbUsFourByte>
 InputStreamFromSimSET::
 get_saved_get_positions() const
 {
-//    return saved_get_positions;
+    return saved_get_positions;
 }
 
 void
 InputStreamFromSimSET::
-set_saved_get_positions(const std::vector<std::streampos> &poss)
+set_saved_get_positions(const std::vector<LbUsFourByte> &poss)
 {
-//    saved_get_positions = poss;
+    saved_get_positions = poss;
 }
 
 Succeeded

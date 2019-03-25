@@ -14,15 +14,15 @@
   find_path(SIMSET_INCLUDE_DIRS NAME SystemDependent.h PATHS ${SIMSET_ROOT_DIR}
         DOC "location of SIMSET include files")
   
-  find_library(SIMSET_LIBRARIES NAME Simset HINTS ${SIMSET_ROOT_DIR}
+  find_library(SIMSET_LIBRARY NAME simset HINTS ${SIMSET_ROOT_DIR}
         DOC "location of SIMSET library")
         
-if (SIMSET_LIBRARIES)
-  message(STATUS "AVAILABLE SIMSET LIBRARIES: " ${SIMSET_LIBRARIES})
+if (SIMSET_LIBRARY)
+  message(STATUS "AVAILABLE SIMSET LIBRARY: " ${SIMSET_LIBRARY})
 endif()
 
 # handle the QUIETLY and REQUIRED arguments and set LLN_FOUND to TRUE if 
 # all listed variables are TRUE
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(SIMSET "SIMSET matrix library not found. If you do have it, set the missing variables" SIMSET_LIBRARIES SIMSET_INCLUDE_DIRS)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(SIMSET "SIMSET matrix library not found. If you do have it, set the missing variables" SIMSET_LIBRARY SIMSET_INCLUDE_DIRS)
 

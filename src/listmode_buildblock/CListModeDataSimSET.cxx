@@ -1,7 +1,5 @@
 /*
-    Copyright (C) 2015, 2016 University of Leeds
-    Copyright (C) 2016, 2017 University College London
-    Copyright (C) 2018 University of Hull
+    Copyright (C) 2019 University of Hull
     This file is part of STIR.
 
     This file is free software; you can redistribute it and/or modify
@@ -19,11 +17,9 @@
 /*!
   \file
   \ingroup listmode
-  \brief Implementation of class stir::CListModeDataROOT
+  \brief Implementation of class stir::CListModeDataSimSET
 
   \author Nikos Efthimiou
-  \author Harry Tsoumpas
-  \author Kris Thielemans
 */
 
 #include "stir/listmode/CListModeDataSimSET.h"
@@ -35,133 +31,149 @@
 #include "stir/error.h"
 #include <boost/format.hpp>
 
+extern "C" {
+#include <LbEnvironment.h>
+#include <LbInterface.h>
+}
+
+#define	PHGRDHST_NumFlags	3
+/* LOCAL CONSTANTS */
+#define PHGRDHST_IsUsePHGHistory()		LbFgIsSet(PhgOptions, LBFlag0)		/* Will we use the PHG history file */
+#define PHGRDHST_IsUseColHistory()		LbFgIsSet(PhgOptions, LBFlag1)		/* Will we use the Collimator history file */
+#define PHGRDHST_IsUseDetHistory()		LbFgIsSet(PhgOptions, LBFlag2)		/* Will we use the Detector history file */
+
 START_NAMESPACE_STIR
 
+//! N.E: Large parts adapted from phgbin and functions called by it;
 CListModeDataSimSET::
-CListModeDataSimSET(const std::string& hroot_filename)
-    : hroot_filename(hroot_filename)
+CListModeDataSimSET(const std::string& _phg_filename)
+    : phg_filename(_phg_filename)
 {
     set_defaults();
-    std::string error_str;
 
-//    this->parser.add_start_key("ROOT header");
-//    this->parser.add_stop_key("End ROOT header");
+    char *knownOptions[] = {"pcd"};
+    char optArgs[PHGRDHST_NumFlags][LBEnMxArgLen];
+    LbUsFourByte optArgFlags = (LBFlag0);
+    LbUsFourByte phgrdhstArgIndex;
 
-//    // Scanner related & Physical dimensions.
-//    this->parser.add_key("originating system", &this->originating_system);
+    double SubObjCurTimeBinDuration = 0.0;
 
-//    this->parser.add_key("Number of rings", &this->num_rings);
-//    this->parser.add_key("Number of detectors per ring", &this->num_detectors_per_ring);
-//    this->parser.add_key("Inner ring diameter (cm)", &this->inner_ring_diameter);
-//    this->parser.add_key("Average depth of interaction (cm)", &this->average_depth_of_interaction);
-//    this->parser.add_key("Distance between rings (cm)", &this->ring_spacing);
-//    this->parser.add_key("Default bin size (cm)", &this->bin_size);
-//    this->parser.add_key("Maximum number of non-arc-corrected bins", &this->max_num_non_arccorrected_bins);
-//    // end Scanner and physical dimensions.
+    std::string argv_str = phg_filename;
+    // Prepend the -p for SimSET to know the type of file.
+    argv_str.insert(0, "-p ");
+    char *argv = new char[argv_str.length() + 1];
+    strcpy(argv, argv_str.c_str());
 
-//    // ROOT related
-//    this->parser.add_parsing_key("GATE scanner type", &this->root_file_sptr);
-//    if(!this->parser.parse(hroot_filename.c_str()))
-//        error("CListModeDataROOT: error parsing '%s'", hroot_filename.c_str());
+    /* Perform initialization tasks */
+    {
+        /* Get our options */
+        if (!LbEnGetOptions(2, &argv, knownOptions,
+                            &PhgOptions, optArgs, optArgFlags, &phgrdhstArgIndex))
+        {
+            error("CListModeDataSimSET: Unable to get options.");
+        }
 
-//    FilePath f(hroot_filename);
-//    if (root_file_sptr->set_up( f.get_path_only()) == Succeeded::no)
-//        error("CListModeDataROOT: Unable to set_up() from the input Header file (.hroot).");
+        /* Make sure the didn't specify more than one history file */
+        if (PHGRDHST_IsUsePHGHistory() && (PHGRDHST_IsUseColHistory() || PHGRDHST_IsUseDetHistory()))
+        {
+            error("CListModeDataSimSET: You can only specify one type of history file.");
+        }
 
-//    // ExamInfo initialisation
-//    this->exam_info_sptr.reset(new ExamInfo);
+        /* Make sure they specified a history file */
+        // N.E.: This should never be the case
+        if (!PHGRDHST_IsUsePHGHistory() && !PHGRDHST_IsUseColHistory() && !PHGRDHST_IsUseDetHistory())
+        {
+            error("CListModeDataSimSET: You must specify the use of a PHG history file (-p)\n"
+                  " or a collimator history file (-c)\n"
+                  " or a detector history file (-d)\n");
+        }
 
-//    // Only PET scanners supported
-//    this->exam_info_sptr->imaging_modality = ImagingModality::PT;
-//    this->exam_info_sptr->originating_system = this->originating_system;
-//    this->exam_info_sptr->set_low_energy_thres(this->root_file_sptr->get_low_energy_thres());
-//    this->exam_info_sptr->set_high_energy_thres(this->root_file_sptr->get_up_energy_thres());
+        /* Get our run-time parameters */
+        if (!PhgGetRunTimeParams())
+            error("CListModeDataSimSET: Error geting our run-time parameters.");
 
-//    shared_ptr<Scanner> this_scanner_sptr;
+        /* Clear the file name parameters */
+        phgrdhstHistParamsName[0] = '\0';
+        phgrdhstHistName[0] = '\0';
 
-//    // If the user set Scanner::User_defined_scanner then the local geometry valiables must be set.
-//    bool give_it_a_try = false;
-//    if (this->originating_system != "User_defined_scanner") //
-//    {
-//        this_scanner_sptr.reset(Scanner::get_scanner_from_name(this->originating_system));
-//        if (this_scanner_sptr->get_type() == Scanner::Unknown_scanner)
-//        {
-//            warning(boost::format("CListModeDataROOT: Unknown value for originating_system keyword: '%s.\n WIll try to "
-//                                  "figure out the scanner's geometry from the parameters") % originating_system );
-//            give_it_a_try = true;
-//        }
-//        else
-//            warning("CListModeDataROOT: I've set the scanner from STIR settings and ignored values in the hroot header.");
-//    }
-//    // If the user provide a Scanner name then, the local variables will be ignored and the Scanner
-//    // will be the selected.
-//    else if (this->originating_system == "User_defined_scanner" ||
-//             give_it_a_try)
-//    {
-//        warning("CListModeDataROOT: Trying to figure out the scanner geometry from the information "
-//             "given in the ROOT header file.");
+        strcpy(phgrdhstHistName, PhgRunTimeParams.PhgPhoHFileHistoryFilePath);
+        strcpy(phgrdhstHistParamsName, PhgRunTimeParams.PhgPhoHParamsFilePath);
 
-//        if (check_scanner_definition(error_str) == Succeeded::no)
-//        {
-//            error(error_str.c_str());
-//        }
+        phgrdhstHistName_str.push_back(*phgrdhstHistName);
+        phgrdhstHistParamsName_str.push_back(*phgrdhstHistParamsName);
 
-//        this_scanner_sptr.reset(new Scanner(Scanner::User_defined_scanner,
-//                                             std::string ("ROOT_defined_scanner"),
-//                                             /* num dets per ring */
-//                                             this->num_detectors_per_ring,
-//                                             /* num of rings */
-//                                             this->num_rings,
-//                                             /* number of non arccor bins */
-//                                             this->max_num_non_arccorrected_bins,
-//                                             /* number of maximum arccor bins */
-//                                             this->max_num_non_arccorrected_bins,
-//                                             /* inner ring radius */
-//                                             this->inner_ring_diameter/0.2f,
-//                                             /* doi */ this->average_depth_of_interaction * 10.f,
-//                                             /* ring spacing */
-//                                             this->ring_spacing * 10.f,
-//                                             this->bin_size * 10.f,
-//                                             /* offset*/ 0,
-//                                             /*num_axial_blocks_per_bucket_v */
-//                                             this->root_file_sptr->get_num_axial_blocks_per_bucket_v(),
-//                                             /*num_transaxial_blocks_per_bucket_v*/
-//                                             this->root_file_sptr->get_num_transaxial_blocks_per_bucket_v(),
-//                                             /*num_axial_crystals_per_block_v*/
-//                                             this->root_file_sptr->get_num_axial_crystals_per_block_v(),
-//                                             /*num_transaxial_crystals_per_block_v*/
-//                                             this->root_file_sptr->get_num_transaxial_crystals_per_block_v(),
-//                                             /*num_axial_crystals_per_singles_unit_v*/
-//                                             this->root_file_sptr->get_num_axial_crystals_per_singles_unit(),
-//                                             /*num_transaxial_crystals_per_singles_unit_v*/
-//                                             this->root_file_sptr->get_num_trans_crystals_per_singles_unit(),
-//                                             /*num_detector_layers_v*/ 1 ));
-//    }
+        /* Initialize the math library - NE: skipped*/
+        /* Initialize the emission list manager - NE: skipped*/
+        /* Initialize the sub-object manager - NE: partial*/
 
-//    // Compare with InputStreamFromROOTFile scanner generated geometry and throw error if wrong.
-//    if (check_scanner_match_geometry(error_str, this_scanner_sptr) == Succeeded::no)
-//    {
-//        error(error_str.c_str());
-//    }
+        /* Set the length of the current time bin */
+        SubObjCurTimeBinDuration = static_cast<double>(PhgRunTimeParams.Phg_LengthOfScan);
 
-//    shared_ptr<ProjDataInfo> tmp( ProjDataInfo::construct_proj_data_info(this_scanner_sptr,
-//                                                                         1,
-//                                                                         this_scanner_sptr->get_num_rings()-1,
-//                                                                         this_scanner_sptr->get_num_detectors_per_ring()/2,
-//                                                                         this_scanner_sptr->get_max_num_non_arccorrected_bins(),
-//                                                                         /* arc_correction*/false));
-//    this->set_proj_data_info_sptr(tmp);
+        /* Initialize the productivity table manager - NE: skipped*/
+        /* Initialize the Cylinder Positions */
+        {
+            /* Set object cylinder */
+            if (!CylPosInitObjectCylinder())
+            {
+                error("CListModeDataSimSET: Error initialize the Cylinder Positions.");
+            }
 
-//    if (this->open_lm_file() == Succeeded::no)
-//        error("CListModeDataSimSET: error opening ROOT file for filename '%s'",
-//              hroot_filename.c_str());
+            /* Set the criticial zone */
+            if (!CylPosInitCriticalZone(PhgRunTimeParams.Phg_AcceptanceAngle))
+            {
+                error("CListModeDataSimSET: Error setting the criticial zone.");
+            }
+
+            /* Set the limit cylinder */
+            CylPosInitLimitCylinder();
+        }
+
+        /* Setup up the productivity information - NE: Reluctantly skipped */
+        /* Initialize the photon tracking module - NE: skipped */
+        // In the following part several nonPET and simulation parts, are skipped.
+        /* We support only PET files so this should leed to an error always. */
+        ColCurParams = 0;
+        if (PHG_IsCollimateOnTheFly())
+        {
+            error("CListModeDataSimSET: This history files has collimator information. \n"
+                  "Currently we support only PET simulations.");
+        }
+
+        /* Initialize the detection module if necessary */
+        if (PHG_IsDetectOnTheFly())
+        {
+            if (!DetInitialize(PHGRDHST_IsUsePHGHistory()))
+                error("CListModeDataSimSET: Unable to initialize the detection module.");
+        }
+    }
+
+    // Get Binning parameter file.
+    //    char *binParams_cstr = phgrdhstHdrParams->H.PhgRunTimeParams.PhgBinParamsFilePath[PhgNumBinParams];
+
+    // Try to guess scanner
+
+    // initialise ExamData.
+
+    // initialise ProjData.
+
+
+    int nikos = 0;
+
+
+    int crap = 0;
+
+    // if the ProjData have been initialised properly create a
+    // Input Stream from SimSET.
+    history_file_sptr.reset(new InputStreamFromSimSET());
+    history_file_sptr->set_up(phgrdhstHistParamsName_str);
+    delete [] argv;
 }
 
 std::string
 CListModeDataSimSET::
 get_name() const
 {
-    return hroot_filename;
+    return phg_filename;
 }
 
 shared_ptr <CListRecord>
@@ -195,7 +207,7 @@ Succeeded
 CListModeDataSimSET::
 reset()
 {
-    return root_file_sptr->reset();
+    return history_file_sptr->reset();
 }
 
 unsigned long CListModeDataSimSET::get_total_number_of_events() const
@@ -207,27 +219,21 @@ CListModeData::SavedPosition
 CListModeDataSimSET::
 save_get_position()
 {
-    return static_cast<SavedPosition>(root_file_sptr->save_get_position());
+    return static_cast<SavedPosition>(history_file_sptr->save_get_position());
 }
 
 Succeeded
 CListModeDataSimSET::
 set_get_position(const CListModeDataSimSET::SavedPosition& pos)
 {
-    return root_file_sptr->set_get_position(pos);
+    return history_file_sptr->set_get_position(pos);
 }
 
 void
 CListModeDataSimSET::
 set_defaults()
 {
-    num_rings = -1;
-    num_detectors_per_ring = -1;
-    max_num_non_arccorrected_bins = -1;
-    inner_ring_diameter = -1.f;
-    average_depth_of_interaction = -1.f;
-    ring_spacing = -.1f;
-    bin_size = -1.f;
+
 }
 
 Succeeded

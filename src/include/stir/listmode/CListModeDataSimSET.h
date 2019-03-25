@@ -1,5 +1,18 @@
 /*
- 
+    Copyright (C) 2019 University of Hull
+    This file is part of STIR.
+
+    This file is free software; you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation; either version 2.1 of the License, or
+    (at your option) any later version.
+
+    This file is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    See STIR/LICENSE.txt for details
 */
 /*!
   \file
@@ -7,8 +20,6 @@
   \brief Declaration of class stir::CListModeDataSimSET
 
   \author Nikos Efthimiou
-  \author Harry Tsoumpas
-  \author Kris Thielemans
 */
 
 #ifndef __stir_listmode_CListModeDataSimSET_H__
@@ -19,6 +30,39 @@
 #include "stir/IO/InputStreamFromSimSET.h"
 #include "stir/KeyParser.h"
 
+extern "C" {
+//#include "SystemDependent.h"
+
+//#include "LbTypes.h"
+//#include "LbError.h"
+//#include "LbDebug.h"
+//#include "LbEnvironment.h"
+//#include "LbFile.h"
+//#include "LbMemory.h"
+//#include "LbParamFile.h"
+//#include "LbInterface.h"
+//#include "LbHeader.h"
+
+//#include "Photon.h"
+//#include "PhgParams.h"
+//#include "ColTypes.h"
+//#include "ColParams.h"
+//#include "DetTypes.h"
+//#include "DetParams.h"
+//#include "CylPos.h"
+//#include "PhgMath.h"
+//#include "PhoHFile.h"
+//#include "PhgHdr.h"
+//#include "ProdTbl.h"
+//#include "PhoTrk.h"
+//#include "SubObj.h"
+//#include "EmisList.h"
+//#include "Collimator.h"
+//#include "Detector.h"
+//#include "phg.h"
+//#include "PhgBin.h"
+}
+
 START_NAMESPACE_STIR
 
 
@@ -26,7 +70,7 @@ class CListModeDataSimSET : public CListModeData
 {
 public:
     //! construct from the filename of the Interfile header
-    CListModeDataSimSET(const std::string& hroot_filename_prefix);
+    CListModeDataSimSET(const std::string& _history_filename);
 
     //! returns the header filename
     virtual std::string
@@ -57,40 +101,23 @@ public:
     get_total_number_of_events() const ;
 
 private:
-    //! Check if the hroot contains a full scanner description
+    //! Check if the hroot contains a full scanner description.
     Succeeded check_scanner_definition(std::string& ret);
-    //! Check if the scanner_sptr matches the geometry in root_file_sptr
+    //! Check if the scanner_sptr matches the geometry in root_file_sptr.
     Succeeded check_scanner_match_geometry(std::string& ret, const shared_ptr<Scanner>& scanner_sptr);
 
-    //! The header file
-    std::string hroot_filename;
-
     //! Pointer to the listmode data
-    shared_ptr<InputStreamFromSimSET > root_file_sptr;
-
-//! \name Variables that can be set in the hroot file to define a scanner's geometry.
-//! They are compared to the Scanner  (if set)  and the InputStreamFromROOTFile
-//! geometry, as given by the repeaters. Can be used to check for inconsistencies.
-//@{
-    //! The name of the originating scanner
-    std::string originating_system;
-    //! Number of rings, set in the hroot file (optional)
-    int num_rings;
-    //! Number of detectors per ring, set in the hroot file (optional)
-    int num_detectors_per_ring;
-    //! Number of non arc corrected bins, set in the hroot file (optional)
-    int max_num_non_arccorrected_bins;
-    //! Inner ring diameter, set in the hroot file (optional)
-    float inner_ring_diameter;
-    //! Average depth of interaction, set in the hroot file (optional)
-    float average_depth_of_interaction;
-    //! Ring spacing, set in the hroot file (optional)
-    float ring_spacing;
-    //! Bin size, set in the hroot file (optional)
-    float bin_size;
-//@}
-
-    KeyParser parser;
+    shared_ptr<InputStreamFromSimSET > history_file_sptr;
+    //! Name of the PHG file.
+    const std::string phg_filename;
+    //! Name of history file as string.
+    std::string phgrdhstHistName_str;
+    //! Name of history file as char.
+    char phgrdhstHistName[1024];
+    //! Name of history parameters file as string.
+    std::string phgrdhstHistParamsName_str;
+    //! Name of history parameters file.
+    char phgrdhstHistParamsName[1024];
 
     Succeeded open_lm_file();
 };

@@ -96,7 +96,7 @@ if (ITK_FOUND)
 endif()
 
 if (SIMSET_FOUND)
-  target_link_libraries(IO ${SIMSET_LIBRARIES})
+  target_link_libraries(IO ${SIMSET_LIBRARY})
 endif()
 
 
