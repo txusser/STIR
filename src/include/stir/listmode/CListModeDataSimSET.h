@@ -84,6 +84,8 @@ public:
     virtual
     Succeeded get_next_record(CListRecord& record) const;
 
+    virtual ~CListModeDataSimSET();
+
     virtual
     Succeeded reset();
 
@@ -113,11 +115,13 @@ private:
     //! Name of history file as string.
     std::string phgrdhstHistName_str;
     //! Name of history file as char.
-    char phgrdhstHistName[1024];
+    char *phgrdhstHistName;
     //! Name of history parameters file as string.
     std::string phgrdhstHistParamsName_str;
     //! Name of history parameters file.
-    char phgrdhstHistParamsName[1024];
+    char *phgrdhstHistParamsName;
+    //! The name of the originating scanner
+    std::string originating_system;
 
     Succeeded open_lm_file();
 };

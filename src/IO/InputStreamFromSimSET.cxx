@@ -1,6 +1,5 @@
 /*
-    Copyright (C) 2016, UCL
-    Copyright (C) 2018, University of Hull
+    Copyright (C) 2019, University of Hull
     This file is part of STIR.
 
     This file is free software; you can redistribute it and/or modify
@@ -22,6 +21,9 @@
 
 extern "C" {
 #include <print.header.h>
+#include <LbFile.h>
+#include <PhgHdr.h>
+#include <PhoHFile.h>
 }
 
 
@@ -83,28 +85,77 @@ set_up(const std::string & _history_params_filename)
 Succeeded
 InputStreamFromSimSET::set_up_standard_hist_file()
 {
-    LbUsFourByte		numBluePhotons;				/* Number of blue photons for this decay */
-    LbUsFourByte		numPinkPhotons;				/* Number of pink photons for this decay */
-
-    LbUsFourByte		numPhotonsProcessed;		/* Number of photons processed */
-    LbUsFourByte		numDecaysProcessed;			/* Number of decays processed */
     PHG_Decay		   	decay;						/* The decay */
-    PHG_Decay		   	nextDecay;					/* The decay */
     PHG_DetectedPhoton	detectedPhoton;				/* The detected photon */
-    PHG_TrackingPhoton	trackingPhoton;				/* The tracking photon */
-    PHG_TrackingPhoton	*bluePhotons = 0;			/* Blue photons for current decay */
-    PHG_TrackingPhoton	*pinkPhotons = 0;			/* Pink photon for current decay*/
-    double 				angle_norm;					/* for normalizing photon direction */
-    Boolean				isOldPhotons1;				/* is this a very old history file--must be
-                                                     read using oldReadEvent */
-    Boolean				isOldPhotons2;				/* is this a moderately old history file--must be
-                                                     read using oldReadEvent */
-    Boolean				isOldDecays;				/* is this an old history file--must be
-                                                     read using oldReadEvent */
-    Boolean				isPHGList;					/* this is PHG history file */
-    Boolean				isColList;					/* this is collimator history file */
-    Boolean				isDetList;					/* this is detector history file */
 
+    Boolean	isPHGList; /* this is PHG history file */
+    Boolean	isColList; /* this is collimator history file */
+    Boolean	isDetList; /* this is detector history file */
+
+
+    char *history_cstr = new char[history_filename.length() + 1];
+    strcpy(history_cstr, history_filename.c_str());
+
+    /* Open history file file */
+    if ((historyFile = LbFlFileOpen(history_cstr, "rb")) == nullptr)
+    {
+        delete [] history_cstr;
+        return Succeeded::no;
+    }
+
+    /* Read in the header and verify it is the right type of file */
+    if (PhgHdrGtParams(historyFile, phgrdhstHdrParams.get(), headerHk.get()) == false)
+    {
+        delete [] history_cstr;
+        return Succeeded::no;
+    }
+
+    /* Verify old collimator/detector list mode files are not being used for SPECT/DHCI:
+     photons had insufficient information for further processing--no detector angle was saved - NE: skipped */
+
+    /* Set flags for type of list mode file being processed */
+    if ( 	(phgrdhstHdrParams->H.HdrKind == PhoHFileEn_PHG) ||
+            (phgrdhstHdrParams->H.HdrKind == PhoHFileEn_PHG2625) ||
+            (phgrdhstHdrParams->H.HdrKind == PhoHFileEn_PHGOLD) )
+    {
+
+        isPHGList = true;
+        isColList = false;
+        isDetList = false;
+    }
+    else
+    {
+        error("InputStreamFromSimSET: File specified as PHG history file is not valid.");
+    }
+
+    PhoHFileEventType eventType = PhoHFileReadEvent(historyFile, &decay, &detectedPhoton);
+    EventTy	locEventType;
+
+    /* Convert to the local event type */
+    switch ( eventType ) {
+        case PhoHFileNullEvent:
+            locEventType = Null;
+            break;
+
+        case PhoHFileDecayEvent:
+            locEventType = Decay;
+            break;
+
+        case PhoHFilePhotonEvent:
+            locEventType = Photon;
+            break;
+
+        default:
+            locEventType = Null;
+            break;
+    }
+
+    if (locEventType != Decay)
+    {
+        error("InputStreamFromSimSET: Expected first event to be decay, and it wasn't.");
+    }
+
+    delete [] history_cstr;
     return Succeeded::yes;
 }
 

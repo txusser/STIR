@@ -22,6 +22,7 @@
 #include "stir/listmode/CListModeDataSimSET.h"
 #include "stir/error.h"
 #include <iostream>
+#include <unistd.h>
 
 extern "C" {
 #include <LbEnvironment.h>
@@ -95,43 +96,84 @@ protected:
         return this->is_SimSET_signature(input);
     }
 
+    //! This is a very dirty function. We have to replicate argv in
+    //! a linux terminal fashion, as that is the acceptabel input to SimSET
+    //! function LbEnGetOptions. I could rewrite that, but the effort might
+    //! be too much.
     bool is_SimSET_signature(std::istream& signature) const
     {
-        std::string argv_str;
-        std::getline(signature, argv_str);
-        char fileName[1024];
+//        std::string argv_str;
+//        std::getline(signature, argv_str);
+//        char fileName[1024];
 
-        // Remove everything prior to := from the line.
-        argv_str = argv_str.substr(argv_str.find("=") + 1);
-        strcpy(fileName, argv_str.c_str());
+//        // Remove everything prior to := from the line.
+//        argv_str = argv_str.substr(argv_str.find("=") + 1);
+//        strcpy(fileName, argv_str.c_str());
 
-        // Prepend the -p for SimSET to know the type of file.
-        argv_str.insert(0, "-p ");
+//        char** argv = new char*[3];
+//        argv[0] = nullptr;
+//        argv[1] = nullptr;
+//        argv[2] = nullptr;
 
-        char *argv = new char[argv_str.length() + 1];
-        strcpy(argv, argv_str.c_str());
 
-        char *knownOptions[] = {"pcd"};
-        char optArgs[PHGRDHST_NumFlags][LBEnMxArgLen];
-        LbUsFourByte optArgFlags = (LBFlag0);
-        LbUsFourByte phgrdhstArgIndex;
+//        char* pseudo_binary = new char[7];
+//        memset(pseudo_binary, 0, 7);
+//        strcpy(pseudo_binary, "phgbin\0");
+//        argv[0] = pseudo_binary;
 
-        /* Get our options */
-        if (!LbEnGetOptions(2, &argv, knownOptions,
-                            &PhgOptions, optArgs, optArgFlags, &phgrdhstArgIndex)) {
+//        char* flag = new char[4];
+//        memset(flag, 0, 4);
+//        strcpy(flag, "-p");
+//        flag[3] = '\0';
+//        argv[1] = flag;
 
-            delete [] argv;
-            return false;
-        }
+//        char *argv_c = new char[argv_str.size() + 1];
+//        memset(argv_c, 0, argv_str.size()+1);
+//        argv_str.copy(argv_c, argv_str.size());
+//        argv_c[argv_str.size()] = '\0';
+//        argv[2] = argv_c;
 
-        /* Make sure the didn't specify more than one history file */
-        if (PHGRDHST_IsUsePHGHistory() && (PHGRDHST_IsUseColHistory() || PHGRDHST_IsUseDetHistory()))
-        {
-            warning("SimSETListmodeInputFileFormat: You can only specify one type of history file.");
-            return false;
-        }
+//        char *knownOptions = new char[4];
+//        strcpy(knownOptions, "pcd");
+//        knownOptions[3] = '\0';
 
-        delete [] argv;
+//        char optArgs[PHGRDHST_NumFlags][LBEnMxArgLen];
+//        LbUsFourByte optArgFlags = (LBFlag0);
+//        LbUsFourByte phgrdhstArgIndex;
+
+//        /* Get our options */
+//        if (!LbEnGetOptions(3, argv, &knownOptions,
+//                            &PhgOptions, optArgs, optArgFlags, &phgrdhstArgIndex)) {
+
+//            // Clean up.
+//            delete [] argv;
+//            delete [] pseudo_binary;
+//            delete [] argv_c;
+//            delete [] flag;
+//            delete [] knownOptions;
+//            return false;
+//        }
+
+//        /* Make sure the didn't specify more than one history file */
+//        if (PHGRDHST_IsUsePHGHistory() && (PHGRDHST_IsUseColHistory() || PHGRDHST_IsUseDetHistory()))
+//        {
+//            warning("SimSETListmodeInputFileFormat: You can only specify one type of history file.");
+//            // Clean up.
+//            delete [] argv;
+//            delete [] pseudo_binary;
+//            delete [] argv_c;
+//            delete [] flag;
+//            delete [] knownOptions;
+//            return false;
+//        }
+
+//        // Clean up.
+//        delete [] argv;
+//        delete [] pseudo_binary;
+//        delete [] argv_c;
+//        delete [] flag;
+//        delete [] knownOptions;
+
         return true;
     }
 };

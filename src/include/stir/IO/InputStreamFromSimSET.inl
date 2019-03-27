@@ -26,6 +26,10 @@
 
 #include "stir/IO/InputStreamFromSimSET.h"
 
+extern "C" {
+#include <PhoHFile.h>
+}
+
 START_NAMESPACE_STIR
 
 unsigned long int
@@ -76,15 +80,54 @@ set_saved_get_positions(const std::vector<LbUsFourByte> &poss)
 
 Succeeded
 InputStreamFromSimSET::
-get_next_record(CListRecordSimSET& record) const
+get_next_record(CListRecordSimSET& record)
 {
 
+    LbUsFourByte		numBluePhotons;				/* Number of blue photons for this decay */
+    LbUsFourByte		numPinkPhotons;				/* Number of pink photons for this decay */
 
-//    return
-//            record.init_from_data(ring1, ring2,
-//                                  crystal1, crystal2,
-//                                  time1, time2,
-//                                  eventID1, eventID2);
+    LbUsFourByte		numPhotonsProcessed;		/* Number of photons processed */
+    LbUsFourByte		numDecaysProcessed;			/* Number of decays processed */
+    PHG_Decay		   	decay;						/* The decay */
+
+    PHG_DetectedPhoton	detectedPhoton;				/* The detected photon */
+    PHG_TrackingPhoton	trackingPhoton;				/* The tracking photon */
+    PHG_TrackingPhoton	*bluePhotons = 0;			/* Blue photons for current decay */
+    PHG_TrackingPhoton	*pinkPhotons = 0;			/* Pink photon for current decay*/
+    double 				angle_norm;					/* for normalizing photon direction */
+    Boolean				isOldPhotons1;				/* is this a very old history file--must be
+                                                     read using oldReadEvent */
+    Boolean				isOldPhotons2;				/* is this a moderately old history file--must be
+                                                     read using oldReadEvent */
+    Boolean				isOldDecays;				/* is this an old history file--must be read using oldReadEvent */
+
+    EventTy	retEventType = Null;
+    PhoHFileEventType	eventType = PhoHFileNullEvent;	/* The event type we read */
+
+    while (retEventType == Decay)
+    {
+        numDecaysProcessed++;
+
+        eventType = PhoHFileReadEvent(historyFile, &nextDecay, &detectedPhoton);
+
+        if (eventType == PhoHFilePhotonEvent)
+            retEventType = Photon;
+
+        if (eventType == PhoHFileNullEvent)
+            error("");
+
+
+        /* Update current decay */
+        decay = nextDecay;
+
+    }
+
+    int nikos = 0;
+    //    return
+    //            record.init_from_data(ring1, ring2,
+    //                                  crystal1, crystal2,
+    //                                  time1, time2,
+    //                                  eventID1, eventID2);
 }
 
 END_NAMESPACE_STIR
