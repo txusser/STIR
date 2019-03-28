@@ -29,7 +29,9 @@
 #include "stir/info.h"
 #include "stir/warning.h"
 #include "stir/error.h"
+
 #include <boost/format.hpp>
+#include <boost/algorithm/string.hpp>
 
 extern "C" {
 #include <LbEnvironment.h>
@@ -167,9 +169,12 @@ CListModeDataSimSET(const std::string& _phg_filename)
             error("CListModeDataSimSET: Unable to initialize the detection module.");
     }
 
+    /* Initialize the binning module if necessary */
+    /* Initialize parameters */
+    if (PhgBinInitParams(PhgRunTimeParams.PhgBinParamsFilePath[0],
+                         &PhgBinParams[0], &PhgBinData[0], &PhgBinFields[0]) == false)
+        error("CListModeDataSimSET: Unable to initialize the bining module.");
 
-    // Get Binning parameter file.
-    //    char *binParams_cstr = phgrdhstHdrParams->H.PhgRunTimeParams.PhgBinParamsFilePath[PhgNumBinParams];
 
     // Try to guess scanner
     // CylPosTargetCylinder holds the goemetric information on the scanner.
@@ -179,23 +184,62 @@ CListModeDataSimSET(const std::string& _phg_filename)
     // //	double			centerX;	/* Center point on x axis */
     // //	double			centerY;	/* Center point on y axis */
 
+    //DetRunTimeParamsTy: Timing information
+    // //    double					PhotonTimeFWHM;							/* Photon time resolution (nanoseconds) */
+    // //    double					EnergyResolutionPercentage;				/* Energy resolution in percentage */
+    // //    double					ReferenceEnergy;						/* Energy resolution in percentage */
+    // //    double					CoincidenceTimingWindowNS;	/* coincidence timing window in nanoseconds */
+
+    // DetRunTimeParams : Cylindrical detector
+    // LayerInfo: InnerRadius
+    // LayerInfo: OutterRadius
+    // NumLayers
+    if (PhgRunTimeParams.PhgIsPET == false)
+        error("CListModeDataSimSET: Only PET scanners are supported.");
+
+
+    // We have already established that a cylindrical scanner will be used.
+    shared_ptr<Scanner> tmpl_scanner;
+    if (check_scanner_match_geometry( DetRunTimeParams[0].CylindricalDetector.RingInfo->LayerInfo->InnerRadius,
+                                      DetRunTimeParams[0].CylindricalDetector.RingInfo->MinZ,
+                                      DetRunTimeParams[0].CylindricalDetector.RingInfo->MaxZ,
+                                      DetRunTimeParams[0].CylindricalDetector.RingInfo->NumLayers,
+                                      DetRunTimeParams->EnergyResolutionPercentage,
+                                      DetRunTimeParams->ReferenceEnergy,
+                                      PhgBinParams->numTDBins,
+                                      PhgBinParams->numZBins,
+                                      tmpl_scanner) == Succeeded::yes)
+    {
+        std::string msg("CListModeDataSimSET: Based on the information harvested by the PHG"
+                        "params file and the Bining file we believe that the best matching"
+                        "scanner is: ");
+        msg.append(tmpl_scanner->get_name());
+        info(msg);
+    }
+    else
+    {
+        error("CListModeDataSimSET: The information harvested from the PHG file and Bining file "
+              "do not match a scanner in the Scanner list.");
+    }
+
     // ExamInfo initialisation
     this->exam_info_sptr.reset(new ExamInfo);
 
     // Only PET scanners supported
     this->exam_info_sptr->imaging_modality = ImagingModality::PT;
     this->exam_info_sptr->originating_system = this->originating_system;
-    this->exam_info_sptr->set_low_energy_thres(static_cast<float>(PhgRunTimeParams.PhgMinimumEnergy));
-//    this->exam_info_sptr->set_high_energy_thres(static_cast<float>(PhgRunTimeParams.PhgMinimumEnergy));
+    this->exam_info_sptr->set_low_energy_thres(static_cast<float>(PhgBinParams->minE));
+    this->exam_info_sptr->set_low_energy_thres(static_cast<float>(PhgBinParams->maxE));
 
 
     // initialise ProjData.
-
-
-    int nikos = 0;
-
-
-    int crap = 0;
+    shared_ptr<ProjDataInfo> tmp( ProjDataInfo::construct_proj_data_info(tmpl_scanner,
+                                                                         1,
+                                                                         tmpl_scanner->get_num_rings()-1,
+                                                                         tmpl_scanner->get_num_detectors_per_ring()/2,
+                                                                         tmpl_scanner->get_max_num_non_arccorrected_bins(),
+                                                                         /* arc_correction*/false));
+    this->set_proj_data_info_sptr(tmp);
 
     // if the ProjData have been initialised properly create a
     // Input Stream from SimSET.
@@ -286,70 +330,63 @@ set_defaults()
     /* Clear the file name parameters */
     phgrdhstHistParamsName[0] = '\0';
     phgrdhstHistName[0] = '\0';
+
+    PhgBinFields[0].NumCoincidences = 0;
+    PhgBinFields[0].NumAcceptedCoincidences = 0;
+    PhgBinFields[0].TotBluePhotons = 0;
+    PhgBinFields[0].TotPinkPhotons = 0;
+    PhgBinFields[0].AccBluePhotons = 0;
+    PhgBinFields[0].AccPinkPhotons = 0;
+    PhgBinFields[0].AccCoincidenceWeight = 0;
+    PhgBinFields[0].AccCoincidenceSquWeight = 0;
+    PhgBinFields[0].StartAccCoincidenceWeight = 0;
+    PhgBinFields[0].StartAccCoincidenceSquWeight = 0;
+
+    LbHdrStNull(&PhgBinFields[0].CountImgHdrHk);
+    PhgBinFields[0].CountFile = nullptr;
+    PhgBinData[0].countImage = nullptr;
+    LbHdrStNull(&PhgBinFields[0].WeightSquImgHdrHk);
+    PhgBinFields[0].WeightSquFile = nullptr;
+    PhgBinData[0].weightSquImage = nullptr;
+    LbHdrStNull(&PhgBinFields[0].WeightImgHdrHk);
+    PhgBinFields[0].WeightFile = nullptr;
+    PhgBinData[0].weightImage = nullptr;
 }
 
 Succeeded
 CListModeDataSimSET::
-check_scanner_match_geometry(std::string& ret, const shared_ptr<Scanner>& scanner_sptr)
+check_scanner_match_geometry(const double _radius,
+                             const double _minZ,
+                             const double _maxZ,
+                             const unsigned int _numLayers,
+                             const double _enResolution,
+                             const double _enResReference,
+                             const unsigned int _numTDBins,
+                             const unsigned int _numZbins,
+                             shared_ptr<Scanner>& scanner_sptr)
 {
-    //    std::ostringstream stream("CListModeDataSimSET: The Scanner does not match the GATE geometry. Check: ");
-    //    bool ok = true;
 
-    //    if (scanner_sptr->get_num_rings() != root_file_sptr->get_num_rings())
-    //    {
-    //        stream << "the number of rings, ";
-    //        ok = false;
-    //    }
+    std::string all_scanners = Scanner::list_all_names();
 
-    //    if (scanner_sptr->get_num_detectors_per_ring() != root_file_sptr->get_num_dets_per_ring())
-    //    {
-    //        stream << "the number of detector per ring, ";
-    //        ok = false;
-    //    }
+    std::vector<std::string> names;
+    boost::split(names, all_scanners, [](char c){return c == '\n';});
 
-    //    if (scanner_sptr->get_num_axial_blocks_per_bucket() != root_file_sptr->get_num_axial_blocks_per_bucket_v())
-    //    {
-    //        stream << "the number of axial blocks per bucket, ";
-    //        ok = false;
-    //    }
+    for ( int scanInt = Scanner::Type::E931;
+          scanInt != Scanner::Type::User_defined_scanner; ++scanInt )
+    {
+        Scanner::Type cur_scanner = static_cast<Scanner::Type>(scanInt);
+        scanner_sptr.reset(new Scanner(cur_scanner));
 
-    //    if(scanner_sptr->get_num_transaxial_blocks_per_bucket() != root_file_sptr->get_num_transaxial_blocks_per_bucket_v())
-    //    {
-    //        stream << "the number of transaxial blocks per bucket, ";
-    //        ok = false;
-    //    }
+        if (scanner_sptr->get_inner_ring_radius() == static_cast<float>(_radius) &&
+                scanner_sptr->get_num_detector_layers() == static_cast<int>(_numLayers) &&
+                scanner_sptr->get_num_rings() == static_cast<int>(_numZbins) &&
+                scanner_sptr->get_energy_resolution() == static_cast<float>(_enResolution) &&
+                scanner_sptr->get_num_detectors_per_ring() == 2*static_cast<int>(_numTDBins) &&
+                scanner_sptr->get_max_num_non_arccorrected_bins() == static_cast<int>(_numTDBins))
+            return Succeeded::yes;
+    }
 
-    //    if(scanner_sptr->get_num_axial_crystals_per_block() != root_file_sptr->get_num_axial_crystals_per_block_v())
-    //    {
-    //        stream << "the number of axial crystals per block, ";
-    //        ok = false;
-    //    }
-
-    //    if(scanner_sptr->get_num_transaxial_crystals_per_block() != root_file_sptr->get_num_transaxial_crystals_per_block_v())
-    //    {
-    //        stream << "the number of transaxial crystals per block, ";
-    //        ok = false;
-    //    }
-
-    //    if(scanner_sptr->get_num_axial_crystals_per_singles_unit() != root_file_sptr->get_num_axial_crystals_per_singles_unit())
-    //    {
-    //        stream << "the number of axial crystals per singles unit, ";
-    //        ok = false;
-    //    }
-
-    //    if(scanner_sptr->get_num_transaxial_crystals_per_singles_unit() != root_file_sptr->get_num_trans_crystals_per_singles_unit())
-    //    {
-    //        stream << "the number of transaxial crystals per singles unit, ";
-    //        ok = false;
-    //    }
-
-    //    if (!ok)
-    //    {
-    //        ret = stream.str();
-    //        return Succeeded::no;
-    //    }
-
-    return Succeeded::yes;
+    return Succeeded::no;
 }
 
 Succeeded

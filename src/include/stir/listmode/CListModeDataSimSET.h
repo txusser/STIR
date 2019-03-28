@@ -19,6 +19,20 @@
   \ingroup listmode
   \brief Declaration of class stir::CListModeDataSimSET
 
+  \details This class tries to read the PhGPhoton params files, which are the
+  same as used to run the SimSET simulation. However, it will then check for a
+  history file and initialise an InputStream.
+
+  Unfortuantely, SimSET does not hold any information on the scanner as name,
+  model, manufacurer etc. In addition, in the case of cylindrical PET scanner
+  important information as number of detectors and rings are not present. In
+  this case the only information available are radius and scanner length.
+  Therefore, we will make use of the bining file setup. As the actual bining
+  parameters will come from the STIR template users are encouraged to set the
+  bining information such as the number of tang positions and z positions are such
+  that match the Scanner num_detectors /2 and num_rings.
+
+
   \author Nikos Efthimiou
 */
 
@@ -106,7 +120,17 @@ private:
     //! Check if the hroot contains a full scanner description.
     Succeeded check_scanner_definition(std::string& ret);
     //! Check if the scanner_sptr matches the geometry in root_file_sptr.
-    Succeeded check_scanner_match_geometry(std::string& ret, const shared_ptr<Scanner>& scanner_sptr);
+    //! \todo This function should be extended with TOF information.
+    Succeeded
+    check_scanner_match_geometry(const double _radius,
+                                 const double _minZ,
+                                 const double _maxZ,
+                                 const unsigned int _numLayers,
+                                 const double _enResolution,
+                                 const double _enResReference,
+                                 const unsigned int _numTDBins,
+                                 const unsigned int _numZbins,
+                                 shared_ptr<Scanner>& scanner_sptr);
 
     //! Pointer to the listmode data
     shared_ptr<InputStreamFromSimSET > history_file_sptr;
