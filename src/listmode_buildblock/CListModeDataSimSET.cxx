@@ -380,7 +380,8 @@ check_scanner_match_geometry(const double _radius,
         if (scanner_sptr->get_inner_ring_radius() == static_cast<float>(_radius) &&
                 scanner_sptr->get_num_detector_layers() == static_cast<int>(_numLayers) &&
                 scanner_sptr->get_num_rings() == static_cast<int>(_numZbins) &&
-                scanner_sptr->get_energy_resolution() == static_cast<float>(_enResolution) &&
+                (scanner_sptr->get_energy_resolution() > 0.0f ?
+                scanner_sptr->get_energy_resolution() == static_cast<float>(_enResolution) : 1) &&
                 scanner_sptr->get_num_detectors_per_ring() == 2*static_cast<int>(_numTDBins) &&
                 scanner_sptr->get_max_num_non_arccorrected_bins() == static_cast<int>(_numTDBins))
             return Succeeded::yes;
