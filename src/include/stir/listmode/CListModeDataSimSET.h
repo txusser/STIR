@@ -89,15 +89,15 @@ private:
     //! Check if the scanner_sptr matches the geometry in root_file_sptr.
     //! \todo This function should be extended with TOF information.
     Succeeded
-    check_scanner_match_geometry(const double _radius,
-                                 const double _minZ,
-                                 const double _maxZ,
-                                 const unsigned int _numLayers,
-                                 const double _enResolution,
-                                 const double _enResReference,
-                                 const unsigned int _numTDBins,
+    check_scanner_match_geometry(const unsigned int _numTDBins,
                                  const unsigned int _numZbins,
-                                 shared_ptr<Scanner>& scanner_sptr);
+                                 shared_ptr<Scanner>& scanner_sptr,
+                                 const double _radius = -1.0,
+                                 const double _minZ = -1.0,
+                                 const double _maxZ = -1.0,
+                                 const unsigned int _numLayers = 1,
+                                 const double _enResolution = -1.0,
+                                 const double _enResReference = -1.0);
 
     //! Pointer to the listmode data
     shared_ptr<InputStreamFromSimSET > history_file_sptr;

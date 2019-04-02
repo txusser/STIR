@@ -135,7 +135,7 @@ get_next_record(CListRecordSimSET& record)
             continue;
 
         /* Get scatter count */
-        blueScatters += cur_detectedPhotonBlue.flags>>2;
+//        blueScatters += cur_detectedPhotonBlue.flags>>2;
 
         /* See if this photon fails the acceptance criteria */
         /* NOTE: It seems like failing a blue should go to the
@@ -145,17 +145,17 @@ get_next_record(CListRecordSimSET& record)
                         every pink
                     */
         {
-            if ( (blueScatters < binParams->minS) &&
-                 (!ignoreMinScatters) )
-                continue;
+//            if ( (blueScatters < binParams->minS) &&
+//                 (!ignoreMinScatters) )
+//                continue;
 
             /* Max scatters is ignored for some scatterRandomParam, this means
                             take all photons from max and above, and put them into
                             the top bin
                         */
-            if	((blueScatters > binParams->maxS) &&
-                 (!ignoreMaxScatters))
-                continue;
+//            if	((blueScatters > binParams->maxS) &&
+//                 (!ignoreMaxScatters))
+//                continue;
 
             if ((binParams->numE1Bins > 0) && (cur_detectedPhotonBlue.energy < static_cast<float>(binParams->minE)))
                 continue;
@@ -172,21 +172,21 @@ get_next_record(CListRecordSimSET& record)
 
 
         /* Get scatter count */
-        pinkScatters += cur_detectedPhotonPink.flags>>2;
+//        pinkScatters += cur_detectedPhotonPink.flags>>2;
 
         /* See if this photon fails the acceptance criteria */
         {
-            if ( (pinkScatters < binParams->minS) &&
-                 (!ignoreMinScatters) )
-                continue;
+//            if ( (pinkScatters < binParams->minS) &&
+//                 (!ignoreMinScatters) )
+//                continue;
 
             /* Max scatters is ignored for some scatterRandomParam, this means
                                         take all photons from max and above, and put them into
                                         the top bin
                                     */
-            if	( (pinkScatters > binParams->maxS) &&
-                  (!ignoreMaxScatters) )
-                continue;
+//            if	( (pinkScatters > binParams->maxS) &&
+//                  (!ignoreMaxScatters) )
+//                continue;
 
             if ((binParams->numE2Bins > 0) && (cur_detectedPhotonPink.energy < static_cast<float>(binParams->minE)))
                 continue;
