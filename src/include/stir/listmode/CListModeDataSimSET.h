@@ -16,7 +16,7 @@
 */
 /*!
   \file
-  \ingroup listmode
+  \ingroup listmode SimSET
   \brief Declaration of class stir::CListModeDataSimSET
 
   \details This class tries to read the PhGPhoton params files, which are the

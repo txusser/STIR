@@ -16,7 +16,7 @@
 */
 /*!
   \file
-  \ingroup listmode
+  \ingroup listmode SimSET
   \brief Implementation of classes stir::ecat::CListEventSimSET and stir::ecat::CListRecordSimsET
   for listmode events for the SimSET as listmode file format.
 

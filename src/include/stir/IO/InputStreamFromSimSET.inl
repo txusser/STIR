@@ -16,7 +16,7 @@
 */
 /*!
   \file
-  \ingroup IO
+  \ingroup IO SimSET
   \brief Implementation of class stir::InputStreamFromSimSETFile
 
   \author Nikos Efthimiou

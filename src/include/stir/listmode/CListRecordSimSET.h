@@ -16,7 +16,7 @@
 */
 /*!
   \file
-  \ingroup listmode
+  \ingroup listmode SimSET
   \brief Classes for listmode events for GATE simulated SimSET history file
 
   \author Efthimiou Nikos

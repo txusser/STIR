@@ -16,7 +16,7 @@
 */
 /*!
   \file
-  \ingroup listmode
+  \ingroup listmode SimSET
   \brief Implementation of class stir::CListModeDataSimSET
 
   \author Nikos Efthimiou
