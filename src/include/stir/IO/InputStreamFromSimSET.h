@@ -68,7 +68,7 @@ public:
 
     static const char * const registered_name;
 
-    typedef std::vector<LbUsFourByte>::size_type SavedPosition;
+    typedef std::vector<std::streampos>::size_type SavedPosition;
     //! Constructor taking a stream
     /*! Data will be assumed to start at the current position reported by seekg().
       If reset() is used, it will go back to this starting position.*/
@@ -104,10 +104,10 @@ public:
     Succeeded set_get_position(const SavedPosition&);
     //! Function that enables the user to store the saved get_positions
     inline
-    std::vector<PHG_Decay> get_saved_get_positions() const;
+    std::vector<std::streampos> get_saved_get_positions() const;
     //! Function that sets the saved get_positions
     inline
-    void set_saved_get_positions(const std::vector<PHG_Decay>& );
+    void set_saved_get_positions(const std::vector<std::streampos>& );
 
     inline unsigned long get_total_number_of_events() const;
 
@@ -141,15 +141,13 @@ private:
     //! This variable will be added to move the z position on the
     //! possitive side, as is STIR's convention.
     double min_axial_position;
-    //! The next position in the decays.
-    PHG_Decay nextDecay;
-    //! The first decay, used to reset the file.
-    PHG_Decay firstDecay;
+    //! Current decay
+    PHG_Decay curDecay;
     //! Binning parameters. They are used to get energy window,
     //! randoms and scattered exclusion/inclusion.
     PHG_BinParamsTy *binParams;
-
-    std::vector<PHG_Decay> saved_get_positions;
+    //! Save positions in the history file
+    std::vector<std::streampos> saved_get_positions;
     //! Number of scatters for current blue photon
     LbUsFourByte blueScatters;
     //! Number of scatters for current pink photon

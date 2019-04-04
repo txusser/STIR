@@ -105,7 +105,6 @@ set_up(const std::string historyFileName,
 Succeeded
 InputStreamFromSimSET::set_up_standard_hist_file()
 {
-    PHG_Decay		   	decay;						/* The decay */
     PHG_DetectedPhoton	detectedPhoton;				/* The detected photon */
 
     Boolean	isPHGList; /* this is PHG history file */
@@ -141,7 +140,7 @@ InputStreamFromSimSET::set_up_standard_hist_file()
         error("InputStreamFromSimSET: File specified as PHG history file is not valid.");
     }
 
-    PhoHFileEventType eventType = PhoHFileReadEvent(historyFile, &decay, &detectedPhoton);
+    PhoHFileEventType eventType = PhoHFileReadEvent(historyFile, &curDecay, &detectedPhoton);
     EventTy	locEventType;
 
     /* Convert to the local event type */
@@ -162,8 +161,11 @@ InputStreamFromSimSET::set_up_standard_hist_file()
             locEventType = Null;
             break;
     }
+//    firstDecay = curDecay;
+//    rewind(historyFile);
+    fseek(historyFile, headerHk.headerSize, SEEK_SET);
 
-    numDecaysProcessed++;
+//    numDecaysProcessed++;
 
     if (locEventType != Decay)
     {
