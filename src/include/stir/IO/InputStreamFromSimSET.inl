@@ -162,10 +162,10 @@ get_next_record(CListRecordSimSET& record)
             if	((binParams->numE1Bins > 0) && (cur_detectedPhotonBlue.energy > static_cast<float>(binParams->maxE)))
                 continue;
 
-            if ((binParams->numZBins > 0) && (cur_detectedPhotonBlue.location.z_position < static_cast<float>(binParams->minZ)))
+            if ((binParams->numZBins > 0) && (cur_detectedPhotonBlue.location.z_position <= static_cast<float>(binParams->minZ)))
                 continue;
 
-            if ((binParams->numZBins > 0) && (cur_detectedPhotonBlue.location.z_position > static_cast<float>(binParams->maxZ)))
+            if ((binParams->numZBins > 0) && (cur_detectedPhotonBlue.location.z_position >= static_cast<float>(binParams->maxZ)))
                 continue;
         }
 
@@ -193,10 +193,10 @@ get_next_record(CListRecordSimSET& record)
             if	((binParams->numE2Bins > 0) && (cur_detectedPhotonPink.energy > static_cast<float>(binParams->maxE)))
                 continue;
 
-            if ((binParams->numZBins > 0) && (cur_detectedPhotonPink.location.z_position < static_cast<float>(binParams->minZ)))
+            if ((binParams->numZBins > 0) && (cur_detectedPhotonPink.location.z_position <= static_cast<float>(binParams->minZ)))
                 continue;
 
-            if ((binParams->numZBins > 0) && (cur_detectedPhotonPink.location.z_position > static_cast<float>(binParams->maxZ)))
+            if ((binParams->numZBins > 0) && (cur_detectedPhotonPink.location.z_position >= static_cast<float>(binParams->maxZ)))
                 continue;
         }
         break;
