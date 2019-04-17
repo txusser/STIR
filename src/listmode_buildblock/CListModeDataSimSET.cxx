@@ -37,12 +37,6 @@ extern "C" {
 #include <PhgBin.h>
 }
 
-//#define	PHGRDHST_NumFlags	3
-/* LOCAL CONSTANTS */
-//#define PHGRDHST_IsUsePHGHistory() LbFgIsSet(PhgOptions, LBFlag0)		/* Will we use the PHG history file */
-//#define PHGRDHST_IsUseColHistory() LbFgIsSet(PhgOptions, LBFlag1)		/* Will we use the Collimator history file */
-//#define PHGRDHST_IsUseDetHistory() LbFgIsSet(PhgOptions, LBFlag2)		/* Will we use the Detector history file */
-
 START_NAMESPACE_STIR
 
 //! N.E: Large parts adapted from phgbin and functions called by it;
@@ -287,10 +281,6 @@ CListModeDataSimSET(const std::string& _phg_filename)
                                                                          tmpl_scanner->get_max_num_non_arccorrected_bins(),
                                                                          /* arc_correction*/false));
     this->set_proj_data_info_sptr(tmp);
-
-//    if (this->open_lm_file() == Succeeded::no)
-//        error("CListModeDataSimSET: error opening ROOT file for filename '%s'",
-//              hroot_filename.c_str());
 
     // if the ProjData have been initialised properly create a
     // Input Stream from SimSET.

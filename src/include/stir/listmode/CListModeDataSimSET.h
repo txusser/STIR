@@ -54,7 +54,13 @@
 
   Moreover, the the inner ring is taken by the LayerInfo->InnerRadius,
 
-  \warning C\urrectly, we support only simplePET and cylindrical scanners.
+  \warning Currectly, we support only simplePET and cylindrical scanners.
+
+  \warning When this interface was build the SimSET version was 2.9.2. But STIR
+  cannot work with it. You need to download and apply the patch from
+  https://gist.github.com/NikEfth/c217afccca9499f0245554941f704654.
+  This patch allow SimSET to build a library to which we link to and created few
+  convinience headers =).
 
   \author Nikos Efthimiou
 */
