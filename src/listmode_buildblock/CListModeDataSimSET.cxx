@@ -230,8 +230,18 @@ CListModeDataSimSET(const std::string& _phg_filename)
     }
     else if (DetRunTimeParams[0].DetectorType == 6) // CylindricalPET
     {
+        uint chk_rings = 0 ;
+
+        if (DetRunTimeParams[0].CylindricalDetector.NumRings == 1)
+            chk_rings = PhgBinParams->numZBins;
+        else
+        {
+            chk_rings =
+                    static_cast<int>(static_cast<float>(DetRunTimeParams[0].CylindricalDetector.NumRings)/2.F + 0.5F);
+        }
+
         if (check_scanner_match_geometry( PhgBinParams->numTDBins,
-                                          PhgBinParams->numZBins,
+                                          chk_rings,
                                           tmpl_scanner,
                                           DetRunTimeParams[0].CylindricalDetector.RingInfo->LayerInfo->InnerRadius,
                                           DetRunTimeParams[0].CylindricalDetector.RingInfo->MinZ,
@@ -410,7 +420,7 @@ check_scanner_match_geometry(const unsigned int _numTDBins,
     boost::split(names, all_scanners, [](char c){return c == '\n';});
 
     for ( int scanInt = Scanner::Type::E931;
-          scanInt != Scanner::Type::GeminiTF; ++scanInt )
+          scanInt != Scanner::Type::User_defined_scanner; ++scanInt )
     {
         Scanner::Type cur_scanner = static_cast<Scanner::Type>(scanInt);
         scanner_sptr.reset(new Scanner(cur_scanner));
@@ -428,49 +438,5 @@ check_scanner_match_geometry(const unsigned int _numTDBins,
 
     return Succeeded::no;
 }
-
-Succeeded
-CListModeDataSimSET::
-check_scanner_definition(std::string& ret)
-{
-    //    if ( num_rings == -1 ||
-    //         num_detectors_per_ring == -1 ||
-    //         max_num_non_arccorrected_bins == -1 ||
-    //         inner_ring_diameter == -1.f ||
-    //         average_depth_of_interaction == -1.f ||
-    //         ring_spacing == -.1f ||
-    //         bin_size == -1.f )
-    //    {
-    //       std::ostringstream stream("CListModeDataSimSET: The User_defined_scanner has not been fully described.\nPlease include in the hroot:\n");
-
-    //       if (num_rings == -1)
-    //           stream << "Number of rings := \n";
-
-    //       if (num_detectors_per_ring == -1)
-    //           stream << "Number of detectors per ring := \n";
-
-    //       if (max_num_non_arccorrected_bins == -1)
-    //           stream << "Maximum number of non-arc-corrected bins := \n";
-
-    //       if (inner_ring_diameter == -1)
-    //           stream << "Inner ring diameter (cm) := \n";
-
-    //       if (average_depth_of_interaction == -1)
-    //           stream << "Average depth of interaction (cm) := \n";
-
-    //       if (ring_spacing == -1)
-    //           stream << "Distance between rings (cm) := \n";
-
-    //       if (bin_size == -1)
-    //           stream << "Default bin size (cm) := \n";
-
-    //       ret = stream.str();
-
-    //       return Succeeded::no;
-    //    }
-
-    return Succeeded::yes;
-}
-
 
 END_NAMESPACE_STIR
