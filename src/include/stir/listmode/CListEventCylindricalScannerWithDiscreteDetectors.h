@@ -85,6 +85,10 @@ public:
      }
 
    shared_ptr<Scanner> scanner_sptr;
+
+   //! This is the weight of the event, reflects factors as
+   //! detector efficiency, true activity and attenuation.
+   float weight;
  private:
    shared_ptr<ProjDataInfoCylindricalNoArcCorr>
      uncompressed_proj_data_info_sptr;

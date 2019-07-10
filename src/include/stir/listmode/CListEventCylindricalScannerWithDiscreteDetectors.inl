@@ -41,6 +41,7 @@ CListEventCylindricalScannerWithDiscreteDetectors(const shared_ptr<Scanner>& sca
                                    scanner_sptr->get_num_detectors_per_ring()/2,
                                    scanner_sptr->get_default_num_arccorrected_bins(), 
                                    false)));
+    weight = 1.f;
 }
 
 LORAs2Points<float>
@@ -84,7 +85,7 @@ get_bin(Bin& bin, const ProjDataInfo& proj_data_info) const
       get_bin_for_det_pos_pair(bin, det_pos) == Succeeded::no)
     bin.set_bin_value(0);
   else
-    bin.set_bin_value(1);
+    bin.set_bin_value(weight);
 }
 
 bool
