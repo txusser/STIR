@@ -243,10 +243,17 @@ get_segment_axial_pos_num_for_ring_pair(int& segment_num,
                                         const int ring1,
                                         const int ring2) const
 {
-  assert(0<=ring1);
-  assert(ring1<get_scanner_ptr()->get_num_rings());
-  assert(0<=ring2);
-  assert(ring2<get_scanner_ptr()->get_num_rings());
+    if(0>ring1 || ring1>get_scanner_ptr()->get_num_rings() ||
+            0>ring2 || ring2>get_scanner_ptr()->get_num_rings())
+    {
+
+        return Succeeded::no;
+    }
+
+//  assert(0<=ring1);
+//  assert(ring1<get_scanner_ptr()->get_num_rings());
+//  assert(0<=ring2);
+//  assert(ring2<get_scanner_ptr()->get_num_rings());
 
   // KT 01/08/2002 swapped rings
   if (get_segment_num_for_ring_difference(segment_num, ring2-ring1) == Succeeded::no)

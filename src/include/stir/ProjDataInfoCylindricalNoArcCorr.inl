@@ -119,7 +119,8 @@ get_view_tangential_pos_num_for_det_num_pair(int& view_num,
 					     const int det1_num,
 					     const int det2_num) const
 {
-  assert(det1_num!=det2_num);
+  if(det1_num==det2_num)
+      return false;
   this->initialise_det1det2_to_uncompressed_view_tangpos_if_not_done_yet();
 
   view_num = 
