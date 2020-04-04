@@ -61,12 +61,17 @@
 #include "stir/analytic/FBP3DRP/FBP3DRPReconstruction.h"
 
 #include "stir/OSMAPOSL/OSMAPOSLReconstruction.h"
+#include "stir/KOSMAPOSL/KOSMAPOSLReconstruction.h"
 #include "stir/OSSPS/OSSPSReconstruction.h"
 
 #ifdef HAVE_LLN_MATRIX
 #include "stir/recon_buildblock/BinNormalisationFromECAT7.h"
 #endif
 #include "stir/recon_buildblock/BinNormalisationFromECAT8.h"
+
+#ifdef HAVE_HDF5
+#include "stir/recon_buildblock/BinNormalisationFromGEHDF5.h"
+#endif
 
 #include "stir/recon_buildblock/FourierRebinning.h"
 
@@ -109,6 +114,7 @@ static FBP2DReconstruction::RegisterIt dummy601;
 static FBP3DRPReconstruction::RegisterIt dummy602;
 
 static OSMAPOSLReconstruction<DiscretisedDensity<3,float> >::RegisterIt dummy603;
+static KOSMAPOSLReconstruction<DiscretisedDensity<3,float> >::RegisterIt dummyK ;
 static OSSPSReconstruction<DiscretisedDensity<3, float> >::RegisterIt dummy604;
 
 #ifdef HAVE_LLN_MATRIX
@@ -122,6 +128,12 @@ END_NAMESPACE_ECAT
 START_NAMESPACE_ECAT
 static BinNormalisationFromECAT8::RegisterIt dummy103;
 END_NAMESPACE_ECAT
+
+#ifdef HAVE_HDF5
+START_NAMESPACE_ECAT
+static BinNormalisationFromGEHDF5::RegisterIt dummy104;
+END_NAMESPACE_ECAT
+#endif
 
 static FourierRebinning::RegisterIt dummyFORE;
 

@@ -43,10 +43,10 @@ class CListEventCylindricalScannerWithDiscreteDetectors : public CListEvent
 {
 public:
   inline explicit 
-    CListEventCylindricalScannerWithDiscreteDetectors(const shared_ptr<Scanner>& scanner_sptr);
+    CListEventCylindricalScannerWithDiscreteDetectors(const shared_ptr<ProjDataInfo>& proj_data_info);
 
   const Scanner * get_scanner_ptr() const
-    { return this->scanner_sptr.get(); }
+    { return this->uncompressed_proj_data_info_sptr->get_scanner_ptr(); }
 
   //! This routine returns the corresponding detector pair   
   virtual void get_detection_position(DetectionPositionPair<>&) const = 0;
@@ -84,12 +84,11 @@ public:
        return uncompressed_proj_data_info_sptr;
      }
 
-   shared_ptr<Scanner> scanner_sptr;
+//   shared_ptr<Scanner> scanner_sptr;
 
    //! This is the weight of the event, reflects factors as
    //! detector efficiency, true activity and attenuation.
    float weight;
- private:
    shared_ptr<ProjDataInfoCylindricalNoArcCorr>
      uncompressed_proj_data_info_sptr;
 

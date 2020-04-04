@@ -125,7 +125,11 @@ private:
  protected:
   virtual void read_matrix_info();
   void read_frames_info();
-  virtual int get_num_data_types() const { return num_time_frames; }
+  //! \brief Get the number of datasets
+  /*! To be overloaded by derived classes if multiple "dimensions" are supported.
+      Default is just to use num_time_frames.
+  */
+  virtual int get_num_datasets() const { return num_time_frames; }
 
 public :
 
@@ -198,10 +202,10 @@ protected:
   /// Read image data types
   void read_image_data_types();
   //!
-  //! \brief Get the number of data types
+  //! \brief Get the number of datasets
   //! \details no. time frames * no. data types (kinetic params) * no. gates
   //! Currently, this is only implemented for either multiple time frames OR multiple data types (gates not considered).
-  virtual int get_num_data_types() const { return num_time_frames*num_image_data_types; }
+  virtual int get_num_datasets() const { return num_time_frames*num_image_data_types; }
 
 };
 
@@ -230,6 +234,7 @@ public:
   std::vector<std::string> applied_corrections;
  
   // derived values
+  int num_timing_poss;
   int num_segments;
   int num_views;
   int num_bins;
@@ -267,6 +272,12 @@ private:
   float energy_resolution;
   //! Reference energy.
   float reference_energy;
+
+  int max_num_timing_poss;
+  float size_of_timing_pos;
+  float timing_resolution;
+
+  int tof_mash_factor;
   // end scanner parameters
 
   double effective_central_bin_size_in_cm;

@@ -2,6 +2,7 @@
     Copyright (C) 2000 PARAPET partners
     Copyright (C) 2000- 2012, Hammersmith Imanet Ltd
     Copyright (C) 2013, 2015, University College London
+    Copyright (C) 2016, 2017, University of Hull
     This file is part of STIR.
 
     This file is free software; you can redistribute it and/or modify
@@ -21,6 +22,7 @@
   \ingroup projdata
   \brief Declaration of class stir::ProjData
 
+  \author Nikos Efthimiou
   \author Sanida Mustafovic
   \author Kris Thielemans
   \author PARAPET project
@@ -36,9 +38,10 @@
 #include "stir/Succeeded.h"
 #include "stir/SegmentBySinogram.h"
 #include "stir/SegmentByView.h"
+
 //#include <ios>
 
-#include "stir/IO/ExamData.h"
+#include "stir/ExamData.h"
 
 START_NAMESPACE_STIR
 
@@ -69,6 +72,8 @@ class Succeeded;
   <li> \c tangential_pos_num : indexes different positions in a direction 
         tangential to the scanner cylinder.
         (sometimes called 'bin' or 'element')
+  <li> \c timing_pos_num : indexes different positions in the LOR, based on
+        the photon detection time difference.
   </ul>
 
   The number of axial positions is allowed to depend on segment_num.
@@ -141,42 +146,50 @@ public:
 //    set_exam_info(ExamInfo const&);
   //! Get viewgram
   virtual Viewgram<float> 
-    get_viewgram(const int view, const int segment_num,const bool make_num_tangential_poss_odd = false) const=0;
+    get_viewgram(const int view, const int segment_num,
+                 const bool make_num_tangential_poss_odd = false,
+                 const int timing_pos = 0) const = 0;
   //! Set viewgram
   virtual Succeeded 
     set_viewgram(const Viewgram<float>&) = 0;
   //! Get sinogram
   virtual Sinogram<float> 
-    get_sinogram(const int ax_pos_num, const int segment_num,const bool make_num_tangential_poss_odd = false) const=0;
+    get_sinogram(const int ax_pos_num, const int segment_num,
+                 const bool make_num_tangential_poss_odd = false,
+                 const int timing_pos = 0) const = 0;
   //! Set sinogram
   virtual Succeeded 
     set_sinogram(const Sinogram<float>&) = 0;
+  // //! Get Bin value
+  //virtual float get_bin_value(const Bin& this_bin) const = 0;
 
   //! Get empty viewgram
   Viewgram<float> get_empty_viewgram(const int view, const int segment_num, 
-    const bool make_num_tangential_poss_odd = false) const;
+    const bool make_num_tangential_poss_odd = false, const int timing_pos = 0) const;
   
   //! Get empty_sinogram
   Sinogram<float> 
     get_empty_sinogram(const int ax_pos_num, const int segment_num,
-    const bool make_num_tangential_poss_odd = false) const;
+    const bool make_num_tangential_poss_odd = false, const int timing_pos = 0) const;
 
    //! Get empty segment sino
   SegmentByView<float> 
     get_empty_segment_by_view(const int segment_num, 
-		  	   const bool make_num_tangential_poss_odd = false) const;
+		  	   const bool make_num_tangential_poss_odd = false,
+			   const int timing_pos = 0) const;
   //! Get empty segment view
   SegmentBySinogram<float> 
     get_empty_segment_by_sinogram(const int segment_num, 
-				   const bool make_num_tangential_poss_odd = false) const;
+				   const bool make_num_tangential_poss_odd = false,
+				   const int timing_pos = 0) const;
 
 
   //! Get segment by sinogram
   virtual SegmentBySinogram<float>
-    get_segment_by_sinogram(const int segment_num) const;
+    get_segment_by_sinogram(const int segment_num, const int timing_pos = 0) const;
   //! Get segment by view
   virtual SegmentByView<float> 
-    get_segment_by_view(const int segment_num) const;
+    get_segment_by_view(const int segment_num, const int timing_pos = 0) const;
   //! Set segment by sinogram
   virtual Succeeded 
     set_segment(const SegmentBySinogram<float>&);
@@ -188,17 +201,21 @@ public:
   virtual RelatedViewgrams<float> 
     get_related_viewgrams(const ViewSegmentNumbers&,
     const shared_ptr<DataSymmetriesForViewSegmentNumbers>&,
-    const bool make_num_tangential_poss_odd = false) const;
+    const bool make_num_tangential_poss_odd = false,
+	const int timing_pos = 0) const;
   //! Set related viewgrams
   virtual Succeeded set_related_viewgrams(const RelatedViewgrams<float>& viewgrams);
-  
+//  //! Get related bin values
+//  //! \todo This function temporaliry has as input a vector<Bin> instead this should be replaced by RelatedBins.
+//  std::vector<float> get_related_bin_values(const std::vector<Bin>&) const;
 
   //! Get empty related viewgrams, where the symmetries_ptr specifies the symmetries to use
   RelatedViewgrams<float> 
     get_empty_related_viewgrams(const ViewSegmentNumbers& view_segmnet_num,
     //const int view_num, const int segment_num, 
     const shared_ptr<DataSymmetriesForViewSegmentNumbers>& symmetries_ptr,
-    const bool make_num_tangential_poss_odd = false) const;   
+    const bool make_num_tangential_poss_odd = false,
+	const int timing_pos = 0) const;
 
 
   //! set all bins to the same value
@@ -227,22 +244,27 @@ public:
       iterT init_pos = array_iter;
       for (int s=0; s<= this->get_max_segment_num(); ++s)
       {
-          SegmentBySinogram<float> segment = this->get_empty_segment_by_sinogram(s);
-          // cannot use std::copy sadly as needs end-iterator for range
-          for (SegmentBySinogram<float>::full_iterator seg_iter = segment.begin_all();
-               seg_iter != segment.end_all();
-               /*empty*/)
-              *seg_iter++ = *array_iter++;
-          this->set_segment(segment);
-
-          if (s!=0)
+          for (int k=this->get_proj_data_info_ptr()->get_min_tof_pos_num();
+        		  k<=this->get_proj_data_info_ptr()->get_max_tof_pos_num();
+        		  ++k)
           {
-              segment = this->get_empty_segment_by_sinogram(-s);
-              for (SegmentBySinogram<float>::full_iterator seg_iter = segment.begin_all();
-                   seg_iter != segment.end_all();
-                   /*empty*/)
-                  *seg_iter++ = *array_iter++;
-              this->set_segment(segment);
+			  SegmentBySinogram<float> segment = this->get_empty_segment_by_sinogram(s, false, k);
+			  // cannot use std::copy sadly as needs end-iterator for range
+			  for (SegmentBySinogram<float>::full_iterator seg_iter = segment.begin_all();
+				   seg_iter != segment.end_all();
+				   /*empty*/)
+				  *seg_iter++ = *array_iter++;
+			  this->set_segment(segment);
+
+			  if (s!=0)
+			  {
+				  segment = this->get_empty_segment_by_sinogram(-s,false,k);
+				  for (SegmentBySinogram<float>::full_iterator seg_iter = segment.begin_all();
+					   seg_iter != segment.end_all();
+					   /*empty*/)
+					  *seg_iter++ = *array_iter++;
+				  this->set_segment(segment);
+			  }
           }
       }
       return static_cast<std::size_t>(std::distance(init_pos, array_iter));
@@ -258,16 +280,21 @@ public:
   std::size_t copy_to(iterT array_iter) const
   {
       iterT init_pos = array_iter;
-      for (int s=0; s<= this->get_max_segment_num(); ++s)
+	  for (int k = this->get_proj_data_info_ptr()->get_min_tof_pos_num();
+		  k <= this->get_proj_data_info_ptr()->get_max_tof_pos_num();
+		  ++k)
       {
-          SegmentBySinogram<float> segment= this->get_segment_by_sinogram(s);
-          std::copy(segment.begin_all_const(), segment.end_all_const(), array_iter);
-          std::advance(array_iter, segment.size_all());
-          if (s!=0)
+		  for (int s = 0; s <= this->get_max_segment_num(); ++s)
           {
-              segment=this->get_segment_by_sinogram(-s);
-              std::copy(segment.begin_all_const(), segment.end_all_const(), array_iter);
-              std::advance(array_iter, segment.size_all());
+			  SegmentBySinogram<float> segment= this->get_segment_by_sinogram(s,k);
+			  std::copy(segment.begin_all_const(), segment.end_all_const(), array_iter);
+			  std::advance(array_iter, segment.size_all());
+			  if (s!=0)
+			  {
+				  segment=this->get_segment_by_sinogram(-s,k);
+				  std::copy(segment.begin_all_const(), segment.end_all_const(), array_iter);
+				  std::advance(array_iter, segment.size_all());
+			  }
           }
       }
       return static_cast<std::size_t>(std::distance(init_pos, array_iter));
@@ -281,6 +308,14 @@ public:
   inline int get_num_views() const;
   //! Get number of tangential positions
   inline int get_num_tangential_poss() const;
+  //! Get number of TOF positions
+  inline int get_num_tof_poss() const;
+  //! Get the index of the first timing position
+  inline int get_min_tof_pos_num() const;
+  //! Get the index of the last timgin position.
+  inline int get_max_tof_pos_num() const;
+  //! Get TOG mash factor
+  inline int get_tof_mash_factor() const;
   //! Get minimum segment number
   inline int get_min_segment_num() const;
   //! Get maximum segment number
@@ -298,7 +333,15 @@ public:
   //! Get maximum tangential position number
   inline int get_max_tangential_pos_num() const;
   //! Get the number of sinograms
+  /*! Note that this will count TOF sinograms as well.
+      \see get_num_non_tof_sinograms()
+  */
   inline int get_num_sinograms() const;
+  //! Get the number of sinograms
+  /*! Note that this is the sum of the number of axial poss over all segments.
+      \see get_num_sinograms()
+  */
+  inline int get_num_non_tof_sinograms() const;
   //! Get the total size of the data
   inline std::size_t size_all() const;
   //! writes data to a file in Interfile format

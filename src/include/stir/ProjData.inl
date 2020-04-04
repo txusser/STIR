@@ -3,6 +3,7 @@
   \ingroup projdata
   \brief Implementations for inline functions of class stir::ProjData
 
+  \author Nikos Efthimiou
   \author Sanida Mustafovic
   \author Kris Thielemans
   \author PARAPET project
@@ -11,6 +12,7 @@
     Copyright (C) 2000 PARAPET partners
     Copyright (C) 2000-2009, Hammersmith Imanet Ltd
     Copyright (C) 2013, 2015 University College London
+    Copyright (C) 2016, University of Hull
     This file is part of STIR.
 
     This file is free software; you can redistribute it and/or modify
@@ -66,6 +68,12 @@ int ProjData::get_num_views() const
 int ProjData::get_num_tangential_poss() const
 { return proj_data_info_ptr->get_num_tangential_poss(); }
 
+int ProjData::get_num_tof_poss() const
+{ return proj_data_info_ptr->get_num_tof_poss(); }
+
+int ProjData::get_tof_mash_factor() const
+{ return proj_data_info_ptr->get_tof_mash_factor(); }
+
 int ProjData::get_min_segment_num() const
 { return proj_data_info_ptr->get_min_segment_num(); }
 
@@ -90,13 +98,24 @@ int ProjData::get_min_tangential_pos_num() const
 int ProjData::get_max_tangential_pos_num() const
 { return proj_data_info_ptr->get_max_tangential_pos_num(); }
 
-int ProjData::get_num_sinograms() const
+int ProjData::get_min_tof_pos_num() const
+{ return proj_data_info_ptr->get_min_tof_pos_num(); }
+
+int ProjData::get_max_tof_pos_num() const
+{ return proj_data_info_ptr->get_max_tof_pos_num(); }
+
+int ProjData::get_num_non_tof_sinograms() const
 {
     int num_sinos = proj_data_info_ptr->get_num_axial_poss(0);
     for (int s=1; s<= this->get_max_segment_num(); ++s)
         num_sinos += 2* this->get_num_axial_poss(s);
 
     return num_sinos;
+}
+
+int ProjData::get_num_sinograms() const
+{
+    return this->get_num_non_tof_sinograms()*this->get_num_tof_poss();
 }
 
 std::size_t ProjData::size_all() const

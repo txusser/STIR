@@ -37,6 +37,7 @@
 #include "stir/ProjDataInMemory.h"
 #include "stir/recon_buildblock/ProjectorByBinPairUsingProjMatrixByBin.h"
 #include "stir/ExamInfo.h"
+
 START_NAMESPACE_STIR
 
 
@@ -69,12 +70,12 @@ typedef RegisteredParsingObject<PoissonLogLikelihoodWithLinearModelForMeanAndLis
 
 public:
  
- //! Name which will be used when parsing a GeneralisedObjectiveFunction object 
+ //! Name which will be 	d when parsing a GeneralisedObjectiveFunction object
   static const char * const registered_name; 
   
   PoissonLogLikelihoodWithLinearModelForMeanAndListModeDataWithProjMatrixByBin<TargetT>(); 
 
-  //! This should compute the gradient of the objective function at the  current_image_estimate
+  //! This should compute the gradient of the objective function at the \a current_estimate overwriting \a gradient
   virtual  
   void compute_sub_gradient_without_penalty_plus_sensitivity(TargetT& gradient,  
                                          const TargetT &current_estimate,  
@@ -101,12 +102,18 @@ protected:
   //! Maximum ring difference to take into account
   /*! \todo Might be removed */
   int  max_ring_difference_num_to_process;
-
+  
+  //! Triggers calculation of sensitivity using time-of-flight
+  bool use_tofsens;
+  
   //! Stores the projectors that are used for the computations
   shared_ptr<ProjMatrixByBin> PM_sptr;
 
   //! Stores the projectors that are used for the computations
-  shared_ptr<ProjectorByBinPairUsingProjMatrixByBin> projector_pair_sptr;
+  shared_ptr<ProjectorByBinPair> projector_pair_sptr;
+
+  //! Backprojector used for sensitivity computation
+  shared_ptr<BackProjectorByBin> sens_backprojector_sptr;
 
   //! points to the additive projection data
   shared_ptr<ProjDataInMemory> additive_proj_data_sptr;
@@ -126,7 +133,7 @@ protected:
   virtual bool actual_subsets_are_approximately_balanced(std::string& warning_message) const;
 
   void
-    add_view_seg_to_sensitivity(TargetT& sensitivity, const ViewSegmentNumbers& view_seg_nums) const;
+    add_view_seg_to_sensitivity(const ViewSegmentNumbers& view_seg_nums) const;
 };
 
 END_NAMESPACE_STIR

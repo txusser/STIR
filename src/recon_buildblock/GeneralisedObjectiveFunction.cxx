@@ -2,6 +2,7 @@
 //
 /*
     Copyright (C) 2003- 2011, Hammersmith Imanet Ltd
+    Copyright (C) 2016, University of Hull
     This file is part of STIR.
 
     This file is free software; you can redistribute it and/or modify
@@ -21,6 +22,7 @@
   \ingroup GeneralisedObjectiveFunction
   \brief Declaration of class stir::GeneralisedObjectiveFunction
 
+  \author Nikos Efthimiou
   \author Kris Thielemans
   \author Sanida Mustafovic
 
@@ -32,7 +34,7 @@
 #include "stir/Succeeded.h"
 #include "stir/modelling/ParametricDiscretisedDensity.h"
 #include "stir/modelling/KineticParameters.h"
-
+#include "stir/info.h"
 using std::string;
 
 START_NAMESPACE_STIR
@@ -45,6 +47,7 @@ set_defaults()
   this->prior_sptr.reset();
   // note: cannot use set_num_subsets(1) here, as other parameters (such as projectors) are not set-up yet.
   this->num_subsets = 1;
+  use_tof = false;
 }
 
 template <typename TargetT>
@@ -53,6 +56,7 @@ GeneralisedObjectiveFunction<TargetT>::
 initialise_keymap()
 {
   this->parser.add_parsing_key("prior type", &prior_sptr);
+  this->parser.add_key("Use TOF information", &use_tof);
 }
 
 template <typename TargetT>
@@ -83,6 +87,11 @@ set_up(shared_ptr<TargetT> const& target_data_ptr)
 	      this->num_subsets);
       return Succeeded::no;
     }
+
+  if (use_tof)
+  {
+      info("Time-Of-Flight reconstruction activated!");
+  }
 
   return Succeeded::yes;  
 }
@@ -146,10 +155,13 @@ compute_sub_gradient(TargetT& gradient,
 		     const TargetT &current_estimate, 
 		     const int subset_num)
 {
-   assert(gradient.get_index_range() == current_estimate.get_index_range());  
+  assert(gradient.get_index_range() == current_estimate.get_index_range());
 
-   this->compute_sub_gradient_without_penalty(gradient, 
-					      current_estimate, 
+  if (subset_num<0 || subset_num>=this->get_num_subsets())
+    error("compute_sub_gradient subset_num out-of-range error");
+
+  this->compute_sub_gradient_without_penalty(gradient,
+					      current_estimate,
 					      subset_num); 
    if (!this->prior_is_zero())
      {
@@ -178,6 +190,14 @@ get_num_subsets() const
 }
 
 template <typename TargetT>
+bool
+GeneralisedObjectiveFunction<TargetT>::
+get_tof_status() const
+{
+  return this->use_tof;
+}
+
+template <typename TargetT>
 double
 GeneralisedObjectiveFunction<TargetT>::
 compute_objective_function_without_penalty(const TargetT& current_estimate)
@@ -195,6 +215,9 @@ GeneralisedObjectiveFunction<TargetT>::
 compute_objective_function_without_penalty(const TargetT& current_estimate,
 					   const int subset_num)
 {
+  if (subset_num<0 || subset_num>=this->get_num_subsets())
+    error("compute_objective_function_without_penalty subset_num out-of-range error");
+
   return
     this->actual_compute_objective_function_without_penalty(current_estimate, subset_num);
 }
@@ -229,6 +252,9 @@ add_multiplication_with_approximate_sub_Hessian_without_penalty(TargetT& output,
 								const TargetT& input,
 								const int subset_num) const
 {
+  if (subset_num<0 || subset_num>=this->get_num_subsets())
+    error("add_multiplication_with_approximate_sub_Hessian_without_penalty subset_num out-of-range error");
+
   {
     string explanation;
     if (!output.has_same_characteristics(input,

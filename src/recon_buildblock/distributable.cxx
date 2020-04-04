@@ -173,7 +173,8 @@ void get_viewgrams(shared_ptr<RelatedViewgrams<float> >& y,
                    const double start_time_of_frame,
                    const double end_time_of_frame,
                    const shared_ptr<DataSymmetriesForViewSegmentNumbers>& symmetries_ptr,
-                   const ViewSegmentNumbers& view_segment_num
+                   const ViewSegmentNumbers& view_segment_num,
+				   const int timing_pos_num
                    )
 {
   if (!is_null_ptr(binwise_correction))
@@ -184,10 +185,10 @@ void get_viewgrams(shared_ptr<RelatedViewgrams<float> >& y,
 #if !defined(_MSC_VER) || _MSC_VER>1300
       additive_binwise_correction_viewgrams.reset(
         new RelatedViewgrams<float>
-        (binwise_correction->get_related_viewgrams(view_segment_num, symmetries_ptr)));
+        (binwise_correction->get_related_viewgrams(view_segment_num, symmetries_ptr, false, timing_pos_num)));
 #else
       RelatedViewgrams<float> tmp(binwise_correction->
-                                  get_related_viewgrams(view_segment_num, symmetries_ptr));
+                                  get_related_viewgrams(view_segment_num, symmetries_ptr, false, timing_pos_num));
       additive_binwise_correction_viewgrams.reset(new RelatedViewgrams<float>(tmp));
 #endif
     }
@@ -199,25 +200,25 @@ void get_viewgrams(shared_ptr<RelatedViewgrams<float> >& y,
 #endif
 #if !defined(_MSC_VER) || _MSC_VER>1300
       y.reset(new RelatedViewgrams<float>
-	      (proj_dat_ptr->get_related_viewgrams(view_segment_num, symmetries_ptr)));
+	      (proj_dat_ptr->get_related_viewgrams(view_segment_num, symmetries_ptr, false, timing_pos_num)));
 #else
       // workaround VC++ 6.0 bug
       RelatedViewgrams<float> tmp(proj_dat_ptr->
-                                  get_related_viewgrams(view_segment_num, symmetries_ptr));
+                                  get_related_viewgrams(view_segment_num, symmetries_ptr, false, timing_pos_num));
       y.reset(new RelatedViewgrams<float>(tmp));
 #endif        
     }
   else
     {
       y.reset(new RelatedViewgrams<float>
-	      (proj_dat_ptr->get_empty_related_viewgrams(view_segment_num, symmetries_ptr)));
+	      (proj_dat_ptr->get_empty_related_viewgrams(view_segment_num, symmetries_ptr, false, timing_pos_num)));
     }
 
   // multiplicative correction
   if (!is_null_ptr(normalisation_sptr) && !normalisation_sptr->is_trivial())
     {
       mult_viewgrams_sptr.reset(
-				new RelatedViewgrams<float>(proj_dat_ptr->get_empty_related_viewgrams(view_segment_num, symmetries_ptr)));
+				new RelatedViewgrams<float>(proj_dat_ptr->get_empty_related_viewgrams(view_segment_num, symmetries_ptr, false, timing_pos_num)));
       mult_viewgrams_sptr->fill(1.F);
 #ifdef STIR_OPENMP
 #pragma omp critical(MULT)
@@ -240,6 +241,7 @@ void send_viewgrams(const shared_ptr<RelatedViewgrams<float> >& y,
                     const int next_receiver)
 {
   distributed::send_view_segment_numbers( y->get_basic_view_segment_num(), NEW_VIEWGRAM_TAG, next_receiver);
+  distributed::send_int_value( y->get_basic_timing_pos_num(), next_receiver);
 
 #ifndef NDEBUG
   //test sending related viegrams
@@ -294,7 +296,8 @@ void distributable_computation(
                                const double start_time_of_frame,
                                const double end_time_of_frame,
                                RPC_process_related_viewgrams_type * RPC_process_related_viewgrams,
-                               DistributedCachingInformation* caching_info_ptr)
+                               DistributedCachingInformation* caching_info_ptr,
+							   int min_timing_pos_num, int max_timing_pos_num)
 
 {
 #ifdef STIR_MPI 
@@ -337,7 +340,8 @@ void distributable_computation(
                                               start_time_of_frame,
                                               end_time_of_frame,
                                               RPC_process_related_viewgrams,
-                                              caching_info_ptr);
+                                              caching_info_ptr,
+											  min_timing_pos_num, max_timing_pos_num);
       return;
     }
 
@@ -377,6 +381,7 @@ void distributable_computation(
   wall_clock_timer.start();
 
   assert(min_segment_num <= max_segment_num);
+  assert(min_timing_pos_num <= max_timing_pos_num);
   assert(subset_num >=0);
   assert(subset_num < num_subsets);
   
@@ -407,25 +412,31 @@ void distributable_computation(
 #endif
   //double total_seq_rpc_time=0.0; //sums up times used for RPC_process_related_viewgrams
 
+  forward_projector_ptr->set_input(*input_image_ptr);
+  if (output_image_ptr != NULL)
+    back_projector_ptr->start_accumulating_in_new_target();
+
 #ifdef STIR_OPENMP
-  std::vector< shared_ptr<DiscretisedDensity<3,float> > > local_output_image_sptrs;
   std::vector<double> local_log_likelihoods;
   std::vector<int> local_counts, local_count2s;
-#pragma omp parallel shared(local_output_image_sptrs, local_log_likelihoods, local_counts, local_count2s)
+#pragma omp parallel shared(local_log_likelihoods, local_counts, local_count2s)
 #endif
+
   // start of threaded section if openmp
   { 
 #ifdef STIR_OPENMP
 #pragma omp single
     {
-      std::cerr << "Starting loop with " << omp_get_num_threads() << " threads\n"; 
-      local_output_image_sptrs.resize(omp_get_max_threads(), shared_ptr<DiscretisedDensity<3,float> >());
+      info(boost::format("Starting loop with %1% threads") % omp_get_num_threads());
       local_log_likelihoods.resize(omp_get_max_threads(), 0.);
       local_counts.resize(omp_get_max_threads(), 0);
       local_count2s.resize(omp_get_max_threads(), 0);
     }
 #pragma omp for schedule(runtime)  
 #endif
+
+  for (int timing_pos_num = min_timing_pos_num; timing_pos_num <= max_timing_pos_num; ++timing_pos_num)
+  {
     // note: older versions of openmp need an int as loop
     for (int i=0; i<static_cast<int>(vs_nums_to_process.size()); ++i)
       {
@@ -440,7 +451,7 @@ void distributable_computation(
                       zero_seg0_end_planes,
                       binwise_correction,
                       normalisation_sptr, start_time_of_frame, end_time_of_frame,
-                      symmetries_ptr, view_segment_num);
+                      symmetries_ptr, view_segment_num, timing_pos_num);
 #ifdef STIR_MPI     
 
           //send viewgrams, the slave will immediatelly start calculation
@@ -468,23 +479,18 @@ void distributable_computation(
 
 #ifdef STIR_OPENMP
           const int thread_num=omp_get_thread_num();
-          info(boost::format("Thread %d/%d calculating segment_num: %d, view_num: %d")
+          info(boost::format("Thread %d/%d calculating segment_num: %d, view_num: %d, timing_pos_num: %d")
                % thread_num % omp_get_num_threads()
-               % view_segment_num.segment_num() % view_segment_num.view_num());
+               % view_segment_num.segment_num() % view_segment_num.view_num() % timing_pos_num);
 #else
-          info(boost::format("calculating segment_num: %d, view_num: %d")
-               % view_segment_num.segment_num() % view_segment_num.view_num());
+          info(boost::format("calculating segment_num: %d, view_num: %d, timing_pos_num: %d")
+               % view_segment_num.segment_num() % view_segment_num.view_num() % timing_pos_num,2);
 #endif
+
 #ifdef STIR_OPENMP
-          if (output_image_ptr != NULL)
-            {
-              if(is_null_ptr(local_output_image_sptrs[thread_num]))
-                local_output_image_sptrs[thread_num].reset(output_image_ptr->get_empty_copy());
-            }
-            
           RPC_process_related_viewgrams(forward_projector_ptr,
                                         back_projector_ptr,
-                                        local_output_image_sptrs[thread_num].get(), input_image_ptr, y.get(), 
+                                        y.get(),
                                         local_counts[thread_num], local_count2s[thread_num], 
                                         is_null_ptr(log_likelihood_ptr)? NULL : &local_log_likelihoods[thread_num], 
                                         additive_binwise_correction_viewgrams.get(),
@@ -493,23 +499,18 @@ void distributable_computation(
 #else
           RPC_process_related_viewgrams(forward_projector_ptr,
                                         back_projector_ptr,
-                                        output_image_ptr, input_image_ptr, y.get(), count, count2, log_likelihood_ptr, 
+                                        y.get(), count, count2, log_likelihood_ptr,
                                         additive_binwise_correction_viewgrams.get(),
                                         mult_viewgrams_sptr.get());
 #endif // OPENMP                                    
 #endif // MPI
-      } // end of for-loop 
+        } // end of for-loop
+      } // end of for-loop over timing_pos_num
   } // end of parallel section of openmp
   
 #ifdef STIR_OPENMP
   // "reduce" data constructed by threads
   {
-    if (output_image_ptr != NULL)
-      {
-        for (int i=0; i<static_cast<int>(local_output_image_sptrs.size()); ++i)
-	  if(!is_null_ptr(local_output_image_sptrs[i])) // only accumulate if a thread filled something in
-	    *output_image_ptr += *(local_output_image_sptrs[i]);
-      }
     if (log_likelihood_ptr != NULL)
       {
         for (int i=0; i<static_cast<int>(local_log_likelihoods.size()); ++i)
@@ -519,6 +520,8 @@ void distributable_computation(
     count2 += std::accumulate(local_count2s.begin(), local_count2s.end(), 0);
   }
 #endif
+  if (output_image_ptr != NULL)
+    back_projector_ptr->get_output(*output_image_ptr);
 #ifdef STIR_MPI
   //end of iteration processing
 

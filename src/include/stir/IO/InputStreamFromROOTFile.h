@@ -32,7 +32,6 @@
 #include "stir/Succeeded.h"
 #include "stir/listmode/CListRecordROOT.h"
 #include "stir/RegisteredObject.h"
-#include "stir/ParsingObject.h"
 
 #include <TROOT.h>
 #include <TSystem.h>
@@ -71,8 +70,7 @@ START_NAMESPACE_STIR
         \warning The initial validation of the ROOT input was done with version 5.34.
 */
 
-class InputStreamFromROOTFile : public RegisteredObject< InputStreamFromROOTFile > ,
-        public ParsingObject
+class InputStreamFromROOTFile : public RegisteredObject< InputStreamFromROOTFile >
 {
 public:
     typedef std::vector<long long int>::size_type SavedPosition;
@@ -128,9 +126,9 @@ public:
     virtual int get_num_axial_crystals_per_block_v() const = 0;
     //! Get the transaxial number of crystals per module
     virtual int get_num_transaxial_crystals_per_block_v() const = 0;
-
+    //! Get the number of axial crystals per singles unit
     virtual int get_num_axial_crystals_per_singles_unit() const = 0;
-
+    //! Get the number of transaxial crystals per singles unit
     virtual int get_num_trans_crystals_per_singles_unit() const = 0;
     //! Lower energy threshold
     inline float get_low_energy_thres() const;
@@ -206,6 +204,10 @@ protected:
     //! (<a href="http://wiki.opengatecollaboration.org/index.php/Users_Guide_V7.2:Digitizer_and_readout_parameters">here</a> )
     //! > the readout depth depends upon how the electronic readout functions.
     int singles_readout_depth;
+
+    // This member will try to give to the continuous time register in GATE
+    // data, a finite least significant bit.
+    double least_significant_clock_bit;
 };
 
 END_NAMESPACE_STIR
