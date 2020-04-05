@@ -54,7 +54,7 @@ public:
     virtual const std::string
     get_name() const
     {
-        return "SimSET_Header_file";
+        return "SimSET";
     }
 
     virtual unique_ptr<data_type>
@@ -77,14 +77,14 @@ protected:
     bool actual_can_read(const FileSignature& signature,
                          std::istream& input) const
     {
-        return this->is_SimSET_signature(input);
+        return this->is_SimSET_signature(signature.get_signature());
     }
 
     //! This is a very dirty function. We have to replicate argv in
     //! a linux terminal fashion, as that is the acceptabel input to SimSET
     //! function LbEnGetOptions. I could rewrite that, but the effort might
     //! be too much.
-    bool is_SimSET_signature(std::istream& signature) const
+    bool is_SimSET_signature(const char* const signature) const
     {
         // checking for "interfile :"
         const char * pos_of_colon = strchr(signature, ':');
