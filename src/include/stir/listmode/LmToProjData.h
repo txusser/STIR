@@ -8,12 +8,14 @@
 
   \brief Declaration of the stir::LmToProjData class which is used to bin listmode data to (3d) sinograms
  
+  \author Nikos Efthimiou
   \author Kris Thielemans
   \author Sanida Mustafovic
   
 */
 /*
     Copyright (C) 2000- 2009, Hammersmith Imanet Ltd
+    Copyright (C) 2017, University of Hull
     This file is part of STIR.
 
     This file is free software; you can redistribute it and/or modify
@@ -108,7 +110,8 @@ class CListTime;
     ; if you're short of RAM (i.e. a single projdata does not fit into memory),
     ; you can use this to process the list mode data in multiple passes.
     num_segments_in_memory := -1
-
+    ; same for TOF bins
+    num_TOF_bins_in_memory := 1
   End := 
   \endverbatim
   
@@ -174,10 +177,17 @@ public:
   LmToProjData();
 
   //! This function does the actual work
+  //! N.E: In order to keep the ToF functions separate from the non-TOF
+  //! STIR this function just call the appropriate actual_process_data_with(out)_tof().
   virtual void process_data();
+
+  //! A test function for time-of-flight data. At this moment we lack a lot of infrastructure in
+  //! order to be able to develope a viable test function of class anywhere else. At a future point
+  //! I should develope a proper test function. This function is going to fill the proj_data with
+  //! the index number of the respective TOF position, for every TOF position.
+  void run_tof_test_function();
   
 protected:
-
   
   //! will be called when a new time frame starts
   /*! The frame numbers start from 1. */
@@ -224,7 +234,9 @@ protected:
   bool do_pre_normalisation;
   bool store_prompts;
   bool store_delayeds;
+
   int num_segments_in_memory;
+  int num_timing_poss_in_memory;
   long int num_events_to_store;
   int max_segment_num_to_process;
 

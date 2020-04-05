@@ -54,7 +54,7 @@
  #include "stir/SegmentByView.h"
  #include "stir/SegmentBySinogram.h"
  #include "stir/ExamInfo.h"
- #include "stir/IO/ExamData.h"
+ #include "stir/ExamData.h"
  #include "stir/Verbosity.h"
  #include "stir/ProjData.h"
  #include "stir/ProjDataInMemory.h"
@@ -64,15 +64,18 @@
 #include "stir/CartesianCoordinate3D.h"
 #include "stir/IndexRange.h"
 #include "stir/IndexRange3D.h"
+#include "stir/IndexRange4D.h"
 #include "stir/Array.h"
 #include "stir/DiscretisedDensity.h"
 #include "stir/DiscretisedDensityOnCartesianGrid.h"
 #include "stir/PixelsOnCartesianGrid.h"
 #include "stir/VoxelsOnCartesianGrid.h"
+#include "stir/zoom.h"
 
 #include "stir/GeneralisedPoissonNoiseGenerator.h"
   
 #include "stir/IO/read_from_file.h"
+#include "stir/IO/write_to_file.h"
 #include "stir/IO/InterfileOutputFileFormat.h"
 #ifdef HAVE_LLN_MATRIX
 #include "stir/IO/ECAT7OutputFileFormat.h"
@@ -630,24 +633,18 @@ namespace std {
 
 
 #endif
-  static Array<3,float> create_array_for_proj_data(const ProjData& proj_data)
+  static Array<4,float> create_array_for_proj_data(const ProjData& proj_data)
   {
-      //    int num_sinos=proj_data.get_num_axial_poss(0);
-      //    for (int s=1; s<= proj_data.get_max_segment_num(); ++s)
-      //      {
-      //        num_sinos += 2*proj_data.get_num_axial_poss(s);
-      //      }
-      int num_sinos = proj_data.get_num_sinograms();
-
-      Array<3,float> array(IndexRange3D(num_sinos, proj_data.get_num_views(), proj_data.get_num_tangential_poss()));
+    const int num_non_tof_sinos = proj_data.get_num_non_tof_sinograms();
+ Array<4,float> array(IndexRange4D(proj_data.get_num_tof_poss(),num_non_tof_sinos, proj_data.get_num_views(), proj_data.get_num_tangential_poss()));
       return array;
   }
 
-  // a function for  converting ProjData to a 3D array as that's what is easy to use
-  static Array<3,float> projdata_to_3D(const ProjData& proj_data)
+  // a function for  converting ProjData to a 4D array as that's what is easy to use
+  static Array<4,float> projdata_to_4D(const ProjData& proj_data)
   {
-      Array<3,float> array = create_array_for_proj_data(proj_data);
-      Array<3,float>::full_iterator array_iter = array.begin_all();
+      Array<4,float> array = create_array_for_proj_data(proj_data);
+      Array<4,float>::full_iterator array_iter = array.begin_all();
       //    for (int s=0; s<= proj_data.get_max_segment_num(); ++s)
       //      {
       //        SegmentBySinogram<float> segment=proj_data.get_segment_by_sinogram(s);
@@ -665,7 +662,7 @@ namespace std {
   }
 
   // inverse of the above function
-  void fill_proj_data_from_3D(ProjData& proj_data, const Array<3,float>& array)
+  void fill_proj_data_from_4D(ProjData& proj_data, const Array<4,float>& array)
   {
       //    int num_sinos=proj_data.get_num_axial_poss(0);
       //    for (int s=1; s<= proj_data.get_max_segment_num(); ++s)
@@ -678,7 +675,7 @@ namespace std {
       //      {
       //        throw std::runtime_error("Incorrect size for filling this projection data");
       //      }
-      Array<3,float>::const_full_iterator array_iter = array.begin_all();
+      Array<4,float>::const_full_iterator array_iter = array.begin_all();
       //
       //    for (int s=0; s<= proj_data.get_max_segment_num(); ++s)
       //      {
@@ -851,6 +848,7 @@ namespace std {
 //%shared_ptr(stir::Array<1,float>);
 %shared_ptr(stir::Array<2,float>);
 %shared_ptr(stir::Array<3,float>);
+%shared_ptr(stir::Array<4,float>);
 %shared_ptr(stir::DiscretisedDensity<3,float>);
 %shared_ptr(stir::DiscretisedDensityOnCartesianGrid<3,float>);
 %shared_ptr(stir::VoxelsOnCartesianGrid<float>);
@@ -1132,6 +1130,7 @@ namespace stir {
   %template(IndexRange2D) IndexRange<2>;
   //%template(IndexRange2DVectorWithOffset) VectorWithOffset<IndexRange<2> >;
   %template(IndexRange3D) IndexRange<3>;
+  %template(IndexRange4D) IndexRange<4>;
 
   %ADD_indexaccess(int,T,VectorWithOffset);
   %template(FloatVectorWithOffset) VectorWithOffset<float>;
@@ -1261,6 +1260,10 @@ namespace stir {
 
 } // namespace stir
 
+%include "stir/ZoomOptions.h"
+%include "stir/zoom.h"
+
+%ignore *::get_scanner_sptr;
 %rename (get_scanner) *::get_scanner_ptr;
 %ignore *::get_proj_data_info_ptr;
 %rename (get_proj_data_info) *::get_proj_data_info_sptr;
@@ -1268,6 +1271,30 @@ namespace stir {
 %ignore *::get_exam_info_sptr; // we do have get_exam_info in C++
 
 %rename (set_objective_function) *::set_objective_function_sptr;
+%ignore  *::get_objective_function_sptr; // we have it without _sptr in C++
+
+%rename (get_initial_data) *::get_initial_data_ptr;
+%rename (construct_target_image) *::construct_target_image_ptr;
+%rename (construct_target) *::construct_target_ptr;
+%ignore *::get_prior_sptr;
+%rename (get_prior) *::get_prior_ptr;
+%rename (get_proj_matrix) *::get_proj_matrix;
+%rename (get_projector_pair) *::get_projector_pair_sptr;
+%rename (get_normalisation) *::get_normalisation_sptr;
+%rename (get_symmetries) *::get_symmetries_ptr;
+%ignore *::get_symmetries_sptr;
+%rename (get_inter_iteration_filter) *::get_inter_iteration_filter_sptr;
+%rename (get_anatomical_prior) *::get_anatomical_prior_sptr;
+%rename (get_proj_data) *::get_proj_data_sptr;
+%rename (get_subset_sensitivity) *::get_subset_sensitivity_sptr;
+%rename (get_forward_projector) *::get_forward_projector_sptr;
+%rename (get_back_projector) *::get_back_projector_sptr;
+%rename (get_kappa) *::get_kappa_sptr;
+%rename (get_attenuation_image) *::get_attenuation_image_sptr;
+/* would be nice, but needs swig to be compiled with PCRE support 
+%rename("rstrip:[_ptr]")
+%rename("rstrip:[_sptr]")
+*/
 
   // Todo need to instantiate with name?
   // TODO Swig doesn't see that Array<2,float> is derived from it anyway becuse of num_dimensions bug
@@ -1277,6 +1304,7 @@ namespace stir {
   // TODO name
   %template (FloatNumericVectorWithOffset3D) stir::NumericVectorWithOffset<stir::Array<2,float>, float>;
   %template(FloatArray3D) stir::Array<3,float>;
+  %template(FloatArray4D) stir::Array<4,float>;
 #if 0
   %ADD_indexaccess(int,%arg(stir::Array<2,float>),%arg(stir::Array<3,float>));
 #endif
@@ -1287,6 +1315,8 @@ namespace stir {
 //%template() stir::DiscretisedDensityOnCartesianGrid<3,float>;
 %template(FloatVoxelsOnCartesianGrid) stir::VoxelsOnCartesianGrid<float>;
 
+%include "stir/IO/write_to_file.h"
+%template(write_image_to_file) stir::write_to_file<DiscretisedDensity<3, float> >;
 
 #ifdef STIRSWIG_SHARED_PTR
 #define DataT stir::DiscretisedDensity<3,float>
@@ -1320,13 +1350,13 @@ namespace stir {
 %include "stir/TimeFrameDefinitions.h"
 %include "stir/ExamInfo.h"
 
-%include "stir/IO/ExamData.h"
+%include "stir/ExamData.h"
 %include "stir/Verbosity.h"
-
 %attributeref(stir::Bin, int, segment_num);
 %attributeref(stir::Bin, int, axial_pos_num);
 %attributeref(stir::Bin, int, view_num);
 %attributeref(stir::Bin, int, tangential_pos_num);
+%attributeref(stir::Bin, int, timing_pos_num);
 %attribute(stir::Bin, float, bin_value, get_bin_value, set_bin_value);
 %include "stir/Bin.h"
 
@@ -1376,11 +1406,11 @@ namespace stir {
 %extend ProjData 
   {
 #ifdef SWIGPYTHON
-    %feature("autodoc", "create a stir 3D Array from the projection data (internal)") to_array;
+    %feature("autodoc", "create a stir 4D Array from the projection data (internal)") to_array;
     %newobject to_array;
-    Array<3,float> to_array()
+    Array<4,float> to_array()
     { 
-      Array<3,float> array = swigstir::projdata_to_3D(*$self);
+      Array<4,float> array = swigstir::projdata_to_4D(*$self);
       return array;
     }
 
@@ -1389,9 +1419,9 @@ namespace stir {
     {
       if (PyIter_Check(arg))
       {
-        Array<3,float> array = swigstir::create_array_for_proj_data(*$self);
+        Array<4,float> array = swigstir::create_array_for_proj_data(*$self);
 	swigstir::fill_Array_from_Python_iterator(&array, arg);
-        swigstir::fill_proj_data_from_3D(*$self, array);        
+        swigstir::fill_proj_data_from_4D(*$self, array);        
       }
       else
       {
@@ -1406,15 +1436,15 @@ namespace stir {
     %newobject to_matlab;
     mxArray * to_matlab()
     { 
-      Array<3,float> array = swigstir::projdata_to_3D(*$self);
+      Array<4,float> array = swigstir::projdata_to_4D(*$self);
       return swigstir::Array_to_matlab(array); 
     }
 
     void fill(const mxArray *pm)
     { 
-      Array<3,float> array;
+      Array<4,float> array;
       swigstir::fill_Array_from_matlab(array, pm, true);
-      swigstir::fill_proj_data_from_3D(*$self, array);
+      swigstir::fill_proj_data_from_4D(*$self, array);
     }
 #endif
   }
@@ -1653,17 +1683,11 @@ namespace stir {
 
 %include "stir/recon_buildblock/ProjMatrixByBinUsingRayTracing.h"
 
-%shared_ptr(  stir::AddParser<stir::ForwardProjectorByBin>);
-%template (internalAddParserForwardProjectorByBin)
-  stir::AddParser<stir::ForwardProjectorByBin>;
 %template (internalRPForwardProjectorByBinUsingProjMatrixByBin)  
   stir::RegisteredParsingObject<stir::ForwardProjectorByBinUsingProjMatrixByBin,
      stir::ForwardProjectorByBin>;
 %include "stir/recon_buildblock/ForwardProjectorByBinUsingProjMatrixByBin.h"
 
-%shared_ptr(  stir::AddParser<stir::BackProjectorByBin>);
-%template (internalAddParserBackProjectorByBin)
-  stir::AddParser<stir::BackProjectorByBin>;
 %template (internalRPBackProjectorByBinUsingProjMatrixByBin)  
   stir::RegisteredParsingObject<stir::BackProjectorByBinUsingProjMatrixByBin,
      stir::BackProjectorByBin>;

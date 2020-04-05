@@ -29,7 +29,7 @@
 #include <string>
 #include <ctime>
 #include "stir/ProjDataInfo.h"
-#include "stir/IO/ExamData.h"
+#include "stir/ExamData.h"
 #include "stir/RegisteredParsingObject.h"
 
 # ifdef BOOST_NO_STDC_NAMESPACE
@@ -232,6 +232,11 @@ public:
   }
 
   virtual shared_ptr<ProjDataInfo> get_proj_data_info_sptr() const;
+
+  const ProjDataInfo* get_proj_data_info_ptr() const
+  {
+    return this->get_proj_data_info_sptr().get();
+  }
 
 protected:
 

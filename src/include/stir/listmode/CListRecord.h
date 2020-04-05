@@ -6,11 +6,13 @@
   \brief Declarations of classes stir::CListRecord, stir::CListTime and stir::CListEvent which
   are used for list mode data.
     
+  \author Nikos Efthimiou
   \author Kris Thielemans
       
 */
 /*
     Copyright (C) 2003- 2011, Hammersmith Imanet Ltd
+    Copyright (C) 2016, University of Hull
     This file is part of STIR.
 
     This file is free software; you can redistribute it and/or modify
@@ -107,14 +109,28 @@ public:
     void
     get_bin(Bin& bin, const ProjDataInfo&) const;
 
-  //! This method checks if the template is valid for LmToProjData
-  /*! Used before the actual processing of the data (see issue #61), before calling get_bin()
-   *  Most scanners have listmode data that correspond to non arc-corrected data and
-   *  this check avoids a crash when an unsupported template is used as input.
-   */
-  virtual
-  bool
-  is_valid_template(const ProjDataInfo&) const =0;
+    //! This method checks if the template is valid for LmToProjData
+    /*! Used before the actual processing of the data (see issue #61), before calling get_bin()
+    *  Most scanners have listmode data that correspond to non arc-corrected data and
+    *  this check avoids a crash when an unsupported template is used as input.
+    */
+    virtual
+    bool
+    is_valid_template(const ProjDataInfo&) const =0;
+
+    //! Returns true is the delta_time has been swapped.
+    bool
+    get_swapped() const
+    {return swapped;}
+
+    double get_delta_time() const { return delta_time; }
+protected:
+    //! The detection time difference, between the two photons.
+    //! This will work for ROOT files, but not so sure about acquired data.
+    double delta_time;
+
+    //! Indicates if the detectors' order has been swapped.
+    bool swapped;
 
 }; /*-coincidence event*/
 
@@ -142,11 +158,18 @@ public:
 
   virtual Succeeded set_time_in_millisecs(const unsigned long time_in_millisecs) = 0;
   inline Succeeded set_time_in_secs(const double time_in_secs)
-    { 
+    {
       unsigned long time_in_millisecs;
       round_to(time_in_millisecs, time_in_secs/1000.);
-      return set_time_in_millisecs(time_in_millisecs); 
+      return set_time_in_millisecs(time_in_millisecs);
     }
+
+  //! Get the timing component of the bin.
+  virtual inline void get_bin(Bin&, const ProjDataInfo&) const
+  {
+      error("CListTime::get_bin() currently is implemented only "
+            "ROOT data. Abort.");
+  }
 
 };
 
@@ -197,6 +220,12 @@ public:
 
   virtual bool operator==(const CListRecord& e2) const = 0;
   bool operator!=(const CListRecord& e2) const { return !(*this == e2); }
+  
+  //! Used in TOF reconstruction to get both the geometric and the timing
+  //!  component of the event
+  virtual void full_event(Bin&, const ProjDataInfo&) const
+  {error("CListRecord::full_event() is implemented only for records which "
+         "hold timing and spatial information.");}
 
 };
 

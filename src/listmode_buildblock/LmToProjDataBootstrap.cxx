@@ -7,10 +7,13 @@
   \brief Class stir::LmToProjDataBootstrap for rebinning listmode files with the bootstrap method
     
   \author Kris Thielemans
+  \author Daniel Deidda
       
 */
 /*
     Copyright (C) 2003- 2011, Hammersmith Imanet Ltd
+    Copyright (C) 2019, National Physical Laboratory
+    Copyright (C) 2019, University College of London
     This file is part of STIR.
 
     This file is free software; you can redistribute it and/or modify
@@ -120,6 +123,9 @@ start_new_time_frame(const unsigned int new_frame_num)
 {
 
   base_type::start_new_time_frame(new_frame_num);
+  CListModeData::SavedPosition start_of_this_frame = this->lm_data_ptr->save_get_position();
+
+  warning("LmToProjDataBootstrap: the number of events printed at the end is not correct! check that via manip_projdata");
 
   const double start_time = this->frame_defs.get_start_time(new_frame_num);
   const double end_time = this->frame_defs.get_end_time(new_frame_num);
@@ -144,13 +150,13 @@ start_new_time_frame(const unsigned int new_frame_num)
 	  break; //get out of while loop
 	}
       if (record.is_time())
-	{
+    {
 	  const double new_time = record.time().get_time_in_secs();
 	  if (this->do_time_frame && new_time >= end_time)
 	    break; // get out of while loop
-	  current_time = new_time;
+      current_time = new_time;
 	}
-      else if (record.is_event() && start_time <= current_time)
+      if (record.is_event() && start_time <= current_time)
 	{
 	  ++total_num_events_in_this_frame;
 
@@ -166,7 +172,7 @@ start_new_time_frame(const unsigned int new_frame_num)
 	      // set value in case the event decoder doesn't touch it
 	      // otherwise it would be 0 and all events will be ignored
 	      bin.set_bin_value(1);
-	      base_type::get_bin_from_event(bin, record.event());
+          base_type::get_bin_from_event(bin, record.event());
 	      // check if it's inside the range we want to store
 	      if (bin.get_bin_value()>0
 		  && bin.tangential_pos_num()>= this->template_proj_data_info_ptr->get_min_tangential_pos_num()
@@ -227,12 +233,13 @@ start_new_time_frame(const unsigned int new_frame_num)
   num_times_to_replicate_iter = num_times_to_replicate.begin();
     
   info(boost::format("Filled in replication vector for %1% events.") % total_num_events_in_this_frame);
+  this->lm_data_ptr->set_get_position(start_of_this_frame);
 }
 
 template <typename LmToProjDataT> 
 void 
 LmToProjDataBootstrap<LmToProjDataT>::
-get_bin_from_event(Bin& bin, const CListEvent& event) const
+get_bin_from_event(Bin& bin, const CListEvent &event) const
 {
   assert(num_times_to_replicate_iter != num_times_to_replicate.end());
   if (*num_times_to_replicate_iter > 0)

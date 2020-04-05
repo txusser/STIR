@@ -1,8 +1,7 @@
-//
-//
 /*
     Copyright (C) 2000 PARAPET partners
     Copyright (C) 2000- 2011, Hammersmith Imanet Ltd
+    Copyright (C) 2018-2019, University College London
     This file is part of STIR.
 
     This file is free software; you can redistribute it and/or modify
@@ -26,6 +25,7 @@
   \author Kris Thielemans
   \author Claire Labbe
   \author PARAPET project
+  \author Ludovica Brusaferri
 
 
 */
@@ -39,6 +39,8 @@
    
 #include "stir/interpolate.h"
 #include "stir/zoom.h"
+#include "stir/DataProcessor.h"
+#include "stir/DiscretisedDensity.h"
 #include "stir/VoxelsOnCartesianGrid.h" 
 #include "stir/PixelsOnCartesianGrid.h" 
 #include "stir/Viewgram.h"
@@ -133,7 +135,7 @@ zoom_viewgrams (RelatedViewgrams<float>& in_viewgrams,
     out_viewgrams = 
     new_proj_data_info_arccorr_ptr->
       get_empty_related_viewgrams(in_viewgrams.get_basic_view_segment_num(),
-				  symmetries_sptr);
+				  symmetries_sptr,false,in_viewgrams.get_basic_timing_pos_num());
 
   {
     RelatedViewgrams<float>::iterator out_iter = out_viewgrams.begin();
@@ -176,7 +178,9 @@ zoom_viewgram (Viewgram<float>& in_view,
     out_view = new_proj_data_info_arccorr_ptr->
                      get_empty_viewgram(
 					in_view.get_view_num(),
-					in_view.get_segment_num());
+					in_view.get_segment_num(),
+					false,
+					in_view.get_timing_pos_num());
 
   zoom_viewgram(out_view, in_view,    
 		x_offset_in_mm, y_offset_in_mm);
@@ -196,6 +200,9 @@ zoom_viewgram (Viewgram<float>& out_view,
   assert(in_view.get_proj_data_info_ptr()->get_num_segments() == 
 	 out_view.get_proj_data_info_ptr()->get_num_segments());
   assert(in_view.get_segment_num() == out_view.get_segment_num());
+  assert(in_view.get_proj_data_info_ptr()->get_num_tof_poss() ==
+	  out_view.get_proj_data_info_ptr()->get_num_tof_poss());
+  assert(in_view.get_timing_pos_num() == out_view.get_timing_pos_num());
   assert(in_view.get_min_axial_pos_num() == out_view.get_min_axial_pos_num());
   assert(in_view.get_max_axial_pos_num() == out_view.get_max_axial_pos_num());
 
@@ -296,10 +303,11 @@ void
 zoom_image_in_place(VoxelsOnCartesianGrid<float> &image,
 		    const float zoom,
 		    const float x_offset_in_mm, const float y_offset_in_mm, 
-		    const int new_size )      
+		    const int new_size,
+                    const ZoomOptions zoom_options)
 {
   VoxelsOnCartesianGrid<float> new_image =
-    zoom_image(image, zoom, x_offset_in_mm, y_offset_in_mm, new_size);
+    zoom_image(image, zoom, x_offset_in_mm, y_offset_in_mm, new_size, zoom_options);
   image = new_image;
 }
 
@@ -307,7 +315,8 @@ VoxelsOnCartesianGrid<float>
 zoom_image(const VoxelsOnCartesianGrid<float> &image,
            const float zoom,
 	   const float x_offset_in_mm, const float y_offset_in_mm, 
-	   const int new_size )                          
+	   const int new_size,
+           const ZoomOptions zoom_options)
 {
   assert(new_size>=0);
   if(zoom==1 && x_offset_in_mm==0 && y_offset_in_mm==0 && new_size== image.get_x_size()) 
@@ -328,7 +337,7 @@ zoom_image(const VoxelsOnCartesianGrid<float> &image,
     new_image2D = new_image.get_plane(new_image.get_min_z());
   for (int plane = image.get_min_z(); plane <= image.get_max_z(); plane++)
     {
-      zoom_image(new_image2D, image.get_plane(plane));
+      zoom_image(new_image2D, image.get_plane(plane), zoom_options);
       new_image.set_plane(new_image2D, plane);
     }
     
@@ -341,10 +350,11 @@ void
 zoom_image_in_place(VoxelsOnCartesianGrid<float> &image,
 		    const CartesianCoordinate3D<float>& zooms,
 		    const CartesianCoordinate3D<float>& offsets_in_mm,
-		    const BasicCoordinate<3,int>& new_sizes)
+		    const BasicCoordinate<3,int>& new_sizes,
+                    const ZoomOptions zoom_options)
 {
   const VoxelsOnCartesianGrid<float> new_image =
-    zoom_image(image, zooms, offsets_in_mm, new_sizes);
+    zoom_image(image, zooms, offsets_in_mm, new_sizes, zoom_options);
   image = new_image;
 }
 
@@ -352,7 +362,8 @@ VoxelsOnCartesianGrid<float>
 zoom_image(const VoxelsOnCartesianGrid<float> &image,
 	   const CartesianCoordinate3D<float>& zooms,
 	   const CartesianCoordinate3D<float>& offsets_in_mm,
-	   const BasicCoordinate<3,int>& new_sizes)
+	   const BasicCoordinate<3,int>& new_sizes,
+           const ZoomOptions zoom_options)
 {
 
   VoxelsOnCartesianGrid<float> new_image =
@@ -360,13 +371,14 @@ zoom_image(const VoxelsOnCartesianGrid<float> &image,
 					     zooms,
 					     offsets_in_mm,
 					     new_sizes);
-  zoom_image(new_image, image);
+  zoom_image(new_image, image, zoom_options);
   return new_image;
 }
 
 void 
 zoom_image(VoxelsOnCartesianGrid<float> &image_out, 
-	   const VoxelsOnCartesianGrid<float> &image_in)
+           const VoxelsOnCartesianGrid<float> &image_in,
+           const ZoomOptions zoom_options)
 {
   image_out.set_exam_info(image_in.get_exam_info());
 /*
@@ -443,11 +455,39 @@ zoom_image(VoxelsOnCartesianGrid<float> &image_out,
 
   overlap_interpolate(image_out, temp2, zoom_z, z_offset);
 
+  float scale_image = 1.F;
+
+  switch (zoom_options.get_scaling_option())
+    {
+    case ZoomOptions::preserve_values:
+      {
+        scale_image =  zoom_x*zoom_y*zoom_z;
+        break;
+      }
+
+    case ZoomOptions::preserve_projections:
+
+      {
+        scale_image =  zoom_y*zoom_z;
+        break;
+      }
+
+    case ZoomOptions::preserve_sum:
+      {
+        return; // no need to scale
+      }
+
+    }
+
+  if (scale_image != 1.F)
+    image_out*= scale_image;
+
 }
 
 void
 zoom_image(PixelsOnCartesianGrid<float> &image2D_out, 
-           const PixelsOnCartesianGrid<float> &image2D_in)
+           const PixelsOnCartesianGrid<float> &image2D_in,
+           const ZoomOptions zoom_options)
 {
   image2D_out.set_exam_info(image2D_in.get_exam_info());
   /*
@@ -484,6 +524,34 @@ zoom_image(PixelsOnCartesianGrid<float> &image2D_out,
     overlap_interpolate(temp[y], image2D_in[y], zoom_x, x_offset);
 
   overlap_interpolate(image2D_out, temp, zoom_y, y_offset);   
+
+  float scale_image = 1.F;
+
+  switch (zoom_options.get_scaling_option())
+    {
+    case ZoomOptions::preserve_values:
+      {
+        scale_image =  zoom_x*zoom_y;
+        break;
+      }
+
+    case ZoomOptions::preserve_projections:
+
+      {
+        scale_image =  zoom_y;
+        break;
+      }
+
+    case ZoomOptions::preserve_sum:
+      {
+        return; // no need to scale
+      }
+
+    }
+
+  if (scale_image != 1.F)
+    image2D_out*= scale_image;
+
 }
 
 END_NAMESPACE_STIR

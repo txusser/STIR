@@ -30,6 +30,7 @@
 
 #include "stir/RegisteredParsingObject.h"
 #include "stir/recon_buildblock/PoissonLogLikelihoodWithLinearModelForMean.h"
+#include "stir/ParseAndCreateFrom.h"
 //#include "stir/ProjData.h"
 #include "stir/recon_buildblock/ProjectorByBinPair.h"
 //#include "stir/recon_buildblock/BinNormalisation.h"
@@ -186,6 +187,7 @@ public:
   const ProjData& get_proj_data() const;
   const shared_ptr<ProjData>& get_proj_data_sptr() const;
   const int get_max_segment_num_to_process() const;
+  const int get_max_timing_pos_num_to_process() const;
   const bool get_zero_seg0_end_planes() const;
   const ProjData& get_additive_proj_data() const;
   const shared_ptr<ProjData>& get_additive_proj_data_sptr() const;
@@ -207,6 +209,7 @@ public:
   int set_num_subsets(const int num_subsets);
   void set_proj_data_sptr(const shared_ptr<ProjData>&);
   void set_max_segment_num_to_process(const int);
+  void set_max_timing_pos_num_to_process(const int);
   void set_zero_seg0_end_planes(const bool);
   //N.E. Changed to ExamData
   virtual void set_additive_proj_data_sptr(const shared_ptr<ExamData>&);
@@ -281,39 +284,26 @@ protected:
   /*! convention: if -1, use get_max_segment_num()*/
   int max_segment_num_to_process;
 
+  //! the maximum absolute time-of-flight bin number to use in the reconstruction
+  /*! convention: if -1, use get_max_tof_pos_num()*/
+  int max_timing_pos_num_to_process;
+
   /**********************/
-  // image stuff
-  // TODO to be replaced with single class or so (TargetT obviously)
-  //! the output image size in x and y direction
-  /*! convention: if -1, use a size such that the whole FOV is covered
-  */
-  int output_image_size_xy; // KT 10122001 appended _xy
-
-  //! the output image size in z direction
-  /*! convention: if -1, use default as provided by VoxelsOnCartesianGrid constructor
-  */
-  int output_image_size_z; // KT 10122001 new
-
-  //! the zoom factor
-  double zoom;
-
-  //! offset in the x-direction
-  double Xoffset;
-
-  //! offset in the y-direction
-  double Yoffset;
-
-  // KT 20/06/2001 new
-  //! offset in the z-direction
-  double Zoffset;
+   ParseAndCreateFrom<TargetT, ProjData> target_parameter_parser;
   /********************************/
 
 
   //! Stores the projectors that are used for the computations
   shared_ptr<ProjectorByBinPair> projector_pair_ptr;
 
+  //! Backprojector used for sensitivity computation
+  shared_ptr<BackProjectorByBin> sens_backprojector_sptr;
+
   //! signals whether to zero the data in the end planes of the projection data
   bool zero_seg0_end_planes;
+
+  //! Triggers calculation of sensitivity using time-of-flight
+  bool use_tofsens;
 
   //! name of file in which additive projection data are stored
   std::string additive_projection_data_filename;
@@ -358,9 +348,10 @@ protected:
   bool actual_subsets_are_approximately_balanced(std::string& warning_message) const;
  private:
   shared_ptr<DataSymmetriesForViewSegmentNumbers> symmetries_sptr;
-
+#if 0
   void
     add_view_seg_to_sensitivity(TargetT& sensitivity, const ViewSegmentNumbers& view_seg_nums) const;
+#endif
 };
 
 #ifdef STIR_MPI
