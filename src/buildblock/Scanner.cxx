@@ -238,14 +238,6 @@ Scanner::Scanner(Type scanner_type)
                (float)(400.0F) );
     break;
 
-  case Siemens_mCT:
-    // Courtesy of Jesus Silva, Molecular Imaging Research Group, Health Research Institute of Santiago de Compostela, Galicia, Spain
-    set_params(Siemens_mCT, string_list("Siemens mCT", "mCT"),
-               52, 312, 624,
-               424.5F, 11.0F, 4.1925F, 2.0F, 0.0F,
-               4, 1, 13, 13, 13, 13, 1);
-    break;
-
   case RPT:
 
     set_params(RPT, string_list("PRT-1", "RPT"),
@@ -545,23 +537,34 @@ case PETMR_Signa:
   case Vereos:
     // Courtesy of Jesus Silva, Molecular Imaging Research Group, Health Research Institute of Santiago de Compostela, Galicia, Spain
     set_params(Vereos, string_list("Philips Vereos", "Vereos"),
-               40, 306, 612,
+               40, 306, 306, 612,
                382.0F, 11.0F, 4.1026F, 2.2876F, 0.0F,
                1, 1, 40, 34, 1, 1, 1,
-               0.0F, 511.F)
+               0.0F, 511.F,
+               0, 0.F, 0.F);
                
     break;
 
   case Vereos_TOF:
     // Courtesy of Jesus Silva, Molecular Imaging Research Group, Health Research Institute of Santiago de Compostela, Galicia, Spain
-    set_params(Vereos_TOF, string_list("Philips Vereos TOF recons", "Vereos"),
-               40, 306, 612,
+    set_params(Vereos_TOF, string_list("Philips Vereos TOF recons", "Vereos TOF"),
+               40, 306, 306, 612,
                382.0F, 11.0F, 4.1026F, 2.2876F, 0.0F,
                1, 1, 40, 34, 1, 1, 1,
                0.0F, 511.F,
-               (short int)(410),
+               (short int)(205),
                (float)(19.6F),
                (float)(230.0F));
+    break;
+
+  case Siemens_mCT:
+    // Courtesy of Jesus Silva, Molecular Imaging Research Group, Health Research Institute of Santiago de Compostela, Galicia, Spain
+    set_params(Siemens_mCT, string_list("Siemens mCT", "mCT"),
+               52, 312, 312, 624,
+               424.5F, 11.0F, 4.1925F, 2.0F, 0.0F,
+               4, 1, 13, 13, 13, 13, 1,
+               0.0F, 511.F,
+               0, 0.F, 0.F);
     break;
 
 
